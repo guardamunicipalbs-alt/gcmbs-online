@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="92" fill="#0f172a"/>
+<path d="M256 74 398 124v112c0 92-56 157-142 202C170 393 114 328 114 236V124L256 74Z" fill="#e2e8f0"/>
+<path d="M256 119 354 154v82c0 65-37 114-98 151-61-37-98-86-98-151v-82l98-35Z" fill="#0f172a"/>
+<text x="256" y="278" text-anchor="middle" font-family="Arial,sans-serif" font-size="92" font-weight="700" fill="#e2e8f0">GCM</text>
+</svg>
