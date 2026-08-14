@@ -8,7 +8,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
 let provider=new AuthenticatedProvider();
-let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null;
+let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null;
 
 function setView(id){
   document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('hidden',x.dataset.view!==id));
@@ -25,7 +25,7 @@ function aplicarPermissoes(){
   const mapa={inicio:'dashboard',escala:'escalas',extras:'extras',banco:'banco_horas',online:'perfil',acessos:'perfil',avisos:'perfil',perfil:'perfil'};
   document.querySelectorAll('nav button').forEach(b=>{
     const mod=mapa[b.dataset.go];
-    b.classList.toggle('hidden',!temAcesso(mod));
+    b.classList.toggle('hidden',b.dataset.go==='inicio'?false:!temAcesso(mod));
   });
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -80,24 +80,57 @@ async function aplicarIdentidadeVisualRemota(){
   }catch{}
 }
 
-function renderInicio(){
-  const escs=minhasEscalas(), banco=meuBanco();
-  const saldo=banco.reduce((a,x)=>a+(String(x.natureza).toUpperCase()==='DEBITO'?-Number(x.minutos||0):Number(x.minutos||0)),0);
-  $('mEscalas').textContent=escs.length;
-  $('mExtras').textContent=meusExtras().length;
-  $('mPermutas').textContent=minhasPermutas().length;
-  $('mSaldo').textContent=horas(saldo);
-  const hoje=new Date().toISOString().slice(0,10);
-  const prox=escs.find(x=>String(x.data)>=hoje)||escs[0];
-  $('proxima').innerHTML=prox
-    ? `<div class="item"><small>${fmt(prox.data)} · Turno ${esc(prox.turno||'-')}</small><strong>${esc(prox.posto_nome||prox.hist_posto_nome||prox.posto||'Posto')}</strong><span>${esc(prox.hist_horario_inicio||'')}${prox.hist_horario_fim?' às '+esc(prox.hist_horario_fim):''}</span></div>`
-    : '<div class="empty">Sem escala encontrada.</div>';
+function hoje(){return new Date().toISOString().slice(0,10)}
+function normalizar(v){return String(v??'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function horarioRelatorio(item){
+  const turno=String(item.turno||'').toUpperCase();
+  if(turno==='B')return '19:00 às 07:00';
+  const hi=String(item.horario_inicio||item.hist_horario_inicio||'').slice(0,5),hf=String(item.horario_fim||item.hist_horario_fim||'').slice(0,5);
+  if(hi==='07:00'&&hf==='17:00')return '07:00 às 17:00';
+  return '07:00 às 19:00';
+}
+function nomeEscala(x){return x.nome_guerra||x.hist_guarda_nome_guerra||x.guarda_nome||x.guarda||'GCM'}
+function postoEscala(x){return String(x.posto_nome||x.hist_posto_nome||x.posto||'').trim()}
+function motoristaEscala(x,nome){const m=normalizar(x.motorista);return !!m&&(m===normalizar(nome)||m===normalizar(x.guarda_nome)||m===normalizar(x.hist_guarda_nome_guerra))}
+function montarGruposEscala(registros){
+  const grupos=new Map();
+  for(const item of registros){
+    const posto=postoEscala(item);if(!posto)continue;
+    const turno=String(item.turno||'A').toUpperCase(),horario=horarioRelatorio(item),prioridade=Number(item.posto_prioridade??item.hist_posto_prioridade??9999),chave=`${posto}\0${turno}\0${horario}`;
+    if(!grupos.has(chave))grupos.set(chave,{posto,turno,horario,prioridade,itens:new Map()});
+    const g=grupos.get(chave),arr=g.itens.get(item.data)||[],nome=nomeEscala(item),ex=arr.find(x=>normalizar(x.nome)===normalizar(nome)),motorista=motoristaEscala(item,nome),veiculo=String(item.viatura||item.hist_viatura_prefixo||'').trim(),extra=normalizar(item.origem).includes('EXTRA');
+    if(ex){ex.motorista=ex.motorista||motorista;ex.veiculo=ex.veiculo||veiculo;ex.extra=ex.extra||extra}else arr.push({nome,motorista,veiculo,extra});
+    g.itens.set(item.data,arr);g.prioridade=Math.min(g.prioridade,prioridade);
+  }
+  return [...grupos.values()].sort((a,b)=>(a.prioridade-b.prioridade)||normalizar(a.posto).localeCompare(normalizar(b.posto))||a.turno.localeCompare(b.turno));
+}
+function gerarDatas(ini,fim){const out=[];if(!ini||!fim||fim<ini)return out;const d=new Date(`${ini}T00:00:00Z`),f=new Date(`${fim}T00:00:00Z`);while(d<=f){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1)}return out}
+function preencherFiltrosEscala(){
+  const dados=provider.escalas();
+  const nomes=[...new Set(dados.map(nomeEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
+  const postos=[...new Set(dados.map(postoEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
+  const g=$('escalaGcm'),p=$('escalaPosto');if(g){const v=g.value;g.innerHTML='<option value="">Todos os GCMs</option>'+nomes.map(x=>`<option>${esc(x)}</option>`).join('');g.value=v}if(p){const v=p.value;p.innerHTML='<option value="">Todos os postos</option>'+postos.map(x=>`<option>${esc(x)}</option>`).join('');p.value=v}
 }
 function renderEscalas(){
-  const ini=$('escalaIni')?.value||'',fim=$('escalaFim')?.value||'',q=String($('escalaBusca')?.value||'').trim().toLowerCase();
-  const e=minhasEscalas().filter(x=>{const d=String(x.data||'').slice(0,10);if(ini&&d<ini)return false;if(fim&&d>fim)return false;return !q||JSON.stringify(x).toLowerCase().includes(q)});
-  if($('tituloEscalas')) $('tituloEscalas').textContent='Escalas / Relatórios';
-  $('listaEscalas').innerHTML=e.length?e.map(x=>`<div class="item"><small>${fmt(x.data)} · Turno ${esc(x.turno||'-')}${x.nome_guerra?' · '+esc(x.nome_guerra):''}</small><strong>${esc(x.posto_nome||x.hist_posto_nome||x.posto||'Posto')}</strong><span>${esc(x.horario_inicio||x.hist_horario_inicio||'')}${(x.horario_fim||x.hist_horario_fim)?' às '+esc(x.horario_fim||x.hist_horario_fim):''}</span>${x.motorista?'<small>Motorista</small>':''}${String(x.origem||'').toUpperCase().includes('EXTRA')?'<small>Extra</small>':''}</div>`).join(''):'<div class="empty">Nenhuma escala encontrada para o filtro informado.</div>';
+  preencherFiltrosEscala();
+  const ini=$('escalaIni')?.value||'',fim=$('escalaFim')?.value||'',gcm=$('escalaGcm')?.value||'',posto=$('escalaPosto')?.value||'',horario=$('escalaHorario')?.value||'';
+  if(!ini||!fim){$('cabecalhoMatrizMobile').innerHTML='<th class="col-posto">POSTO / HORÁRIO</th>';$('resultadoMatrizMobile').innerHTML='<tr><td>Informe o período para consultar.</td></tr>';return}
+  let dados=provider.escalas().filter(x=>{const d=String(x.data||'').slice(0,10);if(d<ini||d>fim)return false;if(gcm&&normalizar(nomeEscala(x))!==normalizar(gcm))return false;if(posto&&normalizar(postoEscala(x))!==normalizar(posto))return false;if(horario&&horarioRelatorio(x)!==horario)return false;return true});
+  let datas=gerarDatas(ini,fim);if(gcm){const ds=new Set(dados.map(x=>String(x.data||'').slice(0,10)));datas=datas.filter(d=>ds.has(d))}
+  const grupos=montarGruposEscala(dados);
+  $('cabecalhoMatrizMobile').innerHTML='<th class="col-posto">POSTO / HORÁRIO</th>'+datas.map(d=>`<th>${fmt(d)}</th>`).join('');
+  $('resultadoMatrizMobile').innerHTML=grupos.map(g=>`<tr><th class="posto-linha"><b>${esc(g.posto)}</b><span>${esc(g.horario)}</span></th>${datas.map(d=>{const itens=g.itens.get(d)||[];return itens.length?`<td>${itens.map(x=>`<div class="gcm-linha"><b>${esc(x.nome)}</b>${x.motorista?`<span class="tag-driver">MOTORISTA${x.veiculo?' - '+esc(x.veiculo):''}</span>`:''}${x.extra?'<span class="tag-extra">Extra</span>':''}</div>`).join('')}</td>`:'<td class="vazio">—</td>'}).join('')}</tr>`).join('')||`<tr><td colspan="${Math.max(1,datas.length+1)}">Nenhuma escala encontrada para os filtros informados.</td></tr>`;
+  $('escalaInfo').textContent=`${dados.length} registro(s) · ${fmt(ini)} a ${fmt(fim)}`;
+  $('escalaFiltroAtivo').textContent=[gcm&&`GCM: ${gcm}`,posto&&`Posto: ${posto}`,horario&&`Horário: ${horario}`].filter(Boolean).join(' · ')||'Todos os GCMs, postos e horários';
+}
+function detalhesQuadro(caminho){const [g,k]=String(caminho||'').split('.');if(!quadroAtual)return[];if(g==='efetivo')return quadroAtual.efetivo?.detalhes?.[k]||[];if(g==='viaturas')return quadroAtual.viaturas?.detalhes?.[k]||[];if(g==='postos'&&k==='cobertos')return quadroAtual.postos?.detalhamento||[];return[]}
+function abrirQuadroDetalhe(titulo,caminho){const itens=detalhesQuadro(caminho);$('quadroModalTitulo').textContent=titulo||'Detalhes';$('quadroModalMeta').textContent=`Data de referência: ${fmt(quadroAtual?.data||$('quadroData').value)} · ${itens.length} registro(s)`;$('quadroModalLista').innerHTML=itens.length?itens.map(x=>`<div class="item"><strong>${esc(x.nome||'-')}</strong><span>${esc(x.complemento||'')}</span></div>`).join(''):'<div class="empty">Nenhum registro compõe este indicador na data selecionada.</div>';$('quadroModal').classList.remove('hidden')}
+function renderInicio(){
+  const s=provider.session||{};$('perfilNome').textContent=s.nome||'';$('perfilCargo').textContent=s.cargo||s.role||'';
+}
+async function carregarQuadro(){
+  const data=$('quadroData')?.value||hoje();$('qAviso').textContent='Atualizando Quadro Operacional...';
+  try{const d=await provider.quadro(data);quadroAtual=d;$('qAtivos').textContent=d.efetivo?.ativos||0;$('qAfastados').textContent=d.efetivo?.afastados||0;$('qFerias').textContent=d.efetivo?.feristas||0;$('qServicoA').textContent=d.efetivo?.servicoA||0;$('qServicoB').textContent=d.efetivo?.servicoB||0;$('qViaturasTotal').textContent=d.viaturas?.total||0;$('qViaturasDisponiveis').textContent=d.viaturas?.disponivel||0;$('qViaturasUso').textContent=d.viaturas?.emUso||0;$('qViaturasBaixadas').textContent=d.viaturas?.baixadas||0;$('qViaturasManut').textContent=d.viaturas?.manutencao||0;$('qPostos').textContent=d.postos?.cobertos||0;$('qAviso').textContent=(d.cnhVencidas||[]).length?`⚠ CNH vencida: ${d.cnhVencidas.length} GCM(s).`:'Sem avisos de CNH vencida para a data selecionada.'}catch(e){$('qAviso').textContent='Não foi possível carregar o Quadro Operacional: '+e.message}
 }
 function renderExtras(){
   const e=meusExtras(),gestor=provider.gestor();
@@ -115,6 +148,9 @@ function renderBanco(){
   }
   $('bh50').textContent=horas(c50);$('bh100').textContent=horas(c100);$('bhDeb').textContent=horas(d);$('bhSaldo').textContent=horas(c50+c100);
   $('listaBanco').innerHTML=b.slice(0,40).map(x=>`<div class="item"><small>${fmt(x.data_fato)} · ${esc(x.classe||'50')}%${gestor&&x.nome_guerra?' · '+esc(x.nome_guerra):''}</small><strong>${esc(x.tipo||x.origem||'Movimentação')}</strong><span>${String(x.natureza).toUpperCase()==='DEBITO'?'-':'+'}${horas(x.minutos)}</span></div>`).join('')||'<div class="empty">Sem movimentações.</div>';
+
+  const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO');
+  const lr=$('listaCorrecoes');if(lr)lr.innerHTML=req.length?req.map(x=>{const p=x.payload||{},min=Number(p.minutos_solicitados||0),status=String(x.status||'PENDENTE').toUpperCase();return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(p.data_servico||'')} · ${horas(min)}</small><strong>${esc(status)}</strong><span>${esc(p.descricao||'Solicitação de correção')}</span>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de correção enviada.</div>';
 }
 
 
@@ -199,12 +235,17 @@ function renderPermutaCandidates(){
   el.innerHTML='<option value="">Selecione</option>'+lista.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||('GCM '+x.guarda_id))}</option>`).join('');
 }
 async function enviarBancoCorrecao(ev){
-  ev.preventDefault();const h=Number($('bcHoras').value||0),m=Number($('bcMinutos').value||0),total=h*60+m;
-  $('bcMsg').textContent='Enviando...';
+  ev.preventDefault();const h=Number($('bcHoras').value||0),m=Number($('bcMinutos').value||0),total=h*60+m,msg=$('bcMsg'),btn=$('bcEnviar');
+  msg.className='full request-message';
+  if(total<30||total%30!==0){msg.textContent='A correção deve ter no mínimo 30 minutos e sempre em blocos de 30 minutos.';msg.classList.add('error');return}
+  btn.disabled=true;msg.textContent='Enviando...';
   try{
-    await provider.requestBankCorrection({competencia:$('bcComp').value,data_servico:$('bcData').value,minutos_solicitados:total,classe:$('bcClasse').value,tipo_correcao:'HORAS_NAO_LANCADAS',descricao:$('bcDescricao').value});
-    $('bcMsg').textContent='Solicitação enviada ao Desktop.';$('bcDescricao').value='';renderTudo();
-  }catch(e){$('bcMsg').textContent=e.message}
+    const comp=$('bcComp').value,data=$('bcData').value,classe=$('bcClasse').value,descricao=$('bcDescricao').value;
+    const r=await provider.requestBankCorrection({competencia:comp,data_servico:data,minutos_solicitados:total,classe,tipo_correcao:'HORAS_NAO_LANCADAS',descricao});
+    msg.textContent=`Solicitação enviada com sucesso${r?.request?.id?' · protocolo #'+r.request.id:''}. Aguardando análise do Comando.`;msg.classList.add('success');
+    $('bcComp').value='';$('bcData').value='';$('bcHoras').value='0';$('bcMinutos').value='0';$('bcClasse').value='50';$('bcDescricao').value='';
+    renderTudo(false);setView('banco');
+  }catch(e){msg.textContent=e.message;msg.classList.add('error')}finally{btn.disabled=false}
 }
 async function enviarPermuta(ev){
   ev.preventDefault();$('pmMsg').textContent='Enviando...';
@@ -218,7 +259,7 @@ function renderTudo(resetView=true){
   aplicarPermissoes();
   renderPerfil();
   renderModulos();
-  if(temAcesso('dashboard')) renderInicio();
+  renderInicio();
   if(temAcesso('escalas')) renderEscalas();
   if(temAcesso('extras')) renderExtras();
   if(temAcesso('banco_horas')) renderBanco();
@@ -226,8 +267,7 @@ function renderTudo(resetView=true){
   renderSolicitacoes();
   renderPermutaCandidates();
   if(resetView){
-    const primeiro=[['inicio','dashboard'],['escala','escalas'],['extras','extras'],['banco','banco_horas'],['online','perfil'],['acessos','perfil'],['avisos','perfil'],['perfil','perfil']].find(([,m])=>temAcesso(m));
-    setView(primeiro?.[0]||'perfil');
+    setView('inicio');carregarQuadro().catch(()=>{});
   }
 }
 
@@ -242,7 +282,7 @@ async function entrar(e){
     $('appTela').classList.remove('hidden');
     renderTudo();
     aplicarIdentidadeVisualRemota().catch(()=>{});
-    carregarOnlineCatalog().catch(()=>{});
+    carregarOnlineCatalog().catch(()=>{});carregarQuadro().catch(()=>{});
   }catch(err){
     $('loginErro').textContent=err.message||'Falha no login.';
   }finally{
@@ -257,19 +297,24 @@ async function sair(){
   $('loginErro').textContent='';
 }
 async function boot(){
-  await aplicarIdentidadeVisual();
+  await aplicarIdentidadeVisual();if($('quadroData'))$('quadroData').value=hoje();if($('escalaIni'))$('escalaIni').value=hoje();if($('escalaFim'))$('escalaFim').value=hoje();
   $('loginForm').addEventListener('submit',entrar);
   $('sair').addEventListener('click',sair);
   $('formBancoCorrecao')?.addEventListener('submit',enviarBancoCorrecao);
   $('formPermuta')?.addEventListener('submit',enviarPermuta);
-  document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.go);if(b.dataset.go==='online')carregarOnlineCatalog().catch(()=>{})}));
+  document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.go);if(b.dataset.go==='online')carregarOnlineCatalog().catch(()=>{});if(b.dataset.go==='inicio')carregarQuadro().catch(()=>{});if(b.dataset.go==='escala')renderEscalas()}));
   $('onlineVoltar')?.addEventListener('click',voltarOnline);
   $('onlineFiltro')?.addEventListener('input',renderRegistrosOnline);
   $('onlineNovo')?.addEventListener('click',()=>editarOnline());
   $('onlineSalvar')?.addEventListener('click',salvarOnline);
   $('onlineCancelar')?.addEventListener('click',()=>$('onlineEditor').close());
-  ['escalaIni','escalaFim','escalaBusca'].forEach(id=>$(id)?.addEventListener(id==='escalaBusca'?'input':'change',renderEscalas));
-  $('escalaLimpar')?.addEventListener('click',()=>{if($('escalaIni'))$('escalaIni').value='';if($('escalaFim'))$('escalaFim').value='';if($('escalaBusca'))$('escalaBusca').value='';renderEscalas();});
+  ['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>$(id)?.addEventListener('change',renderEscalas));
+  $('escalaGerar')?.addEventListener('click',renderEscalas);
+  $('escalaLimpar')?.addEventListener('click',()=>{['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>{if($(id))$(id).value=''});renderEscalas();});
+  $('quadroData')?.addEventListener('change',()=>carregarQuadro().catch(()=>{}));
+  document.querySelectorAll('[data-quadro-detail]').forEach(b=>b.addEventListener('click',()=>abrirQuadroDetalhe(b.dataset.title,b.dataset.quadroDetail)));
+  $('quadroModalFechar')?.addEventListener('click',()=>$('quadroModal').classList.add('hidden'));
+  $('quadroModal')?.addEventListener('click',e=>{if(e.target===$('quadroModal'))$('quadroModal').classList.add('hidden')});
   window.addEventListener('gcmbs:push-received',async()=>{try{await provider.load();renderTudo();}catch{}});
   const s=await provider.restore();
   if(s){
@@ -278,11 +323,11 @@ async function boot(){
     $('appTela').classList.remove('hidden');
     renderTudo();
     aplicarIdentidadeVisualRemota().catch(()=>{});
-    carregarOnlineCatalog().catch(()=>{});
+    carregarOnlineCatalog().catch(()=>{});carregarQuadro().catch(()=>{});
   }
   setInterval(()=>{if(!document.hidden)atualizarAoVivo()},60000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)atualizarAoVivo()});
 }
 boot();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100033',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100034',{updateViaCache:'none'}).catch(()=>{});}

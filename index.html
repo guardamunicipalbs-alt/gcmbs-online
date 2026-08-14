@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100033"><link rel="stylesheet" href="css/app.css?v=100033"><title>GCMBS</title></head>
+<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100034"><link rel="stylesheet" href="css/app.css?v=100034"><title>GCMBS</title></head>
 <body>
 <section id="loginTela" class="login-screen">
   <div class="login-card">
@@ -20,18 +20,43 @@
 <header><div class="brand-head"><img id="headerIcone" src="icon.png" onerror="this.style.display='none'" alt=""><div><h1>GCMBS</h1><p>Guarda Civil Municipal · Aplicativo móvel</p></div></div><button id="sair" class="logout">Sair</button></header>
 <main>
 <section data-view="inicio">
+  <div class="desktop-page-head"><div><h1>Quadro Operacional</h1><p>Resumo diário da operação, disponível a todos os usuários autenticados.</p></div><label>Data <input id="quadroData" type="date"></label></div>
   <div class="card hero"><div><small class="muted">Usuário autenticado</small><h2 id="perfilNome"></h2><span id="perfilCargo" class="badge"></span></div></div>
-  <div class="card"><h2>Resumo</h2><div class="grid"><div class="metric">Escalas<b id="mEscalas">0</b></div><div class="metric">Extras<b id="mExtras">0</b></div><div class="metric">Permutas<b id="mPermutas">0</b></div><div class="metric">Saldo banco<b id="mSaldo">0h00</b></div></div></div>
-  <div class="card"><h2>Próximo serviço</h2><div id="proxima"></div></div>
+  <section class="dashboard-sector"><h2>Efetivo</h2><div class="dashboard-cards">
+    <button class="dashboard-card" data-quadro-detail="efetivo.ativos" data-title="GCM ativos"><span>GCM ativos</span><b id="qAtivos">0</b><small>Ver relação</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.afastados" data-title="GCM afastados"><span>GCM afastados</span><b id="qAfastados">0</b><small>Ver relação</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.feristas" data-title="GCM em férias"><span>GCM em férias</span><b id="qFerias">0</b><small>Ver relação</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoA" data-title="Serviço A · 07:00–19:00"><span>Serviço A · 07:00–19:00</span><b id="qServicoA">0</b><small>Ver GCMs e postos</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoB" data-title="Serviço B · 19:00–07:00"><span>Serviço B · 19:00–07:00</span><b id="qServicoB">0</b><small>Ver GCMs e postos</small></button>
+  </div></section>
+  <section class="dashboard-sector"><h2>Viaturas</h2><div class="dashboard-cards">
+    <button class="dashboard-card" data-quadro-detail="viaturas.total" data-title="Frota cadastrada"><span>Totais</span><b id="qViaturasTotal">0</b><small>Ver relação</small></button>
+    <button class="dashboard-card" data-quadro-detail="viaturas.disponivel" data-title="Disponíveis"><span>Disponível</span><b id="qViaturasDisponiveis">0</b><small>Fora de uso e manutenção</small></button>
+    <button class="dashboard-card" data-quadro-detail="viaturas.emUso" data-title="Em uso"><span>Em uso</span><b id="qViaturasUso">0</b><small>Ver alocação</small></button>
+    <button class="dashboard-card" data-quadro-detail="viaturas.baixadas" data-title="Baixadas · não utilizadas"><span>Baixadas · não utilizadas</span><b id="qViaturasBaixadas">0</b><small>Não utilizadas no dia</small></button>
+    <button class="dashboard-card" data-quadro-detail="viaturas.manutencao" data-title="Em manutenção"><span>Em manutenção</span><b id="qViaturasManut">0</b><small>Ver relação</small></button>
+  </div></section>
+  <section class="dashboard-sector"><h2>Postos</h2><div class="dashboard-cards one"><button class="dashboard-card" data-quadro-detail="postos.cobertos" data-title="Postos cobertos no dia"><span>Postos cobertos no dia</span><b id="qPostos">0</b><small>Ver postos, turnos e GCMs</small></button></div><div id="qAviso" class="notice">Carregando Quadro Operacional...</div></section>
 </section>
-<section data-view="escala" class="hidden"><div class="card"><h2 id="tituloEscalas">Escalas / Relatórios</h2><p class="muted">Escala institucional publicada conforme sua permissão de Escalas/Relatórios.</p><div class="form-grid"><label>Data inicial<input id="escalaIni" type="date"></label><label>Data final<input id="escalaFim" type="date"></label><label class="full">Buscar por GCM, posto ou turno<input id="escalaBusca" placeholder="Nome de guerra, posto, turno..."></label><button id="escalaLimpar" class="mini full" type="button">Limpar filtros</button></div><div id="listaEscalas" class="list" style="margin-top:12px"></div></div></section>
+<section data-view="escala" class="hidden">
+  <div class="desktop-page-head"><div><h1>Relatório de Escala</h1><p>Mesma visão por posto e horário utilizada no Desktop.</p></div></div>
+  <div class="card report-filters">
+    <label>Data inicial<input id="escalaIni" type="date"></label><label>Data final<input id="escalaFim" type="date"></label>
+    <label>GCM<select id="escalaGcm"><option value="">Todos os GCMs</option></select></label>
+    <label>Posto<select id="escalaPosto"><option value="">Todos os postos</option></select></label>
+    <label>Horário<select id="escalaHorario"><option value="">Todos os horários</option><option>07:00 às 17:00</option><option>07:00 às 19:00</option><option>19:00 às 07:00</option></select></label>
+    <button id="escalaGerar" class="primary" type="button">Gerar relatório</button><button id="escalaLimpar" class="secondary" type="button">Limpar filtros</button>
+  </div>
+  <div class="card"><div class="report-summary"><strong id="escalaInfo">Informe o período para consultar.</strong><span id="escalaFiltroAtivo"></span></div><h2>Escala — visão por posto e horário</h2><p class="muted">As datas ficam na horizontal. Em telas menores, deslize a tabela lateralmente.</p><div class="matrix-wrap"><table class="report-matrix"><thead><tr id="cabecalhoMatrizMobile"></tr></thead><tbody id="resultadoMatrizMobile"></tbody></table></div></div>
+</section>
 <section data-view="extras" class="hidden">
 <div class="card"><h2 id="tituloExtras">Minhas escalas extras</h2><div id="listaExtras" class="list"></div></div>
 <div class="card" id="permutaCard"><h2>Solicitar permuta</h2><form id="formPermuta" class="form-grid"><label>Data<input id="pmData" type="date" required></label><label>Turno<select id="pmTurno"><option value="A">A · 07:00–19:00</option><option value="B">B · 19:00–07:00</option><option value="COMPLETO">Completo</option></select></label><label>Tipo<select id="pmExtra"><option value="0">Serviço ordinário</option><option value="1">Serviço extra</option></select></label><label>Substituto<select id="pmSubstituto" required></select></label><label class="full">Observação<textarea id="pmObs" placeholder="Observação opcional"></textarea></label><label class="full check"><input id="pmTermo" type="checkbox" required> Confirmo a solicitação e estou ciente de que depende de análise/aprovação.</label><button class="primary full" type="submit">Enviar permuta</button><div id="pmMsg" class="full muted"></div></form></div>
 </section>
 <section data-view="banco" class="hidden">
 <div class="card"><h2 id="tituloBanco">Meu banco de horas</h2><div class="grid"><div class="metric">50%<b id="bh50">0h00</b></div><div class="metric">100%<b id="bh100">0h00</b></div><div class="metric">Débitos<b id="bhDeb">0h00</b></div><div class="metric">Saldo<b id="bhSaldo">0h00</b></div></div></div>
-<div class="card"><h2>Solicitar correção</h2><form id="formBancoCorrecao" class="form-grid"><label>Competência<input id="bcComp" type="month" required></label><label>Data do serviço<input id="bcData" type="date" required></label><label>Horas<input id="bcHoras" type="number" min="0" max="200" value="1" required></label><label>Minutos<input id="bcMinutos" type="number" min="0" max="59" value="0" required></label><label>Classe<select id="bcClasse"><option value="50">50%</option><option value="100">100%</option></select></label><label class="full">Descrição<textarea id="bcDescricao" required placeholder="Descreva a correção solicitada"></textarea></label><button class="primary full" type="submit">Enviar solicitação</button><div id="bcMsg" class="full muted"></div></form></div>
+<div class="card"><h2>Solicitar correção</h2><p class="muted">Solicitações devem ser feitas em blocos de 30 minutos. O saldo só muda após aprovação do Comando.</p><form id="formBancoCorrecao" class="form-grid"><label>Competência<input id="bcComp" type="month" required></label><label>Data do serviço<input id="bcData" type="date" required></label><label>Horas<input id="bcHoras" type="number" min="0" max="200" step="1" value="0" required></label><label>Minutos<select id="bcMinutos"><option value="0">00</option><option value="30">30</option></select></label><label>Classe<select id="bcClasse"><option value="50">50%</option><option value="100">100%</option></select></label><label class="full">Descrição<textarea id="bcDescricao" required placeholder="Descreva a correção solicitada"></textarea></label><button id="bcEnviar" class="primary full" type="submit">Enviar solicitação</button><div id="bcMsg" class="full request-message" role="status"></div></form></div>
+<div class="card"><h2>Minhas solicitações de correção</h2><div id="listaCorrecoes" class="list"></div></div>
 <div class="card"><h2>Movimentações recentes</h2><div id="listaBanco" class="list"></div></div>
 </section>
 
@@ -60,7 +85,8 @@
   <div class="card"><h2>Solicitações enviadas pelo aplicativo</h2><div id="listaSolicitacoes" class="list"></div></div><div class="notice">As solicitações são enviadas ao GCMBS Desktop para validação e processamento. O gerador de escala não é alterado pelo aplicativo.</div>
 </section>
 </main>
-<nav><button data-go="inicio" class="active">Início</button><button data-go="escala">Escalas</button><button data-go="extras">Extras</button><button data-go="banco">Horas</button><button data-go="online">Online</button><button data-go="acessos">Acessos</button><button data-go="avisos">Avisos <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil">Perfil</button></nav>
+<div id="quadroModal" class="quadro-modal hidden" role="dialog" aria-modal="true"><div class="quadro-modal-card"><div class="quadro-modal-head"><h2 id="quadroModalTitulo">Detalhes</h2><button id="quadroModalFechar" type="button">×</button></div><div id="quadroModalMeta" class="muted"></div><div id="quadroModalLista" class="list"></div></div></div>
+<nav><button data-go="inicio" class="active">Início</button><button data-go="escala">Escalas / Relatórios</button><button data-go="extras">Extras</button><button data-go="banco">Horas</button><button data-go="online">Online</button><button data-go="acessos">Acessos</button><button data-go="avisos">Avisos <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil">Perfil</button></nav>
 </div>
-<script type="module" src="js/app.js?v=100033"></script>
+<script type="module" src="js/app.js?v=100034"></script>
 </body></html>
