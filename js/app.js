@@ -8,7 +8,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
 let provider=new AuthenticatedProvider();
-let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null;
+let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[];
 
 const NAV_GROUPS=[
   {id:'operacional',titulo:'Operacional',mods:['dashboard','cadastro_guardas','equipes','postos']},
@@ -52,7 +52,7 @@ async function abrirModuloPrincipal(modulo){
     return;
   }
   const view=DEDICATED_VIEW[modulo];
-  if(view){setView(view);ativar();if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='escala')renderEscalas();return;}
+  if(view){setView(view);ativar();if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='escala'){escalaModo=modulo==='relatorios'?'institucional':'pessoal';if(escalaModo==='institucional'){try{escalasInstitucionais=await provider.relatorioEscalas()}catch(e){alert(e.message);escalasInstitucionais=[]}}renderEscalas();}return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -136,8 +136,9 @@ function montarGruposEscala(registros){
   return [...grupos.values()].sort((a,b)=>(a.prioridade-b.prioridade)||normalizar(a.posto).localeCompare(normalizar(b.posto))||a.turno.localeCompare(b.turno));
 }
 function gerarDatas(ini,fim){const out=[];if(!ini||!fim||fim<ini)return out;const d=new Date(`${ini}T00:00:00Z`),f=new Date(`${fim}T00:00:00Z`);while(d<=f){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1)}return out}
+function dadosEscalaVisao(){return escalaModo==='institucional'?escalasInstitucionais:provider.escalas()}
 function preencherFiltrosEscala(){
-  const dados=provider.escalas();
+  const dados=dadosEscalaVisao();
   const nomes=[...new Set(dados.map(nomeEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
   const postos=[...new Set(dados.map(postoEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
   const g=$('escalaGcm'),p=$('escalaPosto');if(g){const v=g.value;g.innerHTML='<option value="">Todos os GCMs</option>'+nomes.map(x=>`<option>${esc(x)}</option>`).join('');g.value=v}if(p){const v=p.value;p.innerHTML='<option value="">Todos os postos</option>'+postos.map(x=>`<option>${esc(x)}</option>`).join('');p.value=v}
@@ -146,7 +147,7 @@ function renderEscalas(){
   preencherFiltrosEscala();
   const ini=$('escalaIni')?.value||'',fim=$('escalaFim')?.value||'',gcm=$('escalaGcm')?.value||'',posto=$('escalaPosto')?.value||'',horario=$('escalaHorario')?.value||'';
   if(!ini||!fim){$('cabecalhoMatrizMobile').innerHTML='<th class="col-posto">POSTO / HORÁRIO</th>';$('resultadoMatrizMobile').innerHTML='<tr><td>Informe o período para consultar.</td></tr>';return}
-  let dados=provider.escalas().filter(x=>{const d=String(x.data||'').slice(0,10);if(d<ini||d>fim)return false;if(gcm&&normalizar(nomeEscala(x))!==normalizar(gcm))return false;if(posto&&normalizar(postoEscala(x))!==normalizar(posto))return false;if(horario&&horarioRelatorio(x)!==horario)return false;return true});
+  let dados=dadosEscalaVisao().filter(x=>{const d=String(x.data||'').slice(0,10);if(d<ini||d>fim)return false;if(gcm&&normalizar(nomeEscala(x))!==normalizar(gcm))return false;if(posto&&normalizar(postoEscala(x))!==normalizar(posto))return false;if(horario&&horarioRelatorio(x)!==horario)return false;return true});
   let datas=gerarDatas(ini,fim);if(gcm||posto||horario){const ds=new Set(dados.map(x=>String(x.data||'').slice(0,10)));datas=datas.filter(d=>ds.has(d))}
   const grupos=montarGruposEscala(dados);
   $('cabecalhoMatrizMobile').innerHTML='<th class="col-posto">POSTO / HORÁRIO</th>'+datas.map(d=>`<th>${fmt(d)}</th>`).join('');
@@ -168,7 +169,18 @@ function renderViaturas(){
   $('cardAbastecimento')?.classList.toggle('hidden',!provider.pode('abastecimento_viaturas'));
   $('cardManutencao')?.classList.toggle('hidden',!provider.pode('manutencao_viaturas'));
 }
-function atualizarSubstituidosPermuta(){const sel=$('pmSubstituto'),data=$('pmData')?.value;if(!sel)return;const ids=new Set((provider.escalas()||[]).filter(x=>String(x.data||'').slice(0,10)===data).map(x=>Number(x.guarda_id)).filter(Boolean));const lista=provider.permutationCandidates().filter(x=>ids.has(Number(x.guarda_id)));sel.innerHTML='<option value="">Selecione...</option>'+lista.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');if(data&&!lista.length)sel.innerHTML='<option value="">Nenhum GCM escalado nesta data</option>';}
+async function atualizarSubstituidosPermuta(){
+  const sel=$('pmSubstituto'),data=$('pmData')?.value,turno=$('pmTurno')?.value,msg=$('pmMsg'),btn=$('pmEnviar');if(!sel)return;
+  sel.disabled=true;if(btn)btn.disabled=true;sel.innerHTML='<option value="">Consultando escala...</option>';
+  if(msg){msg.className='full request-message';msg.textContent='';}
+  if(!data||!turno){sel.innerHTML='<option value="">Selecione data e turno</option>';return;}
+  try{
+    const r=await provider.permutaCandidatesFor(data,turno);
+    if(r.bloqueado){sel.innerHTML='<option value="">Indisponível neste período</option>';if(msg){msg.textContent=r.message;msg.classList.add('error');}return;}
+    const lista=r.candidates||[];sel.innerHTML='<option value="">Selecione...</option>'+lista.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');
+    if(!lista.length)sel.innerHTML='<option value="">Nenhum GCM escalado neste período</option>';else{sel.disabled=false;if(btn)btn.disabled=false;}
+  }catch(e){sel.innerHTML='<option value="">Não foi possível consultar</option>';if(msg){msg.textContent=e.message;msg.classList.add('error');}}
+}
 function renderPermutas(){
   const el=$('listaPermutasSolicitadas');if(!el)return;
   const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA');
@@ -177,7 +189,7 @@ function renderPermutas(){
   document.querySelectorAll('[data-pm-del]').forEach(b=>b.onclick=()=>cancelarPermutaSolicitacao(Number(b.dataset.pmDel)));
 }
 function resetPermutaForm(){permutaEditingId=null;$('pmTitulo').textContent='Nova solicitação de permuta';$('pmEnviar').textContent='Enviar solicitação';$('pmCancelarEdicao').classList.add('hidden');$('pmData').value='';$('pmTurno').value='A';$('pmExtra').value='0';$('pmSubstituto').value='';$('pmObs').value='';$('pmTermo').checked=false;}
-function editarPermutaSolicitacao(id){const x=provider.actionRequests().find(r=>Number(r.id)===id&&String(r.tipo).toUpperCase()==='PERMUTA');if(!x||!x.editable)return;const q=x.payload||{};permutaEditingId=id;$('pmTitulo').textContent='Editar solicitação de permuta';$('pmEnviar').textContent='Salvar alteração';$('pmCancelarEdicao').classList.remove('hidden');$('pmData').value=q.data||'';$('pmTurno').value=q.turno||'A';$('pmExtra').value=String(Number(q.servico_extra||0));$('pmSubstituto').value=String(q.substituido_id||q.substituto_id||'');$('pmObs').value=q.observacao||'';$('pmTermo').checked=!!q.concordou_termo;$('permutaCard').scrollIntoView({behavior:'smooth',block:'start'});}
+async function editarPermutaSolicitacao(id){const x=provider.actionRequests().find(r=>Number(r.id)===id&&String(r.tipo).toUpperCase()==='PERMUTA');if(!x||!x.editable)return;const q=x.payload||{};permutaEditingId=id;$('pmTitulo').textContent='Editar solicitação de permuta';$('pmEnviar').textContent='Salvar alteração';$('pmCancelarEdicao').classList.remove('hidden');$('pmData').value=q.data||'';$('pmTurno').value=q.turno||'A';$('pmExtra').value=String(Number(q.servico_extra||0));$('pmObs').value=q.observacao||'';$('pmTermo').checked=!!q.concordou_termo;await atualizarSubstituidosPermuta();$('pmSubstituto').value=String(q.substituido_id||q.substituto_id||'');$('permutaCard').scrollIntoView({behavior:'smooth',block:'start'});}
 async function cancelarPermutaSolicitacao(id){if(!confirm('Excluir/cancelar esta solicitação de permuta enquanto ainda está pendente?'))return;try{await provider.cancelPermutaRequest(id);renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
 function renderBanco(){
   const b=meuBanco(),gestor=provider.gestor();let c50=0,c100=0,d=0;
@@ -276,11 +288,7 @@ function renderSolicitacoes(){
   const lista=provider.actionRequests();
   $('listaSolicitacoes').innerHTML=lista.length?lista.map(x=>`<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(x.tipo||'')}</small><strong>${esc(x.status||'PENDENTE')}</strong><span>${esc(x.resposta||'Aguardando processamento pelo Desktop.')}</span></div>`).join(''):'<div class="empty">Nenhuma solicitação enviada pelo aplicativo.</div>';
 }
-function renderPermutaCandidates(){
-  const el=$('pmSubstituto'); if(!el)return;
-  const lista=provider.permutationCandidates();
-  el.innerHTML='<option value="">Selecione</option>'+lista.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');
-}
+function renderPermutaCandidates(){const el=$('pmSubstituto');if(!el)return;if(!$('pmData')?.value){el.disabled=true;el.innerHTML='<option value="">Selecione data e turno</option>';const btn=$('pmEnviar');if(btn)btn.disabled=true;}}
 async function enviarBancoCorrecao(ev){
   ev.preventDefault();const h=Number($('bcHoras').value||0),m=Number($('bcMinutos').value||0),total=h*60+m,msg=$('bcMsg'),btn=$('bcEnviar');
   msg.className='full request-message';
@@ -365,7 +373,7 @@ async function boot(){
   $('onlineSalvar')?.addEventListener('click',salvarOnline);
   $('onlineCancelar')?.addEventListener('click',()=>$('onlineEditor').close());
   ['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>$(id)?.addEventListener('change',renderEscalas));
-  $('escalaGerar')?.addEventListener('click',renderEscalas);$('pmData')?.addEventListener('change',atualizarSubstituidosPermuta);$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirEventos')?.addEventListener('click',()=>abrirModuloOnline('eventos_extra'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
+  $('escalaGerar')?.addEventListener('click',renderEscalas);$('pmData')?.addEventListener('change',atualizarSubstituidosPermuta);$('pmTurno')?.addEventListener('change',atualizarSubstituidosPermuta);$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirEventos')?.addEventListener('click',()=>abrirModuloOnline('eventos_extra'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
   $('escalaLimpar')?.addEventListener('click',()=>{['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>{if($(id))$(id).value=''});renderEscalas();});
   $('quadroData')?.addEventListener('change',()=>carregarQuadro().catch(()=>{}));
   document.querySelectorAll('[data-quadro-detail]').forEach(b=>b.addEventListener('click',()=>abrirQuadroDetalhe(b.dataset.title,b.dataset.quadroDetail)));

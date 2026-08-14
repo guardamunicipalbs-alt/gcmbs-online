@@ -80,6 +80,8 @@ export class AuthenticatedProvider {
   async entityList(entity,limit=500,offset=0){return this.call('entity_list',{entity,limit,offset})}
   async entityMutate(entity,record_key,operation,data,client_change_id=''){return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id})}
   async quadro(data){return this.call('quadro_operacional',{data})}
+  async relatorioEscalas(){return (await this.call('relatorio_escalas')).escalas||[]}
+  async permutaCandidatesFor(data,turno){return this.call('permuta_candidates',{data,turno})}
 
   async requestBankCorrection(request){const r=await this.call('request_bank_correction',{request});await this.load();return r}
   async requestPermuta(request){const r=await this.call('request_permuta',{request});await this.load();return r}
