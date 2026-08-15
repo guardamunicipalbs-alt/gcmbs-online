@@ -1,7 +1,7 @@
 {
   "meta": {
     "formato": "GCMBS_MOBILE_SNAPSHOT_V1",
-    "gerado_em": "2026-08-12T01:26:20.655081+00:00",
+    "gerado_em": "2026-08-15T01:01:45.478346+00:00",
     "somente_leitura": true
   },
   "guardas": [
@@ -30,7 +30,7 @@
       "id": 19,
       "nome_guerra": "ALVES",
       "nome_completo": "JOAO ALVES DE SOUZA",
-      "cargo": "",
+      "cargo": "Guarda Civil Municipal (Classe-III)",
       "status": "ATIVO"
     },
     {
@@ -149,7 +149,7 @@
       "id": 13,
       "nome_guerra": "MARCULINO",
       "nome_completo": "FRANCISCO ALEUDO MARCULINO DOS SANTOS",
-      "cargo": null,
+      "cargo": "Guarda Civil Municipal (Classe-III)",
       "status": "ATIVO"
     },
     {
@@ -184,7 +184,7 @@
       "id": 15,
       "nome_guerra": "SANTOS",
       "nome_completo": "FRANCISCO JOAO DOS SANTOS",
-      "cargo": "",
+      "cargo": "Guarda Civil Municipal (Classe-III)",
       "status": "AFASTADO"
     },
     {
@@ -198,7 +198,7 @@
       "id": 33,
       "nome_guerra": "SOUZA",
       "nome_completo": "WILDEBERGUES JOSE DE SOUSA",
-      "cargo": "",
+      "cargo": "Guarda Civil Municipal (Classe-III)",
       "status": "AFASTADO"
     },
     {
@@ -9241,6 +9241,87 @@
       "observacao": ""
     },
     {
+      "id": 101,
+      "data": "2026-08-29",
+      "guarda_id": 8,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 102,
+      "data": "2026-08-29",
+      "guarda_id": 26,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 103,
+      "data": "2026-08-29",
+      "guarda_id": 24,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 104,
+      "data": "2026-08-29",
+      "guarda_id": 12,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 105,
+      "data": "2026-08-29",
+      "guarda_id": 11,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 106,
+      "data": "2026-08-30",
+      "guarda_id": 19,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 107,
+      "data": "2026-08-30",
+      "guarda_id": 10,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 108,
+      "data": "2026-08-30",
+      "guarda_id": 17,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
+      "id": 109,
+      "data": "2026-08-30",
+      "guarda_id": 29,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
       "id": 110,
       "data": "2026-08-28",
       "guarda_id": 6,
@@ -9248,213 +9329,163 @@
       "horario_fim": "07:00",
       "status": "ATIVA",
       "observacao": ""
-    },
-    {
-      "id": 101,
-      "data": "2026-08-29",
-      "guarda_id": 8,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 102,
-      "data": "2026-08-29",
-      "guarda_id": 26,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 103,
-      "data": "2026-08-29",
-      "guarda_id": 24,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 104,
-      "data": "2026-08-29",
-      "guarda_id": 12,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 105,
-      "data": "2026-08-29",
-      "guarda_id": 11,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 106,
-      "data": "2026-08-30",
-      "guarda_id": 19,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 107,
-      "data": "2026-08-30",
-      "guarda_id": 10,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 108,
-      "data": "2026-08-30",
-      "guarda_id": 17,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 109,
-      "data": "2026-08-30",
-      "guarda_id": 29,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
     }
   ],
-  "permutas": [],
+  "permutas": [
+    {
+      "id": 1,
+      "data": "2026-08-19",
+      "turno": "A",
+      "servico_extra": 0,
+      "substituido_id": 31,
+      "substituto_id": 12,
+      "status": "PENDENTE",
+      "observacao": "[MOBILE#3]"
+    },
+    {
+      "id": 2,
+      "data": "2026-08-19",
+      "turno": "A",
+      "servico_extra": 0,
+      "substituido_id": 20,
+      "substituto_id": 12,
+      "status": "PENDENTE",
+      "observacao": "[MOBILE#4]"
+    },
+    {
+      "id": 3,
+      "data": "2026-08-20",
+      "turno": "A",
+      "servico_extra": 0,
+      "substituido_id": 19,
+      "substituto_id": 12,
+      "status": "PENDENTE",
+      "observacao": "[MOBILE#5]"
+    }
+  ],
   "banco_horas": [
-    {
-      "id": 109,
-      "guarda_id": 29,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-30",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "100",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 108,
-      "guarda_id": 17,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-30",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "100",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 107,
-      "guarda_id": 10,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-30",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "100",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 106,
-      "guarda_id": 19,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-30",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "100",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 105,
-      "guarda_id": 11,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-29",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "50",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 104,
-      "guarda_id": 12,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-29",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "50",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 103,
-      "guarda_id": 24,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-29",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "50",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 102,
-      "guarda_id": 26,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-29",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "50",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
-      "id": 101,
-      "guarda_id": 8,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-29",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "50",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
     {
       "id": 110,
       "guarda_id": 6,
       "competencia": "2026-08",
       "data_fato": "2026-08-28",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "50",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 109,
+      "guarda_id": 29,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-30",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "100",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 108,
+      "guarda_id": 17,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-30",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "100",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 107,
+      "guarda_id": 10,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-30",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "100",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 106,
+      "guarda_id": 19,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-30",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "100",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 105,
+      "guarda_id": 11,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-29",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "50",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 104,
+      "guarda_id": 12,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-29",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "50",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 103,
+      "guarda_id": 24,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-29",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "50",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 102,
+      "guarda_id": 26,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-29",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "50",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 101,
+      "guarda_id": 8,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-29",
       "tipo": "ESCALA_EXTRA_MANUAL",
       "natureza": "CREDITO",
       "classe": "50",

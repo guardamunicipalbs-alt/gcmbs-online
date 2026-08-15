@@ -10,6 +10,31 @@ const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor
 let provider=new AuthenticatedProvider();
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[];
 
+const ONLINE_LABELS={
+  viatura_id:'Viatura',data_manutencao:'Data da manutenção',tipo_manutencao:'Tipo de manutenção',descricao:'Descrição',
+  quilometragem:'Quilometragem',responsavel:'Responsável',empresa:'Empresa / oficina',valor:'Valor',status:'Status',
+  observacao:'Observação',data_retorno:'Data de retorno',recebido_por:'Recebido por',consertado:'Consertado',
+  encaminhado_por:'Encaminhado por',atendente_oficina:'Atendente da oficina',data_abastecimento:'Data do abastecimento',
+  motorista:'Motorista',motorista_id:'Motorista',litros:'Litros',guarda_id:'GCM',data_inicial:'Data inicial',
+  quantidade_dias:'Quantidade de dias',data_final:'Data final',motivo:'Motivo / justificativa',tipo_servico:'Tipo do serviço',
+  arquivo_nome:'Documento',arquivo_tipo:'Tipo do documento',arquivo_dados:'Arquivo',criado_em:'Criado em',atualizado_em:'Atualizado em'
+};
+const ONLINE_HIDE_FIELDS=new Set(['criado_por','analisado_por','arquivo_dados','arquivo_tipo','criado_em','atualizado_em']);
+const onlineLabel=k=>ONLINE_LABELS[k]||String(k||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+const refData=()=>provider.references?.()||{viaturas:[],guardas:[]};
+function viaturaPorId(v){const x=(refData().viaturas||[]).find(r=>Number(r.id)===Number(v));return x?[x.prefixo,x.placa].filter(Boolean).join(' · '):''}
+function guardaPorId(v){const x=(refData().guardas||[]).find(r=>Number(r.id)===Number(v));return x?.nome_guerra||x?.nome_completo||''}
+function valorApresentacao(k,v){
+  if(v==null||v==='')return '—';
+  if(k==='viatura_id')return viaturaPorId(v)||`Viatura #${v}`;
+  if(/^(guarda_id|substituido_id|substituto_id|motorista_id|recebido_por|encaminhado_por|responsavel_id|condutor_ocorrencia_id)$/.test(k))return guardaPorId(v)||pessoaPorId(v)||`GCM #${v}`;
+  if(/^data_|_em$/.test(k)||['data_inicial','data_final','criado_em','atualizado_em'].includes(k)){const d=fmt(String(v).slice(0,10));return d||String(v)}
+  if(k==='valor'){const n=Number(v);return Number.isFinite(n)?n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):String(v)}
+  if(k==='consertado')return Number(v)?'Sim':'Não';
+  if(k==='tipo_servico')return String(v).toUpperCase()==='EXTRA'?'Serviço extra':'Serviço ordinário';
+  return String(v);
+}
+
 const NAV_GROUPS=[
   {id:'operacional',titulo:'Operacional',mods:['dashboard','cadastro_guardas','equipes','postos']},
   {id:'escalas',titulo:'Escalas',mods:['gerador_escala','escalas','tipos_escalas','escala_extra_manual','feriados','permutas','justificativas_faltas','eventos_extra','folha_pagamento','banco_horas','relatorios']},
@@ -19,6 +44,7 @@ const NAV_GROUPS=[
 ];
 const NAV_ICONS={dashboard:'📊',cadastro_guardas:'👮',equipes:'👥',postos:'📍',gerador_escala:'🤖',escalas:'📋',tipos_escalas:'⚙️',escala_extra_manual:'➕',feriados:'📅',permutas:'🔄',justificativas_faltas:'📄',eventos_extra:'🎪',folha_pagamento:'💰',banco_horas:'⏱️',relatorios:'🖨️',viaturas:'🚓',manutencao_viaturas:'🔧',abastecimento_viaturas:'⛽',checklist_viaturas:'✅',relatorios_frota:'📑',ocorrencias:'📝',cautelas:'🎒',cursos:'🎓',operacoes_especiais:'✉️',frequencia:'📑',central_pendencias:'⚠️',controle_acesso:'🔐',imagens_gcm:'🖼️'};
 const DEDICATED_VIEW={dashboard:'inicio',escalas:'escala',relatorios:'escala',permutas:'permutas',banco_horas:'banco',ocorrencias:'ocorrencias',eventos_extra:'eventos',justificativas_faltas:'justificativas'};
+const PRIMARY_ENTITY={justificativas_faltas:'justificativas_faltas',manutencao_viaturas:'manutencao_viaturas',abastecimento_viaturas:'abastecimento_viaturas',checklist_viaturas:'checklist_viaturas'};
 function setView(id){
   document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('hidden',x.dataset.view!==id));
   document.querySelectorAll('#mainNav [data-go]').forEach(x=>x.classList.toggle('active',x.dataset.go===id));
@@ -52,7 +78,7 @@ async function abrirModuloPrincipal(modulo){
     return;
   }
   const view=DEDICATED_VIEW[modulo];
-  if(view){setView(view);ativar();if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='escala'){escalaModo=modulo==='relatorios'?'institucional':'pessoal';if(escalaModo==='institucional'){try{escalasInstitucionais=await provider.relatorioEscalas()}catch(e){alert(e.message);escalasInstitucionais=[]}}renderEscalas();}return;}
+  if(view){if(modulo==='justificativas_faltas'){await abrirModuloOnline(modulo);ativar();return;}setView(view);ativar();if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='escala'){escalaModo=modulo==='relatorios'?'institucional':'pessoal';if(escalaModo==='institucional'){try{escalasInstitucionais=await provider.relatorioEscalas()}catch(e){alert(e.message);escalasInstitucionais=[]}}renderEscalas();}return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -77,7 +103,7 @@ function modulosOutros(){
   const dedicados=new Set(['dashboard','escalas','relatorios','banco_horas','permutas','abastecimento_viaturas','manutencao_viaturas']);
   // Comandante/Subcomandante recebem o catálogo integral do Desktop. Para os
   // demais GCMs continuam valendo estritamente as permissões cadastradas.
-  const base=provider.gestor()?MODULOS_GCMBS:provider.modulosAutorizados();
+  const base=provider.controleTotal()?MODULOS_GCMBS:provider.modulosAutorizados();
   return base.filter(m=>!dedicados.has(m.id) && !(m.id==='relatorios_frota'&&!provider.gestor()));
 }
 function renderModulos(){
@@ -209,8 +235,8 @@ function renderBanco(){
 
 
 function valorOnline(v){if(v==null)return'';if(typeof v==='object')return JSON.stringify(v);return String(v)}
-function pessoaPorId(v){const todos=[...(provider.guardas()||[]),...(provider.permutationCandidates()||[])];const x=todos.find(g=>Number(g.guarda_id||g.id)===Number(v));return x?.nome_guerra||''}
-function rotuloOnline(k,v){if(/^(guarda_id|substituido_id|substituto_id)$/.test(k))return pessoaPorId(v)||'GCM';return valorOnline(v)}
+function pessoaPorId(v){const todos=[...(provider.guardas()||[]),...(provider.permutationCandidates()||[]),...(refData().guardas||[])];const x=todos.find(g=>Number(g.guarda_id||g.id)===Number(v));return x?.nome_guerra||x?.nome_completo||''}
+function rotuloOnline(k,v){return valorApresentacao(k,v)}
 let onlineModuleFilter='';
 function renderCatalogoOnline(){
   const el=$('onlineEntidades');if(!el)return;
@@ -222,7 +248,14 @@ async function carregarOnlineCatalog(){
   try{onlineCatalog=await provider.entityCatalog();onlineModuleFilter='';renderCatalogoOnline();renderModulos();}
   catch(e){const el=$('onlineEntidades');if(el)el.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
 }
-async function abrirModuloOnline(modulo){if(!onlineCatalog.length){try{onlineCatalog=await provider.entityCatalog()}catch(e){onlineCatalog=[]}}onlineModuleFilter=modulo;setView('online');$('onlineRegistrosCard').classList.add('hidden');$('onlineEntidades').closest('.card').classList.remove('hidden');renderCatalogoOnline();document.querySelectorAll('#mainNav [data-module]').forEach(x=>x.classList.toggle('active',x.dataset.module===modulo));}
+async function abrirModuloOnline(modulo){
+  if(!onlineCatalog.length){try{onlineCatalog=await provider.entityCatalog()}catch(e){onlineCatalog=[]}}
+  onlineModuleFilter=modulo;setView('online');$('onlineRegistrosCard').classList.add('hidden');$('onlineEntidades').closest('.card').classList.remove('hidden');
+  document.querySelectorAll('#mainNav [data-module]').forEach(x=>x.classList.toggle('active',x.dataset.module===modulo));
+  const primary=PRIMARY_ENTITY[modulo],available=onlineCatalog.find(c=>c.entity===primary&&c.modulo===modulo);
+  if(available){await abrirEntidadeOnline(primary);return;}
+  renderCatalogoOnline();
+}
 async function abrirEntidadeOnline(entity){
   const b=await provider.entityList(entity,500,0);onlineCurrent=b.catalog;onlineRecords=b.records||[];
   $('onlineTitulo').textContent=onlineCurrent.titulo;$('onlineNovo').classList.toggle('hidden',!onlineCurrent.can_edit);
@@ -233,30 +266,62 @@ function renderRegistrosOnline(){
   const q=String($('onlineFiltro')?.value||'').toLowerCase(),el=$('onlineRegistros');if(!el||!onlineCurrent)return;
   const list=onlineRecords.filter(r=>JSON.stringify(r.data||{}).toLowerCase().includes(q));
   el.innerHTML=list.map(r=>{
-    const pairs=Object.entries(r.data||{}).filter(([k])=>!String(k).toLowerCase().includes('dados')&&!['id','criado_por','analisado_por'].includes(String(k).toLowerCase())).slice(0,14);
-    return `<div class="item" data-online-key="${esc(r.record_key)}"><div class="online-kv">${pairs.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(rotuloOnline(k,v))}</span>`).join('')}</div>${onlineCurrent.can_edit?`<div class="online-record-actions"><button class="mini" data-online-edit="${esc(r.record_key)}">Editar</button><button class="mini" data-online-del="${esc(r.record_key)}">Excluir</button></div>`:''}</div>`;
+    const pairs=Object.entries(r.data||{}).filter(([k])=>!ONLINE_HIDE_FIELDS.has(String(k).toLowerCase())&&!['id'].includes(String(k).toLowerCase())).slice(0,18);
+    return `<div class="item" data-online-key="${esc(r.record_key)}"><div class="online-kv">${pairs.map(([k,v])=>`<b>${esc(onlineLabel(k))}</b><span>${esc(rotuloOnline(k,v))}</span>`).join('')}</div>${onlineCurrent.can_edit?`<div class="online-record-actions"><button class="mini" data-online-edit="${esc(r.record_key)}">Editar</button><button class="mini" data-online-del="${esc(r.record_key)}">Excluir</button></div>`:''}</div>`;
   }).join('')||'<div class="empty">Nenhum registro.</div>';
   document.querySelectorAll('[data-online-edit]').forEach(b=>b.addEventListener('click',()=>editarOnline(b.dataset.onlineEdit)));
   document.querySelectorAll('[data-online-del]').forEach(b=>b.addEventListener('click',()=>excluirOnline(b.dataset.onlineDel)));
 }
 function campoOnline(col,val){
-  if(Number(col.pk)>0||['criado_por','analisado_por'].includes(String(col.name).toLowerCase()))return'';
-  const type=String(col.type||'').toUpperCase(),name=col.name,v=valorOnline(val);
-  if(/^(guarda_id|substituido_id|substituto_id)$/.test(name)){const opts=[...(provider.guardas()||[]),...(provider.permutationCandidates()||[])].filter((x,i,a)=>a.findIndex(y=>Number(y.guarda_id||y.id)===Number(x.guarda_id||x.id))===i).map(x=>`<option value="${Number(x.guarda_id||x.id)}" ${Number(x.guarda_id||x.id)===Number(v)?'selected':''}>${esc(x.nome_guerra||'GCM')}</option>`).join('');return `<label>${esc(name.replace('_id',''))}<select data-online-field="${esc(name)}">${opts}</select></label>`;}
-  if(type.includes('INT')||type.includes('REAL')||type.includes('NUM')) return `<label>${esc(name)}<input data-online-field="${esc(name)}" type="number" value="${esc(v)}"></label>`;
-  if(v.length>100||/observ|descr|histor|demanda|dados/i.test(name)) return `<label class="full">${esc(name)}<textarea data-online-field="${esc(name)}">${esc(v)}</textarea></label>`;
-  return `<label>${esc(name)}<input data-online-field="${esc(name)}" value="${esc(v)}"></label>`;
+  const name=String(col.name||''),lower=name.toLowerCase();
+  if(Number(col.pk)>0||['criado_por','analisado_por','criado_em','atualizado_em','arquivo_dados','arquivo_tipo'].includes(lower))return'';
+  if(onlineCurrent?.entity==='justificativas_faltas'&&['status','arquivo_nome'].includes(lower))return'';
+  if(onlineCurrent?.entity==='abastecimento_viaturas'&&lower==='motorista')return'';
+  if(lower==='guarda_id'&&!provider.gestor())return'';
+  const type=String(col.type||'').toUpperCase(),v=valorOnline(val),label=onlineLabel(name);
+  if(lower==='viatura_id'){
+    const opts=(refData().viaturas||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc([x.prefixo,x.placa,x.modelo].filter(Boolean).join(' · '))}</option>`).join('');
+    return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
+  }
+  if(/^(guarda_id|substituido_id|substituto_id|motorista_id|recebido_por|encaminhado_por|responsavel_id|condutor_ocorrencia_id)$/.test(lower)){
+    const opts=(refData().guardas||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc(x.nome_guerra||x.nome_completo||'GCM')}</option>`).join('');
+    return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
+  }
+  if(lower==='consertado')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="0" ${Number(v)!==1?'selected':''}>Não</option><option value="1" ${Number(v)===1?'selected':''}>Sim</option></select></label>`;
+  if(lower==='tipo_servico')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="ORDINARIO" ${String(v||'ORDINARIO').toUpperCase()==='ORDINARIO'?'selected':''}>Serviço ordinário</option><option value="EXTRA" ${String(v).toUpperCase()==='EXTRA'?'selected':''}>Serviço extra</option></select></label>`;
+  if(lower==='status')return `<label>${esc(label)}<input data-online-field="${esc(name)}" value="${esc(v||'ATIVA')}"></label>`;
+  if(/^data_/.test(lower)||['data_inicial','data_final'].includes(lower)){
+    const ro=onlineCurrent?.entity==='justificativas_faltas'&&lower==='data_final'?' readonly':'';
+    return `<label>${esc(label)}<input data-online-field="${esc(name)}" type="date" value="${esc(String(v||'').slice(0,10))}"${ro}></label>`;
+  }
+  if(type.includes('INT')||type.includes('REAL')||type.includes('NUM')) return `<label>${esc(label)}<input data-online-field="${esc(name)}" type="number" step="${type.includes('REAL')?'0.01':'1'}" value="${esc(v)}"></label>`;
+  if(v.length>100||/observ|descr|histor|demanda|motivo/i.test(lower)) return `<label class="full">${esc(label)}<textarea data-online-field="${esc(name)}">${esc(v)}</textarea></label>`;
+  return `<label>${esc(label)}<input data-online-field="${esc(name)}" value="${esc(v)}"></label>`;
 }
+
 function editarOnline(key=null){
   onlineEditing=key?onlineRecords.find(r=>String(r.record_key)===String(key)):null;const d=onlineEditing?.data||{};
   $('onlineEditorTitulo').textContent=(onlineEditing?'Editar ':'Novo ')+(onlineCurrent?.titulo||'registro');
   $('onlineCampos').innerHTML=(onlineCurrent?.columns||[]).map(c=>campoOnline(c,d[c.name])).join('');
+  if(onlineCurrent?.entity==='justificativas_faltas'){
+    $('onlineCampos').insertAdjacentHTML('beforeend',`<label class="full">Documento comprobatório (JPG, PNG ou PDF)<input id="onlineArquivoJustificativa" type="file" accept="image/jpeg,image/png,application/pdf"><small>${d.arquivo_nome?`Atual: ${esc(d.arquivo_nome)}`:'Opcional'}</small></label>`);
+  }
   $('onlineMsg').textContent='';$('onlineEditor').showModal();
 }
 async function salvarOnline(){
   try{
     const d={...(onlineEditing?.data||{})};
     document.querySelectorAll('[data-online-field]').forEach(i=>{let v=i.value;const c=onlineCurrent.columns.find(x=>x.name===i.dataset.onlineField);if(/INT|REAL|NUM/i.test(String(c?.type||''))&&v!=='')v=Number(v);d[i.dataset.onlineField]=v});
+    if(onlineCurrent.entity==='justificativas_faltas'){
+      if(!provider.gestor())d.guarda_id=Number(provider.session?.guarda_id);
+      const ini=String(d.data_inicial||''),dias=Math.max(1,Number(d.quantidade_dias||1));if(ini){const dt=new Date(`${ini}T00:00:00Z`);dt.setUTCDate(dt.getUTCDate()+dias-1);d.data_final=dt.toISOString().slice(0,10)}
+      d.status=d.status||'ATIVA';d.tipo_servico=d.tipo_servico||'ORDINARIO';
+      const f=$('onlineArquivoJustificativa')?.files?.[0];if(f){if(f.size>5*1024*1024)throw new Error('O documento deve ter no máximo 5 MB.');const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||'').split(',')[1]||'');r.onerror=()=>rej(new Error('Não foi possível ler o documento.'));r.readAsDataURL(f)});d.arquivo_nome=f.name;d.arquivo_tipo=f.type;d.arquivo_dados=b64;}
+    }
+    if(onlineCurrent.entity==='abastecimento_viaturas'){
+      if(!d.motorista_id)d.motorista_id=Number(provider.session?.guarda_id)||null;
+      d.motorista=guardaPorId(d.motorista_id)||pessoaPorId(d.motorista_id)||d.motorista||'';
+    }
     await provider.entityMutate(onlineCurrent.entity,onlineEditing?.record_key||'','UPSERT',d);
     $('onlineEditor').close();await abrirEntidadeOnline(onlineCurrent.entity);
   }catch(e){$('onlineMsg').textContent=e.message}
@@ -394,4 +459,4 @@ async function boot(){
 }
 boot();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100039',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100043',{updateViaCache:'none'}).catch(()=>{});}

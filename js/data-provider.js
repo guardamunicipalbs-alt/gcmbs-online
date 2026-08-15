@@ -4,7 +4,7 @@ const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-ap
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
 
 export class AuthenticatedProvider {
-  constructor(){ this.session=null; this.data=null; }
+  constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[]}; }
 
   async call(action,payload={},authenticated=true){
     const headers={'Content-Type':'application/json'};
@@ -54,6 +54,7 @@ export class AuthenticatedProvider {
   async load(){
     const body=await this.call('data');
     this.data=body;
+    try{this.refs=await this.call('references')}catch{this.refs={viaturas:[],guardas:[]};}
     // O relatório usa prioritariamente a réplica integral do Desktop. Isso evita
     // divergência entre a tabela móvel resumida e a tabela real de escalas.
     if(this.pode('escalas') || this.pode('relatorios')){
@@ -82,6 +83,7 @@ export class AuthenticatedProvider {
   async quadro(data){return this.call('quadro_operacional',{data})}
   async relatorioEscalas(){return (await this.call('relatorio_escalas')).escalas||[]}
   async permutaCandidatesFor(data,turno){return this.call('permuta_candidates',{data,turno})}
+  references(){return this.refs||{viaturas:[],guardas:[]}}
 
   async requestBankCorrection(request){const r=await this.call('request_bank_correction',{request});await this.load();return r}
   async requestPermuta(request){const r=await this.call('request_permuta',{request});await this.load();return r}
@@ -119,7 +121,7 @@ export class AuthenticatedProvider {
     const rank={CONSULTA:1,EDICAO:2};
     const alvo=rank[String(nivel).toUpperCase()]||1;
     return this.permissoes().some(p =>
-      (p.modulo===modulo || p.modulo==='*') &&
+      p?.ativo!==false && (p.modulo===modulo || p.modulo==='*') &&
       (rank[String(p.nivel).toUpperCase()]||0)>=alvo
     );
   }

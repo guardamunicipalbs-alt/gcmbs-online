@@ -38,5 +38,5 @@ export function normalizarPerfil(session={}){
 }
 
 export function controleTotal(session={}){
-  return session.controle_total===true || ['comandante','subcomandante'].includes(normalizarPerfil(session));
+  return session.controle_total===true || normalizarPerfil(session)==='comandante';
 }
