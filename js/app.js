@@ -7,7 +7,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.48';
+const APP_VERSION='10.0.49';
 let provider=new AuthenticatedProvider();
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[];
 
@@ -19,13 +19,13 @@ const ONLINE_LABELS={
   motorista:'Motorista',motorista_id:'Motorista',litros:'Litros',guarda_id:'GCM',data_inicial:'Data inicial',
   quantidade_dias:'Quantidade de dias',data_final:'Data final',motivo:'Motivo / justificativa',tipo_servico:'Tipo do serviço',
   arquivo_nome:'Documento',arquivo_tipo:'Tipo do documento',arquivo_dados:'Arquivo',criado_em:'Criado em',atualizado_em:'Atualizado em',
-  nome_guerra:'Nome de guerra',nome_completo:'Nome completo',cpf:'CPF',matricula:'Matrícula',cargo:'Cargo',equipe_id:'Equipe',posto_prioritario_id:'Posto prioritário',
-  nome:'Nome',tipo:'Tipo',prioridade:'Prioridade',minimo:'Efetivo mínimo',maximo:'Efetivo máximo',horario_inicio:'Horário inicial',horario_fim:'Horário final',
-  data:'Data',hora:'Hora',prefixo:'Prefixo',placa:'Placa',modelo:'Modelo',ano:'Ano',combustivel:'Combustível',intervalo_troca_oleo_km:'Intervalo troca de óleo (km)',km_ultima_troca_oleo:'KM da última troca de óleo',
+  nome_guerra:'Nome de guerra',nome_completo:'Nome completo',cpf:'CPF',matricula:'Matrícula',cargo:'Cargo',equipe:'Equipe',equipe_id:'Equipe',posto_prioritario:'Posto prioritário',posto_prioritario_id:'Posto prioritário',categoria_cnh:'Categoria CNH',
+  nome:'Nome',tipo:'Tipo',prioridade:'Prioridade',minimo:'Efetivo mínimo',maximo:'Efetivo máximo',quantidade_minima:'Efetivo mínimo',quantidade_maxima:'Efetivo máximo',horario_inicio:'Horário inicial',horario_fim:'Horário final',
+  data:'Data',hora:'Hora',prefixo:'Prefixo',placa:'Placa',modelo:'Modelo',ano:'Ano',ano_fabricacao:'Ano de fabricação',ano_modelo:'Ano/modelo',combustivel:'Combustível',intervalo_troca_oleo_km:'Intervalo troca de óleo (km)',km_ultima_troca_oleo:'KM da última troca de óleo',
   patrimonio:'Patrimônio',equipamento:'Equipamento',modalidade_uso:'Modalidade de uso',data_entrega:'Data de entrega',data_devolucao:'Data de devolução',situacao:'Situação',
   curso:'Curso / habilitação',instituicao:'Instituição',data_inicio:'Data de início',data_conclusao:'Data de conclusão',validade:'Validade',certificado:'Certificado',
   numero_oficio:'Número do ofício',data_recebimento:'Data de recebimento',secretaria_municipal:'Secretaria Municipal',instituicao_solicitante:'Unidade / instituição solicitante',responsavel_solicitacao:'Responsável pela solicitação',cargo_solicitante:'Cargo do solicitante',telefone_solicitante:'Telefone',data_demanda:'Data da demanda',local_demanda:'Local da demanda',horario_termino_previsto:'Término previsto',demanda:'Demanda a ser atendida',
-  competencia:'Competência',classe:'Classe',minutos:'Minutos',natureza:'Natureza',origem:'Origem',posto_nome:'Posto',turno:'Turno',ativo:'Ativo'
+  competencia:'Competência',classe:'Classe',minutos:'Minutos',natureza:'Natureza',origem:'Origem',posto_nome:'Posto',turno:'Turno',ativo:'Ativo',ativa:'Ativa',participa_gerador:'Participa do gerador',modo_distribuicao:'Modo de distribuição',grupo_id:'Grupo de ativação',equipe_servico_id:'Equipe de serviço',justificativa_id:'Justificativa vinculada'
 };
 const ONLINE_HIDE_FIELDS=new Set(['criado_por','analisado_por','arquivo_dados','arquivo_tipo','criado_em','atualizado_em','password','password_hash','token','token_sha256','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','entidade_id','usuario_id','escala_id','extra_id']);
 const onlineLabel=k=>ONLINE_LABELS[k]||String(k||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
@@ -42,7 +42,12 @@ function valorApresentacao(k,v){
   if(k==='tipo_escala_id'){const x=(refData().tipos_escalas||[]).find(r=>Number(r.id)===Number(v));return x?.nome||x?.descricao||'Tipo de escala cadastrado';}
   if(k==='evento_id'){const x=(refData().eventos||[]).find(r=>Number(r.id)===Number(v));return x?[x.nome,x.data].filter(Boolean).join(' · '):'Evento cadastrado';}
   if(k==='oficio_id'){const x=(refData().oficios||[]).find(r=>Number(r.id)===Number(v));return x?[x.numero_oficio,x.data_demanda].filter(Boolean).join(' · '):'Ofício cadastrado';}
-  if(/^(guarda_id|substituido_id|substituto_id|motorista_id|recebido_por|encaminhado_por|responsavel_id|condutor_ocorrencia_id)$/.test(k))return guardaPorId(v)||pessoaPorId(v)||'GCM cadastrado';
+  if(k==='grupo_id'){const x=(refData().grupos_ativacao||[]).find(r=>Number(r.id)===Number(v));return x?.nome||'Grupo cadastrado';}
+  if(k==='equipe_servico_id')return equipePorId(v)||'Equipe cadastrada';
+  if(k==='justificativa_id'){const x=(refData().justificativas||[]).find(r=>Number(r.id)===Number(v));return x?[fmt(x.data_inicial),x.motivo].filter(Boolean).join(' · '):'Justificativa cadastrada';}
+  if(k==='posto_prioritario')return String(v);
+  if(k==='equipe'&&onlineCurrent?.entity==='guardas')return String(v);
+  if(/^(guarda_id|substituido_id|substituto_id|motorista_id|recebido_por|encaminhado_por|responsavel_id|condutor_ocorrencia_id)$/.test(k))return guardaPorId(v)||'GCM cadastrado';
   if(/^data_|_em$/.test(k)||['data_inicial','data_final','criado_em','atualizado_em'].includes(k)){const d=fmt(String(v).slice(0,10));return d||String(v)}
   if(k==='valor'){const n=Number(v);return Number.isFinite(n)?n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):String(v)}
   if(k==='consertado')return Number(v)?'Sim':'Não';
@@ -52,18 +57,18 @@ function valorApresentacao(k,v){
 
 
 const ENTITY_UI={
-  guardas:{titulo:'Cadastro de Guardas',action:'Novo GCM',descricao:'Cadastro funcional dos GCMs, com identificação, lotação, habilitações e configuração operacional.',order:['nome_guerra','nome_completo','cpf','matricula','cargo','status','equipe_id','posto_prioritario_id','cnh_categoria','autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h'],sections:[['Identificação funcional',['nome_guerra','nome_completo','cpf','matricula','cargo','status']],['Lotação e configuração operacional',['equipe_id','posto_prioritario_id','disponivel_escala','pode_noite','pode_24h']],['CNH e autorizações',['cnh_categoria','autorizado_viatura','autorizado_motocicleta']]]},
-  equipes:{titulo:'Equipes',action:'Nova equipe',descricao:'Equipes operacionais, jornada vinculada e ciclo de serviço.',order:['nome','tipo_escala_id','ciclo','ativo','observacao'],sections:[['Identificação',['nome','ativo']],['Jornada e ciclo',['tipo_escala_id','ciclo']],['Observações',['observacao']]]},
-  postos:{titulo:'Postos Operacionais',action:'Novo posto',descricao:'Prioridade operacional, efetivo mínimo/máximo, horários e funcionamento dos postos.',order:['nome','tipo','prioridade','minimo','maximo','horario_inicio','horario_fim','funcionamento_24h','ativo','observacao'],sections:[['Identificação',['nome','tipo','ativo']],['Prioridade e efetivo',['prioridade','minimo','maximo']],['Funcionamento',['horario_inicio','horario_fim','funcionamento_24h']],['Observações',['observacao']]]},
+  guardas:{titulo:'Cadastro de Guardas',action:'Novo GCM',descricao:'Cadastro funcional dos GCMs, com identificação, lotação, habilitações e configuração operacional.',order:['nome_guerra','nome_completo','cpf','matricula','cargo','status','equipe','posto_prioritario','categoria_cnh','autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h'],sections:[['Identificação funcional',['nome_guerra','nome_completo','cpf','matricula','cargo','status']],['Lotação e configuração operacional',['equipe','posto_prioritario','disponivel_escala','pode_noite','pode_24h']],['CNH e autorizações',['categoria_cnh','autorizado_viatura','autorizado_motocicleta']]]},
+  equipes:{titulo:'Equipes',action:'Nova equipe',descricao:'Equipes operacionais, jornada vinculada e ciclo de serviço.',order:['nome','tipo_escala_id','ciclo','ativa','participa_gerador','turno_inicio','modo_distribuicao'],sections:[['Identificação',['nome','ativa']],['Jornada e ciclo',['tipo_escala_id','ciclo','turno_inicio','modo_distribuicao']],['Operação',['participa_gerador']]]},
+  postos:{titulo:'Postos Operacionais',action:'Novo posto',descricao:'Prioridade operacional, efetivo mínimo/máximo, horários e funcionamento dos postos.',order:['nome','tipo','prioridade','quantidade_minima','quantidade_maxima','horario_inicio','horario_fim','funcionamento_24h','ativo','observacao'],sections:[['Identificação',['nome','tipo','ativo']],['Prioridade e efetivo',['prioridade','quantidade_minima','quantidade_maxima']],['Funcionamento',['horario_inicio','horario_fim','funcionamento_24h']],['Observações',['observacao']]]},
   tipos_escalas:{titulo:'Tipos de Escalas',action:'Novo tipo',descricao:'Jornadas e horários utilizados pelas equipes e escalas.',order:['nome','descricao','ativo'],sections:[['Tipo de escala',['nome','ativo']],['Descrição',['descricao']]]},
   escalas_extras_manuais:{titulo:'Escala Extra Manual',action:'Nova escala extra',descricao:'Efetivo adicional sincronizado com o Desktop, obedecendo às permissões do usuário.',order:['data','guarda_id','horario_inicio','horario_fim','status','observacao'],sections:[['Serviço extra',['data','guarda_id','horario_inicio','horario_fim','status']],['Observação',['observacao']]]},
-  feriados:{titulo:'Feriados',action:'Novo feriado',descricao:'Calendário institucional de feriados utilizado nos cálculos do sistema.',order:['data','descricao','tipo','ativo'],sections:[['Feriado',['data','descricao','tipo','ativo']]]},
+  feriados:{titulo:'Feriados',action:'Novo feriado',descricao:'Calendário institucional de feriados utilizado nos cálculos do sistema.',order:['data','nome','observacao'],sections:[['Feriado',['data','nome']],['Observação',['observacao']]]},
   justificativas_faltas:{titulo:'Justificativa de Faltas',action:'Nova justificativa',descricao:'Justificativa de faltas e documentos do próprio GCM, conforme permissão.',order:['guarda_id','data_inicial','quantidade_dias','data_final','tipo_servico','motivo','observacao','status'],sections:[['Período e serviço',['guarda_id','data_inicial','quantidade_dias','data_final','tipo_servico']],['Justificativa',['motivo','observacao','status']]]},
   eventos_extras:{titulo:'Serviço Extra por Evento',action:'Novo evento',descricao:'Eventos extraordinários, local e período operacional.',order:['nome','data','horario_inicio','horario_fim','local','observacao','status'],sections:[['Evento',['nome','status']],['Data, horário e local',['data','horario_inicio','horario_fim','local']],['Observação',['observacao']]]},
   folha_pagamento_config:{titulo:'Folha de Pagamento',action:'Nova configuração',descricao:'Parâmetros e configurações da folha de pagamento autorizados ao perfil atual.'},
-  viaturas:{titulo:'Cadastro de Viaturas',action:'Nova viatura',descricao:'Frota institucional, distinguindo viatura e motopatrulha, com parâmetros operacionais e de manutenção.',order:['prefixo','placa','modelo','ano','tipo','status','exige_motorista','intervalo_troca_oleo_km','km_ultima_troca_oleo','observacao'],sections:[['Identificação da viatura',['prefixo','placa','modelo','ano','tipo','status']],['Operação',['exige_motorista']],['Troca de óleo',['intervalo_troca_oleo_km','km_ultima_troca_oleo']],['Observações',['observacao']]]},
+  viaturas:{titulo:'Cadastro de Viaturas',action:'Nova viatura',descricao:'Frota institucional, distinguindo viatura e motopatrulha, com parâmetros operacionais e de manutenção.',order:['prefixo','placa','marca','modelo','ano_fabricacao','ano_modelo','tipo','status','combustivel','intervalo_troca_oleo_km','km_ultima_troca_oleo','observacao'],sections:[['Identificação da viatura',['prefixo','placa','marca','modelo','ano_fabricacao','ano_modelo','tipo','status']],['Características',['combustivel']],['Troca de óleo',['intervalo_troca_oleo_km','km_ultima_troca_oleo']],['Observações',['observacao']]]},
   manutencao_viaturas:{titulo:'Manutenção de Viaturas',action:'Nova manutenção',descricao:'Baixa, acompanhamento e retorno de viaturas. Exclusão fica restrita ao Comando/Subcomando.',order:['viatura_id','data_manutencao','tipo_manutencao','descricao','quilometragem','encaminhado_por','empresa','atendente_oficina','valor','status','consertado','data_retorno','recebido_por','observacao'],sections:[['Viatura e entrada',['viatura_id','data_manutencao','quilometragem','tipo_manutencao','status']],['Serviço / oficina',['descricao','encaminhado_por','empresa','atendente_oficina','valor']],['Retorno',['consertado','data_retorno','recebido_por']],['Observações',['observacao']]]},
-  abastecimento_viaturas:{titulo:'Abastecimento',action:'Novo abastecimento',descricao:'Registro e histórico de abastecimentos da frota.',order:['viatura_id','data','quilometragem','combustivel','litros','valor','motorista_id','observacao'],sections:[['Abastecimento',['viatura_id','data','quilometragem','combustivel','litros','valor']],['Condutor e observação',['motorista_id','observacao']]]},
+  abastecimento_viaturas:{titulo:'Abastecimento',action:'Novo abastecimento',descricao:'Registro e histórico de abastecimentos da frota.',order:['viatura_id','data_abastecimento','quilometragem','litros','motorista_id','observacao'],sections:[['Abastecimento',['viatura_id','data_abastecimento','quilometragem','litros']],['Condutor e observação',['motorista_id','observacao']]]},
   equipamentos_cautelas:{titulo:'Equipamentos e Cautelas',action:'Nova cautela',descricao:'Cautelas individuais, de viatura e coletivas, com entrega, situação e devolução.',order:['equipamento','patrimonio','tipo','modalidade_uso','guarda_id','viatura_id','data_entrega','data_devolucao','situacao','observacao'],sections:[['Equipamento',['equipamento','patrimonio','tipo','modalidade_uso','situacao']],['Responsabilidade',['guarda_id','viatura_id']],['Datas',['data_entrega','data_devolucao']],['Observações',['observacao']]]},
   cursos_habilitacoes:{titulo:'Cursos e Habilitações',action:'Novo curso',descricao:'Cursos e habilitações dos GCMs, incluindo início, conclusão, validade e comprovantes.',order:['guarda_id','curso','instituicao','data_inicio','data_conclusao','validade','certificado','observacao','ativo'],sections:[['GCM e curso',['guarda_id','curso','instituicao','ativo']],['Datas',['data_inicio','data_conclusao','validade']],['Comprovante e observação',['certificado','observacao']]]},
   oficios:{titulo:'Ofícios',action:'Novo ofício',descricao:'Ofícios e demandas institucionais seguindo o formulário adotado no Desktop.',order:['numero_oficio','data_recebimento','secretaria_municipal','outro','instituicao_solicitante','responsavel_solicitacao','cargo_solicitante','telefone_solicitante','data_demanda','local_demanda','horario_inicio','horario_termino_previsto','demanda'],sections:[['Identificação do ofício',['numero_oficio','data_recebimento','secretaria_municipal','outro']],['Solicitante',['instituicao_solicitante','responsavel_solicitacao','cargo_solicitante','telefone_solicitante']],['Demanda',['data_demanda','local_demanda','horario_inicio','horario_termino_previsto']],['Descrição detalhada',['demanda']]]},
@@ -76,8 +81,8 @@ function orderedColumns(){const cols=onlineCurrent?.columns||[],cfg=uiEntity(),m
 
 const NAV_GROUPS=[
   {id:'operacional',titulo:'Operacional',mods:['dashboard','cadastro_guardas','equipes','postos']},
-  {id:'escalas',titulo:'Escalas',mods:['gerador_escala','escalas','tipos_escalas','escala_extra_manual','feriados','permutas','justificativas_faltas','eventos_extra','folha_pagamento','banco_horas','relatorios']},
-  {id:'frota',titulo:'Frota',mods:['viaturas','manutencao_viaturas','abastecimento_viaturas','checklist_viaturas','relatorios_frota']},
+  {id:'escalas',titulo:'Escalas',mods:['gerador_escala','escalas','tipos_escalas','escala_extra_manual','feriados','justificativas_faltas','eventos_extra','folha_pagamento','banco_horas','relatorios']},
+  {id:'frota',titulo:'Frota e Permutas',mods:['viaturas','permutas','abastecimento_viaturas','manutencao_viaturas','checklist_viaturas','relatorios_frota']},
   {id:'gestao',titulo:'Gestão Institucional',mods:['ocorrencias','cautelas','cursos','operacoes_especiais','frequencia','central_pendencias','controle_acesso']},
   {id:'institucional',titulo:'Institucional',mods:['imagens_gcm']}
 ];
@@ -225,14 +230,14 @@ function renderEscalas(){
   $('escalaInfo').textContent=`${dados.length} registro(s) · ${fmt(ini)} a ${fmt(fim)}`;
   $('escalaFiltroAtivo').textContent=[gcm&&`GCM: ${gcm}`,posto&&`Posto: ${posto}`,horario&&`Horário: ${horario}`].filter(Boolean).join(' · ')||'Todos os GCMs, postos e horários';
 }
-function detalhesQuadro(caminho){const [g,k]=String(caminho||'').split('.');if(!quadroAtual)return[];if(g==='efetivo')return quadroAtual.efetivo?.detalhes?.[k]||[];if(g==='viaturas')return quadroAtual.viaturas?.detalhes?.[k]||[];if(g==='postos'&&k==='cobertos')return quadroAtual.postos?.detalhamento||[];return[]}
+function detalhesQuadro(caminho){const [g,k]=String(caminho||'').split('.');if(!quadroAtual)return[];if(g==='efetivo')return quadroAtual.efetivo?.detalhes?.[k]||[];if(g==='viaturas')return quadroAtual.viaturas?.detalhes?.[k]||[];if(g==='postos'&&k==='cobertos')return quadroAtual.postos?.detalhamento||[];if(g==='faltas'&&k==='registros')return quadroAtual.faltas?.registros||[];return[]}
 function abrirQuadroDetalhe(titulo,caminho){const itens=detalhesQuadro(caminho);$('quadroModalTitulo').textContent=titulo||'Detalhes';$('quadroModalMeta').textContent=`Data de referência: ${fmt(quadroAtual?.data||$('quadroData').value)} · ${itens.length} registro(s)`;$('quadroModalLista').innerHTML=itens.length?itens.map(x=>`<div class="item"><strong>${esc(x.nome||'-')}</strong><span>${esc(x.complemento||'')}</span></div>`).join(''):'<div class="empty">Nenhum registro compõe este indicador na data selecionada.</div>';$('quadroModal').classList.remove('hidden')}
 function renderInicio(){
   const s=provider.session||{};$('perfilNome').textContent=s.nome||'';$('perfilCargo').textContent=s.cargo||s.role||'';
 }
 async function carregarQuadro(){
   const data=$('quadroData')?.value||hoje();$('qAviso').textContent='Atualizando Quadro Operacional...';
-  try{const d=await provider.quadro(data);quadroAtual=d;$('qAtivos').textContent=d.efetivo?.ativos||0;$('qAfastados').textContent=d.efetivo?.afastados||0;$('qFerias').textContent=d.efetivo?.feristas||0;$('qServicoA').textContent=d.efetivo?.servicoA||0;$('qServicoB').textContent=d.efetivo?.servicoB||0;$('qViaturasTotal').textContent=d.viaturas?.total||0;$('qViaturasDisponiveis').textContent=d.viaturas?.disponivel||0;$('qViaturasUso').textContent=d.viaturas?.emUso||0;$('qViaturasBaixadas').textContent=d.viaturas?.baixadas||0;$('qViaturasManut').textContent=d.viaturas?.manutencao||0;$('qPostos').textContent=d.postos?.cobertos||0;$('qAviso').textContent=(d.cnhVencidas||[]).length?`⚠ CNH vencida: ${d.cnhVencidas.length} GCM(s).`:'Sem avisos de CNH vencida para a data selecionada.'}catch(e){$('qAviso').textContent='Não foi possível carregar o Quadro Operacional: '+e.message}
+  try{const d=await provider.quadro(data);quadroAtual=d;$('qAtivos').textContent=d.efetivo?.ativos||0;$('qAfastados').textContent=d.efetivo?.afastados||0;$('qFerias').textContent=d.efetivo?.feristas||0;$('qViaturasTotal').textContent=d.viaturas?.total||0;$('qViaturasDisponiveis').textContent=d.viaturas?.disponivel||0;$('qViaturasUso').textContent=d.viaturas?.emUso||0;$('qViaturasBaixadas').textContent=d.viaturas?.baixadas||0;$('qViaturasManut').textContent=d.viaturas?.manutencao||0;$('qPostos').textContent=d.postos?.cobertos||0;if($('qFaltas'))$('qFaltas').textContent=d.faltas?.total||0;$('qAviso').textContent=(d.cnhVencidas||[]).length?`⚠ CNH vencida: ${d.cnhVencidas.length} GCM(s).`:'Sem avisos de CNH vencida para a data selecionada.'}catch(e){$('qAviso').textContent='Não foi possível carregar o Quadro Operacional: '+e.message}
 }
 function nomeCandidato(id){const x=provider.permutationCandidates().find(g=>Number(g.guarda_id)===Number(id));return x?.nome_guerra||'GCM';}
 function renderViaturas(){
@@ -286,7 +291,7 @@ function renderPermutas(){
 }
 
 function renderPermutasGestao(){
-  const card=$('permutaGestaoCard'),el=$('listaPermutasGestao');if(!card||!el)return;const gestor=provider.gestor();card.classList.toggle('hidden',!gestor);if(!gestor)return;
+  const card=$('permutaGestaoCard'),el=$('listaPermutasGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('permutas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
   const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA');
   el.innerHTML=req.length?req.map(x=>{const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM';const pend=['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE'].includes(st);return `<article class="record-card"><div class="record-card-head"><strong>${esc(sol)} assume serviço de ${esc(sub)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${fmt(q.data)} · Turno ${esc(q.turno||'-')} · ${Number(q.servico_extra)?'Serviço extra':'Serviço ordinário'}</div>${q.observacao?`<div>${esc(q.observacao)}</div>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="request-actions"><button class="mini" data-cmd-pm-ok="${x.id}">Aprovar</button><button class="mini" data-cmd-pm-no="${x.id}">Recusar</button><button class="mini danger-soft" data-cmd-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de permuta visível ao Comando.</div>';
   el.querySelectorAll('[data-cmd-pm-ok]').forEach(b=>b.onclick=()=>decidirPermutaComando(Number(b.dataset.cmdPmOk),'APROVADA'));
@@ -315,7 +320,7 @@ function renderBanco(){
 }
 
 function renderBancoGestao(){
-  const card=$('bancoGestaoCard'),el=$('listaBancoGestao');if(!card||!el)return;const gestor=provider.gestor();card.classList.toggle('hidden',!gestor);if(!gestor)return;
+  const card=$('bancoGestaoCard'),el=$('listaBancoGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('banco_horas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
   const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO');
   el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Competência ${esc(p.competencia||'-')} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
   el.querySelectorAll('[data-cmd-bh-ok]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhOk),'APROVADA'));
@@ -383,7 +388,7 @@ function renderRegistrosOnline(){
 }
 function campoOnline(col,val){
   const name=String(col.name||''),lower=name.toLowerCase();
-  if(Number(col.pk)>0||['criado_por','analisado_por','criado_em','atualizado_em','arquivo_dados','arquivo_tipo','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','entidade_id','usuario_id','escala_id','extra_id','grupo_id','equipe_servico_id','justificativa_id'].includes(lower))return'';
+  if(Number(col.pk)>0||['criado_por','analisado_por','criado_em','atualizado_em','arquivo_dados','arquivo_tipo','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','entidade_id','usuario_id','escala_id','extra_id'].includes(lower))return'';
   if(onlineCurrent?.entity==='justificativas_faltas'&&['status','arquivo_nome'].includes(lower))return'';
   if(onlineCurrent?.entity==='abastecimento_viaturas'&&lower==='motorista')return'';
   if(lower==='guarda_id'&&!provider.gestor())return'';
@@ -400,6 +405,14 @@ function campoOnline(col,val){
     const opts=(refData().postos||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc([x.nome,x.tipo].filter(Boolean).join(' · '))}</option>`).join('');
     return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
   }
+  if(lower==='posto_prioritario'&&onlineCurrent?.entity==='guardas'){
+    const opts=(refData().postos||[]).map(x=>`<option value="${esc(x.nome||'')}" ${String(x.nome||'')===String(v)?'selected':''}>${esc([x.nome,x.tipo].filter(Boolean).join(' · '))}</option>`).join('');
+    return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Sem posto prioritário</option>${opts}</select></label>`;
+  }
+  if(lower==='equipe'&&onlineCurrent?.entity==='guardas'){
+    const opts=(refData().equipes||[]).map(x=>`<option value="${esc(x.nome||'')}" ${String(x.nome||'')===String(v)?'selected':''}>${esc(x.nome||'Equipe')}</option>`).join('');
+    return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Sem equipe informada</option>${opts}</select></label>`;
+  }
   if(/^(guarda_id|substituido_id|substituto_id|motorista_id|recebido_por|encaminhado_por|responsavel_id|condutor_ocorrencia_id)$/.test(lower)){
     const opts=(refData().guardas||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc(x.nome_guerra||x.nome_completo||'GCM')}</option>`).join('');
     return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
@@ -413,9 +426,19 @@ function campoOnline(col,val){
   if(lower==='oficio_id'){
     const opts=(refData().oficios||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc([x.numero_oficio,x.data_demanda,x.local_demanda].filter(Boolean).join(' · '))}</option>`).join('');return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
   }
-  if(/_id$/.test(lower)&&!['id','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','escala_id','extra_id','usuario_id','entidade_id'].includes(lower))return `<label>${esc(label)}<input data-online-field="${esc(name)}" value="${esc(v)}" placeholder="Selecione pelo cadastro correspondente"></label>`;
+  if(lower==='grupo_id'){
+    const opts=(refData().grupos_ativacao||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc(x.nome||'Grupo')}</option>`).join('');return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
+  }
+  if(lower==='equipe_servico_id'){
+    const opts=(refData().equipes||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc(x.nome||'Equipe')}</option>`).join('');return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
+  }
+  if(lower==='justificativa_id'){
+    const gid=Number((onlineEditing?.data||{}).guarda_id||provider.session?.guarda_id||0);const lista=(refData().justificativas||[]).filter(x=>!gid||Number(x.guarda_id)===gid);
+    const opts=lista.map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc([fmt(x.data_inicial),x.motivo].filter(Boolean).join(' · '))}</option>`).join('');return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Sem justificativa vinculada</option>${opts}</select></label>`;
+  }
+  if(/_id$/.test(lower)&&!['id','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','escala_id','extra_id','usuario_id','entidade_id'].includes(lower))return `<label>${esc(label)}<input type="hidden" data-online-field="${esc(name)}" value="${esc(v)}"><span class="field-auto">${esc(label)}: vínculo administrado automaticamente pelo sistema</span></label>`;
   if(lower==='consertado')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="0" ${Number(v)!==1?'selected':''}>Não</option><option value="1" ${Number(v)===1?'selected':''}>Sim</option></select></label>`;
-  if(['autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h','exige_motorista','funcionamento_24h'].includes(lower))return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="1" ${['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Sim</option><option value="0" ${!['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Não</option></select></label>`;
+  if(['autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h','exige_motorista','funcionamento_24h','ativa','participa_gerador'].includes(lower))return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="1" ${['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Sim</option><option value="0" ${!['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Não</option></select></label>`;
   if(lower==='combustivel')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${['GASOLINA','ETANOL','DIESEL','FLEX'].map(x=>`<option ${String(v).toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='tipo'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="VIATURA" ${String(v||'VIATURA').toUpperCase()==='VIATURA'?'selected':''}>Viatura / carro</option><option value="MOTO" ${['MOTO','MOTOPATRULHA'].includes(String(v).toUpperCase())?'selected':''}>Motopatrulha</option></select></label>`;
   if(lower==='status'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['ATIVA','DISPONÍVEL','EM USO','MANUTENÇÃO','BAIXADA','INATIVA'].map(x=>`<option value="${x}" ${String(v||'ATIVA').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
@@ -475,6 +498,12 @@ async function atualizarAoVivo(){
   try{await provider.load();renderTudo(false);await aplicarIdentidadeVisualRemota();if(onlineCurrent)await abrirEntidadeOnline(onlineCurrent.entity)}catch{}
 }
 
+function renderAvisosInstitucionais(){
+  const lista=(provider.institutionalNotices?.()||[]).slice();
+  const render=(host,limit=50)=>{if(!host)return;const arr=lista.slice(0,limit);host.innerHTML=arr.length?arr.map(x=>{const nivel=String(x.nivel||'NORMAL').toUpperCase();const ate=x.fim_em?` · até ${fmt(String(x.fim_em).slice(0,10))}`:'';return `<article class="notice-board-item ${esc(nivel)}"><small><span class="notice-priority">${esc(nivel)}</span> · ${fmt(String(x.created_at||x.inicio_em||'').slice(0,10))}${ate}</small><strong>${esc(x.titulo||'Comunicado')}</strong><p>${esc(x.mensagem||'')}</p>${x.criado_por_nome?`<small>Publicado por ${esc(x.criado_por_nome)}</small>`:''}</article>`}).join(''):'<div class="empty">Nenhum aviso institucional ativo.</div>';};
+  render($('avisosHomeLista'),3);render($('listaAvisosInstitucionais'),50);
+}
+
 function renderAvisos(){
   const lista=provider.notifications().slice();
   const decisoes=provider.actionRequests().filter(x=>['APROVADA','RECUSADA','REPROVADA','CANCELADA'].includes(String(x.status||'').toUpperCase())).map(x=>({created_at:x.processado_em||x.created_at,titulo:String(x.tipo).toUpperCase()==='PERMUTA'?'Decisão de permuta':'Decisão do Banco de Horas',mensagem:x.resposta||`Situação: ${x.status}`,synthetic:true}));
@@ -509,8 +538,8 @@ async function enviarPermuta(ev){
   try{const req={data:$('pmData').value,turno:$('pmTurno').value,servico_extra:Number($('pmExtra').value),substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked};const r=permutaEditingId?await provider.updatePermutaRequest(permutaEditingId,req):await provider.requestPermuta(req);msg.textContent=permutaEditingId?'Solicitação atualizada. Aguardando decisão do Comando.':'Solicitação enviada. Acompanhe o histórico nesta tela.';msg.classList.add('success');resetPermutaForm();renderTudo(false);setView('permutas')}catch(e){msg.textContent=e.message;msg.classList.add('error')}
 }
 
-async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,destino,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';await provider.load();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
-function renderMensagemComando(){const card=$('mensagemComandoCard');if(!card)return;card.classList.toggle('hidden',!provider.gestor());if(!provider.gestor())return;const sel=$('msgGcms');const pessoas=provider.permutationCandidates();sel.innerHTML=pessoas.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');}
+async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,nivel:$('msgNivel')?.value||'NORMAL',fim_em:$('msgFim')?.value||null,destino,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';if($('msgFim'))$('msgFim').value='';if($('msgNivel'))$('msgNivel').value='NORMAL';await provider.load();renderAvisosInstitucionais();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
+function renderMensagemComando(){const card=$('mensagemComandoCard');if(!card)return;const permitido=provider.gestor()&&provider.pode('central_pendencias','EDICAO');card.classList.toggle('hidden',!permitido);if(!permitido)return;const sel=$('msgGcms');const pessoas=(refData().guardas||[]).map(x=>({guarda_id:x.guarda_id||x.id,nome_guerra:x.nome_guerra||x.nome_completo}));sel.innerHTML=pessoas.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');}
 function renderRelatoriosFrota(){
   const el=$('frotaRelatorioAtalhos');if(!el)return;const mods=[['viaturas','Cadastro de Viaturas','Frota, tipo e situação'],['manutencao_viaturas','Manutenções','Baixas, oficinas e retornos'],['abastecimento_viaturas','Abastecimentos','Consumo, km e motorista'],['checklist_viaturas','Check-lists','Inspeções e pendências']].filter(x=>temAcesso(x[0]));
   el.innerHTML=mods.map(x=>`<button class="report-launch" type="button" data-frota-open="${x[0]}"><strong>${x[1]}</strong><span>${x[2]}</span><b>ABRIR →</b></button>`).join('')||'<div class="empty">Nenhum conjunto da frota autorizado.</div>';
@@ -533,6 +562,7 @@ function renderTudo(resetView=true){
   renderViaturas();
   if(temAcesso('permutas')) {renderPermutas();renderPermutasGestao();}
   if(temAcesso('banco_horas')) {renderBanco();renderBancoGestao();}
+  renderAvisosInstitucionais();
   renderAvisos();
   renderSolicitacoes();
   renderPermutaCandidates();
@@ -614,4 +644,4 @@ async function boot(){
 }
 boot();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100048',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100049',{updateViaCache:'none'}).catch(()=>{});}

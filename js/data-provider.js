@@ -4,7 +4,7 @@ const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-ap
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
 
 export class AuthenticatedProvider {
-  constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[]}; }
+  constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}; }
 
   async call(action,payload={},authenticated=true){
     const headers={'Content-Type':'application/json'};
@@ -54,7 +54,7 @@ export class AuthenticatedProvider {
   async load(){
     const body=await this.call('data');
     this.data=body;
-    try{this.refs=await this.call('references')}catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[]};}
+    try{this.refs=await this.call('references')}catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
     // O relatório usa prioritariamente a réplica integral do Desktop. Isso evita
     // divergência entre a tabela móvel resumida e a tabela real de escalas.
     if(this.pode('escalas') || this.pode('relatorios')){
@@ -73,6 +73,7 @@ export class AuthenticatedProvider {
   permutas(){return this.data?.permutas||[]}
   bancoHoras(){return this.data?.banco_horas||[]}
   notifications(){return this.data?.notifications||[]}
+  institutionalNotices(){return this.data?.institutional_notices||[]}
   actionRequests(){return this.data?.action_requests||[]}
   permutationCandidates(){return this.data?.permutation_candidates||[]}
 
@@ -85,7 +86,7 @@ export class AuthenticatedProvider {
   async permutaCandidatesFor(data,turno){return this.call('permuta_candidates',{data,turno})}
   async checklistContext(viatura_id){return this.call('checklist_context',{viatura_id})}
   async occurrenceContext(data,hora){return this.call('occurrence_context',{data,hora})}
-  references(){return this.refs||{viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[]}}
+  references(){return this.refs||{viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}}
 
   async requestBankCorrection(request){const r=await this.call('request_bank_correction',{request});await this.load();return r}
   async requestPermuta(request){const r=await this.call('request_permuta',{request});await this.load();return r}

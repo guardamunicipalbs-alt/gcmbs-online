@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100048"><link rel="stylesheet" href="css/app.css?v=100048"><title>GCMBS</title></head>
+<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100050"><link rel="stylesheet" href="css/app.css?v=100050"><title>GCMBS</title></head>
 <body>
 <section id="loginTela" class="login-screen">
   <div class="login-card">
@@ -21,13 +21,15 @@
 <main>
 <section data-view="inicio">
   <div class="desktop-page-head"><div><h1>Quadro Operacional</h1><p>Resumo diário da operação, disponível a todos os usuários autenticados.</p></div><label>Data <input id="quadroData" type="date"></label></div>
+  <div id="quadroAvisosHome" class="card notice-board"><div class="toolbar"><div><h2>📢 Quadro de Avisos</h2><small>Comunicados institucionais ativos do Comando.</small></div><button type="button" class="secondary" data-go="avisos">Ver todos</button></div><div id="avisosHomeLista" class="notice-board-list"></div></div>
   <div class="card hero"><div><small class="muted">Usuário autenticado</small><h2 id="perfilNome"></h2><span id="perfilCargo" class="badge"></span></div></div>
   <section class="dashboard-sector"><h2>Efetivo</h2><div class="dashboard-cards">
     <button class="dashboard-card" data-quadro-detail="efetivo.ativos" data-title="GCM ativos"><span>GCM ativos</span><b id="qAtivos">0</b><small>Ver relação</small></button>
     <button class="dashboard-card" data-quadro-detail="efetivo.afastados" data-title="GCM afastados"><span>GCM afastados</span><b id="qAfastados">0</b><small>Ver relação</small></button>
     <button class="dashboard-card" data-quadro-detail="efetivo.feristas" data-title="GCM em férias"><span>GCM em férias</span><b id="qFerias">0</b><small>Ver relação</small></button>
-    <button class="dashboard-card" data-quadro-detail="efetivo.servicoA" data-title="Serviço A · 07:00–19:00"><span>Serviço A · 07:00–19:00</span><b id="qServicoA">0</b><small>Ver GCMs e postos</small></button>
-    <button class="dashboard-card" data-quadro-detail="efetivo.servicoB" data-title="Serviço B · 19:00–07:00"><span>Serviço B · 19:00–07:00</span><b id="qServicoB">0</b><small>Ver GCMs e postos</small></button>
+    <button class="dashboard-card" data-quadro-detail="faltas.registros" data-title="Faltas do dia"><span>Faltas</span><b id="qFaltas">0</b><small>Ver relatório</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoA" data-title="Serviço A · 07:00–19:00"><span>Serviço A · 07:00–19:00</span><b>Ver serviço</b><small>GCMs e postos</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoB" data-title="Serviço B · 19:00–07:00"><span>Serviço B · 19:00–07:00</span><b>Ver serviço</b><small>GCMs e postos</small></button>
   </div></section>
   <section class="dashboard-sector"><h2>Viaturas</h2><div class="dashboard-cards">
     <button class="dashboard-card" data-quadro-detail="viaturas.total" data-title="Frota cadastrada"><span>Totais</span><b id="qViaturasTotal">0</b><small>Ver relação</small></button>
@@ -131,7 +133,7 @@
   <div class="card"><div class="toolbar"><div><h2>Pendências consolidadas</h2><small class="muted">Atualizadas junto com a sincronização online.</small></div></div><div id="pendenciasLista" class="pending-list"></div></div>
 </section>
 <section data-view="online" class="hidden">
-  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Android 10.0.48</small></div></div>
+  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Android 10.0.49</small></div></div>
   <div class="card module-landing">
     <div class="notice module-sync-note"><strong>Dados únicos e sincronizados</strong>Esta tela utiliza as mesmas permissões e registros do sistema online. Ações de edição só aparecem para usuários autorizados.</div>
     <div id="onlineEntidades" class="module-grid"></div>
@@ -145,7 +147,20 @@
 </section>
 <dialog id="onlineEditor"><div class="card module-editor-card" style="margin:0"><div class="module-editor-head"><div><div class="module-kicker">FORMULÁRIO INSTITUCIONAL</div><h2 id="onlineEditorTitulo">Registro</h2></div><button id="onlineCancelar" class="dialog-close" type="button" aria-label="Fechar">×</button></div><div id="onlineCampos" class="module-editor-fields"></div><div class="form-actions module-editor-actions"><button id="onlineSalvar" class="primary">Salvar</button><button id="onlineCancelarBottom" class="secondary" type="button">Cancelar</button></div><div id="onlineMsg" class="muted" style="margin-top:8px"></div></div></dialog>
 
-<section data-view="avisos" class="hidden"><div id="mensagemComandoCard" class="card hidden"><h2>Enviar mensagem institucional</h2><p class="muted">Disponível exclusivamente para Comandante e Subcomandante.</p><form id="formMensagemComando" class="form-grid"><label class="full">Título<input id="msgTitulo" placeholder="Aviso, determinação de serviço..."></label><label>Destino<select id="msgDestino"><option value="TODOS">Todos os GCMs</option><option value="SELECIONADOS">GCMs selecionados</option></select></label><label id="msgGcmsLabel" class="full hidden">GCMs<select id="msgGcms" multiple size="8"></select></label><label class="full">Conteúdo<textarea id="msgConteudo" required placeholder="Digite o conteúdo livre da mensagem institucional"></textarea></label><button class="primary full" type="submit">Enviar mensagem</button><div id="msgComandoRetorno" class="full request-message"></div></form></div><div class="card"><h2>Notificações</h2><div class="notice">Alertas automáticos de escala, permutas, banco de horas e mensagens do Comando.</div><div id="listaAvisos" class="list" style="margin-top:12px"></div></div></section>
+<section data-view="avisos" class="hidden">
+  <div class="desktop-page-head"><div><h1>Quadro de Avisos</h1><p>Comunicados institucionais sincronizados entre Desktop, Online e App.</p></div></div>
+  <div id="mensagemComandoCard" class="card hidden"><h2>Publicar aviso institucional</h2><p class="muted">Disponível ao Comando conforme as permissões vigentes.</p><form id="formMensagemComando" class="form-grid">
+    <label class="full">Título<input id="msgTitulo" placeholder="Aviso, determinação de serviço..."></label>
+    <label>Prioridade<select id="msgNivel"><option value="NORMAL">Normal</option><option value="IMPORTANTE">Importante</option><option value="URGENTE">Urgente</option></select></label>
+    <label>Exibir até<input id="msgFim" type="datetime-local"></label>
+    <label>Destino<select id="msgDestino"><option value="TODOS">Todos os GCMs</option><option value="SELECIONADOS">GCMs selecionados</option></select></label>
+    <label id="msgGcmsLabel" class="full hidden">GCMs<select id="msgGcms" multiple size="8"></select></label>
+    <label class="full">Mensagem<textarea id="msgConteudo" required placeholder="Digite o conteúdo do aviso institucional"></textarea></label>
+    <button class="primary full" type="submit">Publicar aviso</button><div id="msgComandoRetorno" class="full request-message"></div>
+  </form></div>
+  <div class="card"><h2>Avisos ativos</h2><div id="listaAvisosInstitucionais" class="notice-board-list"></div></div>
+  <div class="card"><h2>Notificações pessoais</h2><div class="notice">Alertas automáticos de escala, permutas, banco de horas e confirmações.</div><div id="listaAvisos" class="list" style="margin-top:12px"></div></div>
+</section>
 
 <section data-view="eventos" class="hidden"><div class="card"><h2>Eventos</h2><p class="muted">Administração online dos eventos e das equipes/GCMs participantes, conforme as permissões do Desktop.</p><button id="abrirEventos" class="primary">Abrir gestão de eventos</button></div></section>
 <section data-view="acessos" class="hidden">
@@ -158,7 +173,7 @@
 </section>
 </main>
 <div id="quadroModal" class="quadro-modal hidden" role="dialog" aria-modal="true"><div class="quadro-modal-card"><div class="quadro-modal-head"><h2 id="quadroModalTitulo">Detalhes</h2><button id="quadroModalFechar" type="button">×</button></div><div id="quadroModalMeta" class="muted"></div><div id="quadroModalLista" class="list"></div></div></div>
-<nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="avisos" data-fixed="true">🔔 <span>Avisos</span> <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
+<nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="avisos" data-fixed="true">📢 <span>Quadro de Avisos</span> <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
 </div>
-<script type="module" src="js/app.js?v=100048"></script>
+<script type="module" src="js/app.js?v=100050"></script>
 </body></html>
