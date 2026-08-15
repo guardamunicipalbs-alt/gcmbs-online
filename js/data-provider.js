@@ -84,6 +84,7 @@ export class AuthenticatedProvider {
   async quadro(data){return this.call('quadro_operacional',{data})}
   async relatorioEscalas(){return (await this.call('relatorio_escalas')).escalas||[]}
   async permutaCandidatesFor(data,turno){return this.call('permuta_candidates',{data,turno})}
+  async frequencyServices(guarda_id,data){return this.call('frequency_services',{guarda_id,data})}
   async checklistContext(viatura_id){return this.call('checklist_context',{viatura_id})}
   async occurrenceContext(data,hora){return this.call('occurrence_context',{data,hora})}
   references(){return this.refs||{viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}}
