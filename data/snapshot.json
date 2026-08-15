@@ -1,7 +1,7 @@
 {
   "meta": {
     "formato": "GCMBS_MOBILE_SNAPSHOT_V1",
-    "gerado_em": "2026-08-15T01:01:45.478346+00:00",
+    "gerado_em": "2026-08-15T03:06:21.942724+00:00",
     "somente_leitura": true
   },
   "guardas": [
@@ -9241,6 +9241,15 @@
       "observacao": ""
     },
     {
+      "id": 110,
+      "data": "2026-08-28",
+      "guarda_id": 6,
+      "horario_inicio": "19:00",
+      "horario_fim": "07:00",
+      "status": "ATIVA",
+      "observacao": ""
+    },
+    {
       "id": 101,
       "data": "2026-08-29",
       "guarda_id": 8,
@@ -9316,15 +9325,6 @@
       "id": 109,
       "data": "2026-08-30",
       "guarda_id": 29,
-      "horario_inicio": "19:00",
-      "horario_fim": "07:00",
-      "status": "ATIVA",
-      "observacao": ""
-    },
-    {
-      "id": 110,
-      "data": "2026-08-28",
-      "guarda_id": 6,
       "horario_inicio": "19:00",
       "horario_fim": "07:00",
       "status": "ATIVA",
@@ -9365,19 +9365,6 @@
   ],
   "banco_horas": [
     {
-      "id": 110,
-      "guarda_id": 6,
-      "competencia": "2026-08",
-      "data_fato": "2026-08-28",
-      "tipo": "ESCALA_EXTRA_MANUAL",
-      "natureza": "CREDITO",
-      "classe": "50",
-      "minutos": 720,
-      "origem": "ESCALA_EXTRA_MANUAL",
-      "motivo": "Escala Extra Manual",
-      "status": "ATIVO"
-    },
-    {
       "id": 109,
       "guarda_id": 29,
       "competencia": "2026-08",
@@ -9486,6 +9473,19 @@
       "guarda_id": 8,
       "competencia": "2026-08",
       "data_fato": "2026-08-29",
+      "tipo": "ESCALA_EXTRA_MANUAL",
+      "natureza": "CREDITO",
+      "classe": "50",
+      "minutos": 720,
+      "origem": "ESCALA_EXTRA_MANUAL",
+      "motivo": "Escala Extra Manual",
+      "status": "ATIVO"
+    },
+    {
+      "id": 110,
+      "guarda_id": 6,
+      "competencia": "2026-08",
+      "data_fato": "2026-08-28",
       "tipo": "ESCALA_EXTRA_MANUAL",
       "natureza": "CREDITO",
       "classe": "50",

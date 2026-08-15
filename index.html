@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100043"><link rel="stylesheet" href="css/app.css?v=100043"><title>GCMBS</title></head>
+<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100048"><link rel="stylesheet" href="css/app.css?v=100048"><title>GCMBS</title></head>
 <body>
 <section id="loginTela" class="login-screen">
   <div class="login-card">
     <img id="loginIcone" src="icon.png" onerror="this.src='icon.svg'" alt="GCMBS" class="login-icon">
-    <h1>GCMBS</h1><p class="muted">Acesso móvel institucional</p>
+    <h1>GCMBS</h1><p class="muted">Sistema institucional online</p>
     <form id="loginForm">
       <label>Usuário / CPF<input id="loginUsuario" autocomplete="username" required></label>
       <label>Senha<input id="loginSenha" type="password" autocomplete="current-password" required></label>
@@ -17,7 +17,7 @@
 </section>
 
 <div id="appTela" class="app hidden">
-<header><div class="brand-head"><button id="menuToggle" class="menu-toggle" type="button" aria-label="Abrir menu">☰</button><img id="headerIcone" src="icon.png" onerror="this.style.display='none'" alt=""><div><h1>GCMBS</h1><p>Guarda Civil Municipal · Sistema Online</p></div></div><div class="header-user"><span id="headerUsuario"></span><button id="sair" class="logout">Sair</button></div></header>
+<header><div class="brand-head"><button id="menuToggle" class="menu-toggle" type="button" aria-label="Abrir menu">☰</button><img id="headerIcone" src="icon.png" onerror="this.style.display='none'" alt=""><div><h1>GCMBS</h1><p>Guarda Civil Municipal · Sistema Online</p></div></div><div class="header-user"><span id="connectionStatus" class="connection-status">Online</span><span id="headerUsuario"></span><button id="sair" class="logout">Sair</button></div></header>
 <main>
 <section data-view="inicio">
   <div class="desktop-page-head"><div><h1>Quadro Operacional</h1><p>Resumo diário da operação, disponível a todos os usuários autenticados.</p></div><label>Data <input id="quadroData" type="date"></label></div>
@@ -50,8 +50,46 @@
   <div class="card"><div class="report-summary"><strong id="escalaInfo">Informe o período para consultar.</strong><span id="escalaFiltroAtivo"></span></div><h2>Escala — visão por posto e horário</h2><p class="muted">As datas ficam na horizontal. Em telas menores, deslize a tabela lateralmente.</p><div class="matrix-wrap"><table class="report-matrix"><thead><tr id="cabecalhoMatrizMobile"></tr></thead><tbody id="resultadoMatrizMobile"></tbody></table></div></div>
 </section>
 
-<section data-view="ocorrencias" class="hidden"><div class="desktop-page-head"><div><h1>Ocorrências e Produção Operacional</h1><p>Registro operacional sincronizado com o Desktop.</p></div></div><div class="card"><h2>Ocorrências / Produção</h2><p class="muted">Todas as opções do cadastro institucional ficam disponíveis conforme autorização. Registre e consulte pela base online.</p><button id="abrirOcorrencias" class="primary">Abrir Ocorrências / Produção</button></div></section>
+<section data-view="ocorrencias" class="hidden">
+  <div class="desktop-page-head"><div><h1>Ocorrências e Produção Operacional</h1><p>Formulário institucional equivalente ao Desktop, otimizado para uso em campo.</p></div><button id="occNovo" class="primary" type="button">Nova ocorrência</button></div>
+  <div id="occFormCard" class="card hidden"><form id="occForm" class="desktop-form">
+    <div class="form-section"><h2>Dados da ocorrência</h2><div class="form-grid">
+      <label>Data da ocorrência<input id="occData" type="date" required></label><label>Hora da ocorrência<input id="occHora" type="time" required></label>
+      <label class="full">Natureza da ocorrência <small>Selecione uma ou mais opções.</small><div id="occNaturezas" class="choice-grid"></div></label>
+      <label class="full">Outra natureza<input id="occNaturezaOutro"></label>
+      <label>Ocorrência recebida via<select id="occVia"><option value="">Selecione...</option><option>CENTRAL / RÁDIO</option><option>TELEFONE</option><option>WHATSAPP</option><option>SOLICITAÇÃO DIRETA</option><option>FLAGRANTE DURANTE PATRULHAMENTO</option><option>OUTRO</option></select></label>
+      <label>Outro meio<input id="occViaOutro"></label><label class="full">Local da ocorrência<input id="occLocal" placeholder="Bairro / rua / número / ponto de referência"></label>
+    </div></div>
+    <div class="form-section"><h2>Suspeito(s), vítima(s) e testemunha(s)</h2><div class="form-grid">
+      <label class="full">Dados do(s) suspeito(s)<textarea id="occSuspeitos"></textarea></label><label>Sexo do(s) suspeito(s)<select id="occSuspeitosSexo"><option value="">Não informado</option><option>MASCULINO</option><option>FEMININO</option><option>MÚLTIPLOS - DESCREVER</option><option>OUTRO</option></select></label><label>Descrição / outro<input id="occSuspeitosSexoOutro"></label>
+      <label class="full">Dados da(s) vítima(s)<textarea id="occVitimas"></textarea></label><label>Sexo da(s) vítima(s)<select id="occVitimasSexo"><option value="">Não informado</option><option>MASCULINO</option><option>FEMININO</option><option>MÚLTIPLOS - DESCREVER</option><option>OUTRO</option></select></label><label>Descrição / outro<input id="occVitimasSexoOutro"></label>
+      <label class="full">Dados da(s) testemunha(s)<textarea id="occTestemunhas"></textarea></label>
+    </div></div>
+    <div class="form-section"><h2>Procedimentos e materiais</h2><div class="form-grid">
+      <label>Uso de algemas<select id="occAlgemas"><option>NÃO</option><option>SIM</option></select></label><label class="full">Justificativa para uso de algemas<textarea id="occJustAlgemas"></textarea></label>
+      <label class="full">Materiais apreendidos<textarea id="occMateriais"></textarea></label>
+    </div></div>
+    <div class="form-section"><h2>Equipe e histórico</h2><div class="form-grid">
+      <label class="full">Membros da equipe <small>Os GCMs escalados no período aparecem pré-selecionados quando possível.</small><div id="occEquipe" class="choice-grid"></div></label>
+      <label>Condutor da ocorrência<select id="occCondutor" required><option value="">Selecione...</option></select></label>
+      <label class="full">Procedimentos adotados<textarea id="occProcedimentos"></textarea></label><label class="full">Histórico da ocorrência<textarea id="occHistorico" class="tall"></textarea></label>
+    </div></div>
+    <div class="form-actions"><button class="primary" type="submit">Registrar ocorrência</button><button id="occCancelar" class="secondary" type="button">Cancelar</button><span id="occMsg" class="muted"></span></div>
+  </form></div>
+  <div class="card"><div class="toolbar"><div><h2>Ocorrências registradas</h2><small class="muted">Histórico sincronizado com o Desktop.</small></div></div><div id="occLista" class="record-grid"></div></div>
+</section>
 <section data-view="justificativas" class="hidden"><div class="desktop-page-head"><div><h1>Justificativa de Faltas</h1><p>Mesmo cadastro institucional do Desktop, sincronizado online.</p></div></div><div class="card"><h2>Justificativas</h2><p class="muted">Cadastre, consulte e acompanhe justificativas e documentos conforme sua permissão.</p><button id="abrirJustificativas" class="primary">Abrir Justificativa de Faltas</button></div></section>
+<section data-view="checklist" class="hidden">
+  <div class="desktop-page-head"><div><h1>Check-list de Viaturas</h1><p>Inspeção rápida: todos os itens começam como OK; altere apenas o que apresentar problema.</p></div><button id="chkNovo" class="primary" type="button">Novo check-list</button></div>
+  <div id="chkFormCard" class="card hidden"><form id="chkForm" class="desktop-form">
+    <div class="form-section"><h2>Identificação</h2><div class="form-grid"><label>Viatura<select id="chkViatura" required></select></label><label>GCM responsável<select id="chkGuarda" disabled></select></label><label>Data<input id="chkData" type="date" required></label><label>Hora<input id="chkHora" type="time"></label><label>KM atual<input id="chkKm" type="number" min="0"></label><label>Situação<select id="chkSituacao"><option>APTA</option><option>APTA COM RESSALVA</option><option>NÃO APTA</option></select></label></div></div>
+    <div id="chkPendencia" class="pending-banner hidden"><strong>⚠ Problema constatado no check-list anterior</strong><div id="chkPendenciaTexto"></div><div id="chkResolvidos" class="choice-grid"></div></div>
+    <div class="form-section"><h2>Itens de inspeção</h2><div id="chkItens" class="inspection-grid"></div></div>
+    <div class="form-section"><h2>Troca de óleo</h2><div id="chkOleoResumo" class="notice">Selecione uma viatura.</div><label class="inline-check"><input id="chkTrocaOleo" type="checkbox"> Óleo trocado neste check-list</label><label id="chkKmTrocaBox" class="hidden">KM da nova troca<input id="chkKmTroca" type="number" min="0"></label></div>
+    <label>Observações<textarea id="chkObs"></textarea></label><div class="form-actions"><button class="primary" type="submit">Salvar check-list</button><button id="chkCancelar" class="secondary" type="button">Cancelar</button><span id="chkMsg" class="muted"></span></div>
+  </form></div>
+  <div class="card"><h2>Histórico</h2><div id="chkLista" class="record-grid"></div></div>
+</section>
 <section data-view="viaturas" class="hidden">
   <div class="desktop-page-head"><div><h1>Viaturas</h1><p>Acesso rápido aos módulos autorizados da frota.</p></div></div>
   <div class="module-grid fleet-menu">
@@ -62,6 +100,7 @@
 <section data-view="permutas" class="hidden">
   <div class="desktop-page-head"><div><h1>Permutas</h1><p>Solicite, acompanhe e consulte as decisões do Comando.</p></div></div>
   <div class="card"><h2>Minhas solicitações de permuta</h2><div id="listaPermutasSolicitadas" class="list"></div></div>
+  <div id="permutaGestaoCard" class="card hidden"><h2>Gerenciamento de permutas — Comando</h2><p class="muted">Analise as solicitações pendentes, aprove, recuse ou retire da fila solicitações registradas de forma equivocada. As decisões são sincronizadas com o Desktop.</p><div id="listaPermutasGestao" class="list"></div></div>
   <div class="card" id="permutaCard"><h2 id="pmTitulo">Nova solicitação de permuta</h2><form id="formPermuta" class="form-grid">
     <label>Data<input id="pmData" type="date" required></label>
     <label>Turno<select id="pmTurno"><option value="A">A · 07:00–19:00</option><option value="B">B · 19:00–07:00</option><option value="COMPLETO">Completo</option></select></label>
@@ -77,28 +116,40 @@
 <div class="card"><h2 id="tituloBanco">Meu banco de horas</h2><div class="grid"><div class="metric">50%<b id="bh50">0h00</b></div><div class="metric">100%<b id="bh100">0h00</b></div><div class="metric">Débitos<b id="bhDeb">0h00</b></div><div class="metric">Saldo<b id="bhSaldo">0h00</b></div></div></div>
 <div class="card"><h2>Solicitar correção</h2><p class="muted">Solicitações devem ser feitas em blocos de 30 minutos. O saldo só muda após aprovação do Comando.</p><form id="formBancoCorrecao" class="form-grid"><label>Competência<input id="bcComp" type="month" required></label><label>Data do serviço<input id="bcData" type="date" required></label><label>Horas<input id="bcHoras" type="number" min="0" max="200" step="1" value="0" required></label><label>Minutos<select id="bcMinutos"><option value="0">00</option><option value="30">30</option></select></label><label>Classe<select id="bcClasse"><option value="50">50%</option><option value="100">100%</option></select></label><label class="full">Descrição<textarea id="bcDescricao" required placeholder="Descreva a correção solicitada"></textarea></label><button id="bcEnviar" class="primary full" type="submit">Enviar solicitação</button><div id="bcMsg" class="full request-message" role="status"></div></form></div>
 <div class="card"><h2>Minhas solicitações de correção</h2><div id="listaCorrecoes" class="list"></div></div>
+<div id="bancoGestaoCard" class="card hidden"><h2>Análise de horas — Comando</h2><p class="muted">O Comando pode revisar a quantidade e a classe antes de aprovar, ou recusar com justificativa.</p><div id="listaBancoGestao" class="list"></div></div>
 <div class="card"><h2>Movimentações recentes</h2><div id="listaBanco" class="list"></div></div>
 </section>
 
+<section data-view="relatoriosFrota" class="hidden">
+  <div class="desktop-page-head"><div><h1>Relatórios da Frota</h1><p>Visão integrada da frota com acesso aos cadastros e históricos autorizados.</p></div></div>
+  <div class="dashboard-cards"><div class="dashboard-card static"><span>Viaturas cadastradas</span><b id="rfTotal">0</b><small>Base online</small></div><div class="dashboard-card static"><span>Ativas / disponíveis</span><b id="rfAtivas">0</b><small>Conforme situação atual</small></div></div>
+  <div class="card"><div class="toolbar"><div><h2>Consultas da frota</h2><small class="muted">Abra a área desejada. Os filtros e ações obedecem às permissões do seu perfil.</small></div></div><div id="frotaRelatorioAtalhos" class="report-launch-grid"></div></div>
+</section>
+<section data-view="pendencias" class="hidden">
+  <div class="desktop-page-head"><div><h1>Central de Pendências</h1><p>Solicitações em análise e avisos ainda não lidos, consolidados para o usuário atual.</p></div></div>
+  <div class="dashboard-cards"><div class="dashboard-card static"><span>Total visível</span><b id="pTotal">0</b><small>Pendências atuais</small></div><div class="dashboard-card static"><span>Solicitações</span><b id="pSolic">0</b><small>Aguardando processamento</small></div><div class="dashboard-card static"><span>Avisos</span><b id="pAvisos">0</b><small>Não lidos</small></div></div>
+  <div class="card"><div class="toolbar"><div><h2>Pendências consolidadas</h2><small class="muted">Atualizadas junto com a sincronização online.</small></div></div><div id="pendenciasLista" class="pending-list"></div></div>
+</section>
 <section data-view="online" class="hidden">
-  <div class="card">
-    <h2>Dados online</h2>
-    <p class="muted">Consulta em nuvem dos módulos autorizados. Os dados ficam disponíveis mesmo quando o computador da sede está desligado. Alterações permitidas são sincronizadas com o Desktop quando ele voltar a se conectar.</p>
+  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Android 10.0.48</small></div></div>
+  <div class="card module-landing">
+    <div class="notice module-sync-note"><strong>Dados únicos e sincronizados</strong>Esta tela utiliza as mesmas permissões e registros do sistema online. Ações de edição só aparecem para usuários autorizados.</div>
     <div id="onlineEntidades" class="module-grid"></div>
   </div>
-  <div id="onlineRegistrosCard" class="card hidden">
-    <div class="online-toolbar"><button id="onlineVoltar" class="mini">← Módulos</button><h2 id="onlineTitulo"></h2><button id="onlineNovo" class="mini hidden">Novo</button></div>
-    <input id="onlineFiltro" placeholder="Filtrar registros...">
-    <div id="onlineRegistros" class="list" style="margin-top:12px"></div>
+  <div id="onlineRegistrosCard" class="card module-records hidden">
+    <div class="online-toolbar"><button id="onlineVoltar" class="mini">← Voltar</button><div style="flex:1"><h2 id="onlineTitulo"></h2><small id="onlineDescricao" class="muted"></small></div><button id="onlineNovo" class="primary hidden">Novo registro</button></div>
+    <div id="onlineEntityTabs" class="module-tabs hidden"></div><div class="module-record-summary"><div><span>Registros</span><b id="onlineTotal">0</b></div><div><span>Visualização</span><b id="onlineFiltrados">Todos os registros</b></div></div>
+    <div class="module-search"><span>⌕</span><input id="onlineFiltro" placeholder="Pesquisar registros..."></div>
+    <div id="onlineRegistros" class="list module-record-list"></div>
   </div>
 </section>
-<dialog id="onlineEditor"><div class="card" style="margin:0;max-height:80vh;overflow:auto"><h2 id="onlineEditorTitulo">Registro</h2><div id="onlineCampos" class="form-grid"></div><div style="display:flex;gap:8px;margin-top:12px"><button id="onlineSalvar" class="primary">Salvar</button><button id="onlineCancelar" class="mini">Cancelar</button></div><div id="onlineMsg" class="muted" style="margin-top:8px"></div></div></dialog>
+<dialog id="onlineEditor"><div class="card module-editor-card" style="margin:0"><div class="module-editor-head"><div><div class="module-kicker">FORMULÁRIO INSTITUCIONAL</div><h2 id="onlineEditorTitulo">Registro</h2></div><button id="onlineCancelar" class="dialog-close" type="button" aria-label="Fechar">×</button></div><div id="onlineCampos" class="module-editor-fields"></div><div class="form-actions module-editor-actions"><button id="onlineSalvar" class="primary">Salvar</button><button id="onlineCancelarBottom" class="secondary" type="button">Cancelar</button></div><div id="onlineMsg" class="muted" style="margin-top:8px"></div></div></dialog>
 
 <section data-view="avisos" class="hidden"><div id="mensagemComandoCard" class="card hidden"><h2>Enviar mensagem institucional</h2><p class="muted">Disponível exclusivamente para Comandante e Subcomandante.</p><form id="formMensagemComando" class="form-grid"><label class="full">Título<input id="msgTitulo" placeholder="Aviso, determinação de serviço..."></label><label>Destino<select id="msgDestino"><option value="TODOS">Todos os GCMs</option><option value="SELECIONADOS">GCMs selecionados</option></select></label><label id="msgGcmsLabel" class="full hidden">GCMs<select id="msgGcms" multiple size="8"></select></label><label class="full">Conteúdo<textarea id="msgConteudo" required placeholder="Digite o conteúdo livre da mensagem institucional"></textarea></label><button class="primary full" type="submit">Enviar mensagem</button><div id="msgComandoRetorno" class="full request-message"></div></form></div><div class="card"><h2>Notificações</h2><div class="notice">Alertas automáticos de escala, permutas, banco de horas e mensagens do Comando.</div><div id="listaAvisos" class="list" style="margin-top:12px"></div></div></section>
 
 <section data-view="eventos" class="hidden"><div class="card"><h2>Eventos</h2><p class="muted">Administração online dos eventos e das equipes/GCMs participantes, conforme as permissões do Desktop.</p><button id="abrirEventos" class="primary">Abrir gestão de eventos</button></div></section>
 <section data-view="acessos" class="hidden">
-  <div class="card"><h2>Outros</h2><p class="muted">O aplicativo respeita a mesma autorização do GCMBS Desktop. Os módulos com tela própria são abertos diretamente. Os demais usam a réplica online genérica quando houver dados sincronizados. O nível CONSULTA/EDIÇÃO vem do Controle de Acesso do GCMBS.</p><div id="listaModulos" class="module-grid"></div></div>
+  <div class="card"><h2>Outros</h2><p class="muted">O aplicativo respeita a mesma autorização do GCMBS Desktop. Cada módulo autorizado utiliza uma interface própria ou um formulário estruturado conforme o cadastro correspondente do Desktop. Os dados são sincronizados em nuvem quando houver conexão. O nível CONSULTA/EDIÇÃO vem do Controle de Acesso do GCMBS.</p><div id="listaModulos" class="module-grid"></div></div>
 </section>
 <section data-view="perfil" class="hidden">
   <div class="card"><h2>Meu perfil</h2><p><b>Usuário:</b> <span id="perfilUsuario"></span></p><p><b>Perfil:</b> <span id="perfilRole"></span></p></div>
@@ -109,5 +160,5 @@
 <div id="quadroModal" class="quadro-modal hidden" role="dialog" aria-modal="true"><div class="quadro-modal-card"><div class="quadro-modal-head"><h2 id="quadroModalTitulo">Detalhes</h2><button id="quadroModalFechar" type="button">×</button></div><div id="quadroModalMeta" class="muted"></div><div id="quadroModalLista" class="list"></div></div></div>
 <nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="avisos" data-fixed="true">🔔 <span>Avisos</span> <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
 </div>
-<script type="module" src="js/app.js?v=100043"></script>
+<script type="module" src="js/app.js?v=100048"></script>
 </body></html>
