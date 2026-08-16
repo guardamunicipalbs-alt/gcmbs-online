@@ -7,7 +7,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.54';
+const APP_VERSION='10.0.55';
 let provider=new AuthenticatedProvider();
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
 
@@ -417,7 +417,9 @@ function campoOnline(col,val){
   if(lower==='guarda_id'&&!provider.gestor())return'';
   const type=String(col.type||'').toUpperCase(),v=valorOnline(val),label=onlineLabel(name);
   if(/^(viatura_id|viatura_principal_id|viatura_substituta_id|hist_viatura_id)$/.test(lower)){
-    const opts=(refData().viaturas||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc([x.prefixo,x.placa,x.modelo].filter(Boolean).join(' · '))}</option>`).join('');
+    const all=(refData().viaturas||[]);
+    const lista=onlineCurrent?.entity==='manutencao_viaturas'?all:all.filter(x=>!['MANUTENCAO','MANUTENÇÃO','INDISPONIVEL','INDISPONÍVEL','BAIXADA','INATIVA'].includes(String(x.situacao_operacional||x.status||'ATIVA').toUpperCase()));
+    const opts=lista.map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc([x.prefixo,x.placa,x.modelo,x.situacao_operacional].filter(Boolean).join(' · '))}</option>`).join('');
     return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${opts}</select></label>`;
   }
   if(lower==='equipe_id'){
@@ -464,7 +466,7 @@ function campoOnline(col,val){
   if(['autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h','exige_motorista','funcionamento_24h','ativa','participa_gerador'].includes(lower))return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="1" ${['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Sim</option><option value="0" ${!['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Não</option></select></label>`;
   if(lower==='combustivel')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${['GASOLINA','ETANOL','DIESEL','FLEX'].map(x=>`<option ${String(v).toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='tipo'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="VIATURA" ${String(v||'VIATURA').toUpperCase()==='VIATURA'?'selected':''}>Viatura / carro</option><option value="MOTO" ${['MOTO','MOTOPATRULHA'].includes(String(v).toUpperCase())?'selected':''}>Motopatrulha</option></select></label>`;
-  if(lower==='status'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['ATIVA','DISPONÍVEL','EM USO','MANUTENÇÃO','BAIXADA','INATIVA'].map(x=>`<option value="${x}" ${String(v||'ATIVA').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
+  if(lower==='status'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['ATIVA','INDISPONIVEL','BAIXADA','INATIVA'].map(x=>`<option value="${x}" ${String(v||'ATIVA').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='modalidade_uso')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['INDIVIDUAL','VIATURA','COLETIVO'].map(x=>`<option ${String(v||'INDIVIDUAL').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='tipo_servico'&&onlineCurrent?.entity==='frequencia_registros')return `<label>${esc(label)}<select data-online-field="${esc(name)}" disabled><option value="${esc(v)}">${esc(v||'Selecione GCM e data')}</option></select><small>Preenchido automaticamente pela escala gravada.</small></label>`;
   if(lower==='tipo_servico')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="ORDINARIO" ${String(v||'ORDINARIO').toUpperCase()==='ORDINARIO'?'selected':''}>Serviço ordinário</option><option value="EXTRA" ${String(v).toUpperCase()==='EXTRA'?'selected':''}>Serviço extra</option></select></label>`;
@@ -571,7 +573,7 @@ function renderRelatoriosFrota(){
   const el=$('frotaRelatorioAtalhos');if(!el)return;const mods=[['viaturas','Cadastro de Viaturas','Frota, tipo e situação'],['manutencao_viaturas','Manutenções','Baixas, oficinas e retornos'],['abastecimento_viaturas','Abastecimentos','Consumo, km e motorista'],['checklist_viaturas','Check-lists','Inspeções e pendências']].filter(x=>temAcesso(x[0]));
   el.innerHTML=mods.map(x=>`<button class="report-launch" type="button" data-frota-open="${x[0]}"><strong>${x[1]}</strong><span>${x[2]}</span><b>ABRIR →</b></button>`).join('')||'<div class="empty">Nenhum conjunto da frota autorizado.</div>';
   el.querySelectorAll('[data-frota-open]').forEach(b=>b.addEventListener('click',()=>abrirModuloPrincipal(b.dataset.frotaOpen)));
-  const refs=refData(),vs=refs.viaturas||[];if($('rfTotal'))$('rfTotal').textContent=String(vs.length);if($('rfAtivas'))$('rfAtivas').textContent=String(vs.filter(v=>!/BAIX|INATIV|MANUT/i.test(String(v.status||''))).length);
+  const refs=refData(),vs=refs.viaturas||[];if($('rfTotal'))$('rfTotal').textContent=String(vs.length);if($('rfAtivas'))$('rfAtivas').textContent=String(vs.filter(v=>!['MANUTENCAO','MANUTENÇÃO','INDISPONIVEL','INDISPONÍVEL','BAIXADA','INATIVA'].includes(String(v.situacao_operacional||v.status||'ATIVA').toUpperCase())).length);
 }
 function renderCentralPendencias(){
   const host=$('pendenciasLista');if(!host)return;const req=(provider.actionRequests()||[]).filter(x=>!['APROVADA','RECUSADA','REPROVADA','CANCELADA','CONCLUIDA'].includes(String(x.status||'PENDENTE').toUpperCase()));const notif=(provider.notifications()||[]).filter(x=>!x.lida_em);
