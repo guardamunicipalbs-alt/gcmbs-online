@@ -1,13 +1,12 @@
-﻿{
-    "version":  "10.0.57",
-    "versionCode":  57,
-    "apk":  "GCMBS-10.0.57.apk",
-    "available":  true,
-    "publishedAt":  "2026-08-16T02:59:34.0359121-03:00",
-    "sha256":  "fb56257101252ff5c9259666d99f59aa71af6bc8de1fcbf5828ce2e4e9d2a30f",
-    "notes":  [
-                  "Instalacao/atualizacao pelo site sem USB",
-                  "Pagina oficial de download do Android",
-                  "Verificacao de versao no Meu Perfil"
-              ]
+{
+  "version": "10.0.58",
+  "versionCode": 58,
+  "apk": "GCMBS-10.0.58.apk",
+  "available": false,
+  "publishedAt": "2026-08-16T16:53:00-03:00",
+  "notes": [
+    "Código Online/PWA atualizado para 10.0.58",
+    "Permutas de extras, filtros por competência e novas regras integradas",
+    "APK 10.0.58 aguardando recompilação em ambiente com dependências Gradle disponíveis"
+  ]
 }
