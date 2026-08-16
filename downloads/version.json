@@ -1,0 +1,13 @@
+﻿{
+    "version":  "10.0.57",
+    "versionCode":  57,
+    "apk":  "GCMBS-10.0.57.apk",
+    "available":  true,
+    "publishedAt":  "2026-08-16T02:59:34.0359121-03:00",
+    "sha256":  "fb56257101252ff5c9259666d99f59aa71af6bc8de1fcbf5828ce2e4e9d2a30f",
+    "notes":  [
+                  "Instalacao/atualizacao pelo site sem USB",
+                  "Pagina oficial de download do Android",
+                  "Verificacao de versao no Meu Perfil"
+              ]
+}
