@@ -2,6 +2,7 @@ import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.j
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
+const ACTIONS_V58='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-actions-v58';
 
 export class AuthenticatedProvider {
   constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}; }
@@ -18,6 +19,16 @@ export class AuthenticatedProvider {
     });
     let body={};
     try{body=await r.json()}catch{}
+    if(!r.ok) throw new Error(body.message||`Erro ${r.status}`);
+    return body;
+  }
+
+  async callV58(action,payload={}){
+    const headers={'Content-Type':'application/json'};
+    const token=localStorage.getItem('gcmbs.mobile.token');
+    if(token) headers.Authorization=`Bearer ${token}`;
+    const r=await fetch(ACTIONS_V58,{method:'POST',headers,body:JSON.stringify({action,...payload}),cache:'no-store'});
+    let body={};try{body=await r.json()}catch{}
     if(!r.ok) throw new Error(body.message||`Erro ${r.status}`);
     return body;
   }
@@ -55,8 +66,6 @@ export class AuthenticatedProvider {
     const body=await this.call('data');
     this.data=body;
     try{this.refs=await this.call('references')}catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
-    // O relatório usa prioritariamente a réplica integral do Desktop. Isso evita
-    // divergência entre a tabela móvel resumida e a tabela real de escalas.
     if(this.pode('escalas') || this.pode('relatorios')){
       try{
         const mirror=await this.entityList('escalas',5000,0);
@@ -81,23 +90,25 @@ export class AuthenticatedProvider {
   async entityCatalog(){return (await this.call('entity_catalog')).entities||[]}
   async entityList(entity,limit=500,offset=0){return this.call('entity_list',{entity,limit,offset})}
   async entityMutate(entity,record_key,operation,data,client_change_id=''){return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id})}
-  async quadro(data){return this.call('quadro_operacional',{data})}
+  async quadro(data){const base=await this.call('quadro_operacional',{data});try{const c=await this.callV58('quadro_counters',{data});if(base?.efetivo){base.efetivo.servicoA=Number(c.servicoA||0);base.efetivo.servicoB=Number(c.servicoB||0);if(base.efetivo.detalhes){base.efetivo.detalhes.servicoA=c.detalhesA||[];base.efetivo.detalhes.servicoB=c.detalhesB||[];}}}catch(e){console.warn('[GCMBS] contadores ordinários:',e?.message||e);}return base}
   async relatorioEscalas(){return (await this.call('relatorio_escalas')).escalas||[]}
-  async ajustarEscalaComando(adjustment){const r=await this.call('admin_scale_adjust',{adjustment});await this.load();return r}
+  async ajustarEscalaComando(adjustment){const r=await this.callV58('admin_scale_adjust_v58',{adjustment});await this.load();return r}
   async permutaCandidatesFor(data,turno){return this.call('permuta_candidates',{data,turno})}
+  async extraSwapCandidates(){return this.callV58('extra_swap_candidates',{})}
   async frequencyServices(guarda_id,data){return this.call('frequency_services',{guarda_id,data})}
   async checklistContext(viatura_id){return this.call('checklist_context',{viatura_id})}
   async occurrenceContext(data,hora){return this.call('occurrence_context',{data,hora})}
   references(){return this.refs||{viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}}
 
   async requestBankCorrection(request){const r=await this.call('request_bank_correction',{request});await this.load();return r}
-  async requestPermuta(request){const r=await this.call('request_permuta',{request});await this.load();return r}
+  async requestPermuta(request){const modalidade=String(request?.modalidade||'ASSUNCAO').toUpperCase();const r=modalidade==='TROCA_EXTRA'?await this.callV58('request_extra_swap',{request}):await this.call('request_permuta',{request});await this.load();return r}
+  async acceptExtraSwap(id,aceitou){const r=await this.callV58('accept_extra_swap',{id,aceitou});await this.load();return r}
   async updatePermutaRequest(id,request){const r=await this.call('update_permuta_request',{id,request});await this.load();return r}
   async cancelPermutaRequest(id){const r=await this.call('cancel_permuta_request',{id});await this.load();return r}
   async decidePermutaRequest(id,decisao,motivo=''){const r=await this.call('decide_permuta_request',{id,decisao,motivo});await this.load();return r}
   async adminDeletePermutaRequest(id,motivo=''){const r=await this.call('admin_delete_permuta_request',{id,motivo});await this.load();return r}
   async decideBankRequest(id,decisao,ajustes={}){const r=await this.call('decide_bank_request',{id,decisao,ajustes});await this.load();return r}
-  async sendInstitutionalMessage(message){const r=await this.call('send_message',{message});await this.load();return r}
+  async sendInstitutionalMessage(message){const r=await this.callV58('send_message_v58',{message});await this.load();return r}
   async markNotificationRead(id){const r=await this.call('mark_notification_read',{id});if(r.success&&this.data){const n=this.data.notifications?.find(x=>Number(x.id)===Number(id));if(n&&!n.lida_em)n.lida_em=new Date().toISOString();}return r}
   async pushCall(payload={}){
     const token=localStorage.getItem('gcmbs.mobile.token');
