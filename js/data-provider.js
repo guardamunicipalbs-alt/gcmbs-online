@@ -83,6 +83,7 @@ export class AuthenticatedProvider {
   async entityMutate(entity,record_key,operation,data,client_change_id=''){return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id})}
   async quadro(data){return this.call('quadro_operacional',{data})}
   async relatorioEscalas(){return (await this.call('relatorio_escalas')).escalas||[]}
+  async ajustarEscalaComando(adjustment){const r=await this.call('admin_scale_adjust',{adjustment});await this.load();return r}
   async permutaCandidatesFor(data,turno){return this.call('permuta_candidates',{data,turno})}
   async frequencyServices(guarda_id,data){return this.call('frequency_services',{guarda_id,data})}
   async checklistContext(viatura_id){return this.call('checklist_context',{viatura_id})}

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100051"><link rel="stylesheet" href="css/app.css?v=100051"><title>GCMBS</title></head>
+<meta name="theme-color" content="#0f172a"><link rel="manifest" href="manifest.webmanifest?v=100052"><link rel="stylesheet" href="css/app.css?v=100052"><title>GCMBS</title></head>
 <body>
 <section id="loginTela" class="login-screen">
   <div class="login-card">
@@ -28,20 +28,22 @@
     <button class="dashboard-card" data-quadro-detail="efetivo.afastados" data-title="GCM afastados"><span>GCM afastados</span><b id="qAfastados">0</b><small>Ver relação</small></button>
     <button class="dashboard-card" data-quadro-detail="efetivo.feristas" data-title="GCM em férias"><span>GCM em férias</span><b id="qFerias">0</b><small>Ver relação</small></button>
     <button class="dashboard-card" data-quadro-detail="faltas.registros" data-title="Faltas do dia"><span>Faltas</span><b id="qFaltas">0</b><small>Ver relatório</small></button>
-    <button class="dashboard-card" data-quadro-detail="efetivo.servicoA" data-title="Serviço A · 07:00–19:00"><span>Serviço A · 07:00–19:00</span><b>Ver serviço</b><small>GCMs e postos</small></button>
-    <button class="dashboard-card" data-quadro-detail="efetivo.servicoB" data-title="Serviço B · 19:00–07:00"><span>Serviço B · 19:00–07:00</span><b>Ver serviço</b><small>GCMs e postos</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoA" data-title="Serviço A · 07:00–19:00"><span>Serviço A · 07:00–19:00</span><b id="qServicoA">0</b><small>GCMs e postos</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoB" data-title="Serviço B · 19:00–07:00"><span>Serviço B · 19:00–07:00</span><b id="qServicoB">0</b><small>GCMs e postos</small></button>
   </div></section>
   <section class="dashboard-sector"><h2>Viaturas</h2><div class="dashboard-cards">
     <button class="dashboard-card" data-quadro-detail="viaturas.total" data-title="Frota cadastrada"><span>Totais</span><b id="qViaturasTotal">0</b><small>Ver relação</small></button>
     <button class="dashboard-card" data-quadro-detail="viaturas.disponivel" data-title="Disponíveis"><span>Disponível</span><b id="qViaturasDisponiveis">0</b><small>Fora de uso e manutenção</small></button>
     <button class="dashboard-card" data-quadro-detail="viaturas.emUso" data-title="Em uso"><span>Em uso</span><b id="qViaturasUso">0</b><small>Ver alocação</small></button>
-    <button class="dashboard-card" data-quadro-detail="viaturas.baixadas" data-title="Baixadas · não utilizadas"><span>Baixadas · não utilizadas</span><b id="qViaturasBaixadas">0</b><small>Não utilizadas no dia</small></button>
+    <button class="dashboard-card" data-quadro-detail="viaturas.baixadas" data-title="Não utilizadas"><span>Não utilizadas</span><b id="qViaturasBaixadas">0</b><small>Operacionais sem alocação no dia</small></button>
+    <button class="dashboard-card" data-quadro-detail="viaturas.indisponivel" data-title="Indisponíveis"><span>Indisponível</span><b id="qViaturasIndisponiveis">0</b><small>Fora de operação, sem manutenção aberta</small></button>
     <button class="dashboard-card" data-quadro-detail="viaturas.manutencao" data-title="Em manutenção"><span>Em manutenção</span><b id="qViaturasManut">0</b><small>Ver relação</small></button>
   </div></section>
   <section class="dashboard-sector"><h2>Postos</h2><div class="dashboard-cards one"><button class="dashboard-card" data-quadro-detail="postos.cobertos" data-title="Postos cobertos no dia"><span>Postos cobertos no dia</span><b id="qPostos">0</b><small>Ver postos, turnos e GCMs</small></button></div><div id="qAviso" class="notice">Carregando Quadro Operacional...</div></section>
 </section>
 <section data-view="escala" class="hidden">
-  <div class="desktop-page-head"><div><h1>Relatório de Escala</h1><p>Mesma visão por posto e horário utilizada no Desktop.</p></div></div>
+  <div class="desktop-page-head"><div><h1 id="escalaTitulo">Relatório de Escala</h1><p id="escalaSubtitulo">Mesma visão por posto e horário utilizada no Desktop.</p></div></div>
+  <div id="escalaComandoAviso" class="card notice hidden"><strong>Gerenciador de Escala — Comando</strong><br>Toque em <b>Alterar</b> ao lado de um GCM para trocar o posto ou substituir o servidor. Alterações em datas anteriores são bloqueadas e cada ajuste fica registrado para auditoria.</div>
   <div class="card report-filters">
     <label>Data inicial<input id="escalaIni" type="date"></label><label>Data final<input id="escalaFim" type="date"></label>
     <label>GCM<select id="escalaGcm"><option value="">Todos os GCMs</option></select></label>
@@ -133,7 +135,7 @@
   <div class="card"><div class="toolbar"><div><h2>Pendências consolidadas</h2><small class="muted">Atualizadas junto com a sincronização online.</small></div></div><div id="pendenciasLista" class="pending-list"></div></div>
 </section>
 <section data-view="online" class="hidden">
-  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Android 10.0.49</small></div></div>
+  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Android 10.0.52</small></div></div>
   <div class="card module-landing">
     <div class="notice module-sync-note"><strong>Dados únicos e sincronizados</strong>Esta tela utiliza as mesmas permissões e registros do sistema online. Ações de edição só aparecem para usuários autorizados.</div>
     <div id="onlineEntidades" class="module-grid"></div>
@@ -145,6 +147,8 @@
     <div id="onlineRegistros" class="list module-record-list"></div>
   </div>
 </section>
+
+<dialog id="escalaEditor"><div class="card module-editor-card" style="margin:0"><div class="module-editor-head"><div><div class="module-kicker">GERENCIADOR DE ESCALA · COMANDO</div><h2>Ajustar serviço</h2></div><button id="escalaEditorFechar" class="dialog-close" type="button">×</button></div><div class="module-editor-fields"><div class="notice" id="escalaEditorResumo"></div><label>Novo posto<select id="escalaNovoPosto"><option value="">Manter posto atual</option></select></label><label>Substituir por GCM<select id="escalaNovoGcm"><option value="">Manter GCM atual</option></select></label><label class="full">Motivo da alteração<textarea id="escalaMotivo" placeholder="Informe o motivo administrativo" required></textarea></label></div><div class="form-actions"><button id="escalaSalvarAjuste" class="primary" type="button">Registrar alteração</button><button id="escalaCancelarAjuste" class="secondary" type="button">Cancelar</button></div><div id="escalaAjusteMsg" class="muted" style="margin-top:8px"></div></div></dialog>
 <dialog id="onlineEditor"><div class="card module-editor-card" style="margin:0"><div class="module-editor-head"><div><div class="module-kicker">FORMULÁRIO INSTITUCIONAL</div><h2 id="onlineEditorTitulo">Registro</h2></div><button id="onlineCancelar" class="dialog-close" type="button" aria-label="Fechar">×</button></div><div id="onlineCampos" class="module-editor-fields"></div><div class="form-actions module-editor-actions"><button id="onlineSalvar" class="primary">Salvar</button><button id="onlineCancelarBottom" class="secondary" type="button">Cancelar</button></div><div id="onlineMsg" class="muted" style="margin-top:8px"></div></div></dialog>
 
 <section data-view="avisos" class="hidden">
@@ -175,5 +179,5 @@
 <div id="quadroModal" class="quadro-modal hidden" role="dialog" aria-modal="true"><div class="quadro-modal-card"><div class="quadro-modal-head"><h2 id="quadroModalTitulo">Detalhes</h2><button id="quadroModalFechar" type="button">×</button></div><div id="quadroModalMeta" class="muted"></div><div id="quadroModalLista" class="list"></div></div></div>
 <nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="avisos" data-fixed="true">📢 <span>Quadro de Avisos</span> <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
 </div>
-<script type="module" src="js/app.js?v=100051"></script>
+<script type="module" src="js/app.js?v=100052"></script>
 </body></html>

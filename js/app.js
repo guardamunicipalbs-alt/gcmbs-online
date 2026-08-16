@@ -7,9 +7,9 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.51';
+const APP_VERSION='10.0.53';
 let provider=new AuthenticatedProvider();
-let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[];
+let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
 
 const ONLINE_LABELS={
   viatura_id:'Viatura',data_manutencao:'Data da manutenção',tipo_manutencao:'Tipo de manutenção',descricao:'Descrição',
@@ -101,7 +101,7 @@ function setView(id){
 }
 function temAcesso(modulo){
   if(modulo==='perfil'||modulo==='avisos') return true;
-  if(modulo==='escalas') return provider.gestor() && provider.pode('escalas');
+  if(modulo==='escalas'||modulo==='gerador_escala') return provider.gestor() && provider.pode('escalas');
   return provider.pode(modulo);
 }
 function renderNavegacao(){
@@ -205,7 +205,7 @@ function montarGruposEscala(registros){
     const turno=String(item.turno||'A').toUpperCase(),horario=horarioRelatorio(item),prioridade=Number(item.posto_prioridade??item.hist_posto_prioridade??9999),chave=`${posto}\0${turno}\0${horario}`;
     if(!grupos.has(chave))grupos.set(chave,{posto,turno,horario,prioridade,itens:new Map()});
     const dia=String(item.data||'').slice(0,10),g=grupos.get(chave),arr=g.itens.get(dia)||[],nome=nomeEscala(item),ex=arr.find(x=>normalizar(x.nome)===normalizar(nome)),motorista=motoristaEscala(item,nome),veiculo=String(item.viatura||item.hist_viatura_prefixo||'').trim(),extra=normalizar(item.origem).includes('EXTRA');
-    if(ex){ex.motorista=ex.motorista||motorista;ex.veiculo=ex.veiculo||veiculo;ex.extra=ex.extra||extra}else arr.push({nome,motorista,veiculo,extra});
+    if(ex){ex.motorista=ex.motorista||motorista;ex.veiculo=ex.veiculo||veiculo;ex.extra=ex.extra||extra}else arr.push({nome,motorista,veiculo,extra,raw:item,id:Number(item.id||0),guarda_id:Number(item.guarda_id||0),posto_id:Number(item.posto_id||0),data:dia});
     g.itens.set(dia,arr);g.prioridade=Math.min(g.prioridade,prioridade);
   }
   return [...grupos.values()].sort((a,b)=>(a.prioridade-b.prioridade)||normalizar(a.posto).localeCompare(normalizar(b.posto))||a.turno.localeCompare(b.turno));
@@ -226,10 +226,33 @@ function renderEscalas(){
   let datas=gerarDatas(ini,fim);if(gcm||posto||horario){const ds=new Set(dados.map(x=>String(x.data||'').slice(0,10)));datas=datas.filter(d=>ds.has(d))}
   const grupos=montarGruposEscala(dados);
   $('cabecalhoMatrizMobile').innerHTML='<th class="col-posto">POSTO / HORÁRIO</th>'+datas.map(d=>`<th>${fmt(d)}</th>`).join('');
-  $('resultadoMatrizMobile').innerHTML=grupos.map(g=>`<tr><th class="posto-linha"><b>${esc(g.posto)}</b><span>${esc(g.horario)}</span></th>${datas.map(d=>{const itens=g.itens.get(d)||[];return itens.length?`<td>${itens.map(x=>`<div class="gcm-linha"><b>${esc(x.nome)}</b>${x.motorista?`<span class="tag-driver">MOTORISTA${x.veiculo?' - '+esc(x.veiculo):''}</span>`:''}${x.extra?'<span class="tag-extra">Extra</span>':''}</div>`).join('')}</td>`:'<td class="vazio">—</td>'}).join('')}</tr>`).join('')||`<tr><td colspan="${Math.max(1,datas.length+1)}">Nenhuma escala encontrada para os filtros informados.</td></tr>`;
+  const podeGerenciar=provider.gestor()&&provider.pode('escalas','EDICAO');
+  $('escalaComandoAviso')?.classList.toggle('hidden',!podeGerenciar);
+  if($('escalaTitulo'))$('escalaTitulo').textContent=podeGerenciar?'Gerenciar Escalas':'Relatório de Escala';
+  if($('escalaSubtitulo'))$('escalaSubtitulo').textContent=podeGerenciar?'Visualize a escala e faça ajustes administrativos pelo celular.':'Mesma visão por posto e horário utilizada no Desktop.';
+  $('resultadoMatrizMobile').innerHTML=grupos.map(g=>`<tr><th class="posto-linha"><b>${esc(g.posto)}</b><span>${esc(g.horario)}</span></th>${datas.map(d=>{const itens=g.itens.get(d)||[];return itens.length?`<td>${itens.map(x=>`<div class="gcm-linha"><b>${esc(x.nome)}</b>${x.motorista?`<span class="tag-driver">MOTORISTA${x.veiculo?' - '+esc(x.veiculo):''}</span>`:''}${x.extra?'<span class="tag-extra">Extra</span>':''}${podeGerenciar&&x.id&&!x.extra?`<button class="mini scale-edit" data-scale-edit="${x.id}" type="button">Alterar</button>`:''}</div>`).join('')}</td>`:'<td class="vazio">—</td>'}).join('')}</tr>`).join('')||`<tr><td colspan="${Math.max(1,datas.length+1)}">Nenhuma escala encontrada para os filtros informados.</td></tr>`;
+  document.querySelectorAll('[data-scale-edit]').forEach(b=>b.onclick=()=>abrirAjusteEscala(Number(b.dataset.scaleEdit)));
   $('escalaInfo').textContent=`${dados.length} registro(s) · ${fmt(ini)} a ${fmt(fim)}`;
   $('escalaFiltroAtivo').textContent=[gcm&&`GCM: ${gcm}`,posto&&`Posto: ${posto}`,horario&&`Horário: ${horario}`].filter(Boolean).join(' · ')||'Todos os GCMs, postos e horários';
 }
+
+function abrirAjusteEscala(id){
+  if(!(provider.gestor()&&provider.pode('escalas','EDICAO')))return alert('Ajuste de escala restrito ao Comando autorizado.');
+  const item=dadosEscalaVisao().find(x=>Number(x.id)===Number(id));if(!item)return alert('Registro de escala não localizado.');
+  const hojeLocal=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});if(String(item.data||'').slice(0,10)<hojeLocal)return alert('Escalas anteriores são históricas e não podem ser alteradas.');
+  escalaEditing=item;const refs=refData();
+  $('escalaEditorResumo').innerHTML=`<b>${esc(nomeEscala(item))}</b> · ${fmt(String(item.data).slice(0,10))} · ${esc(horarioRelatorio(item))}<br>Posto atual: <b>${esc(postoEscala(item)||'-')}</b>`;
+  $('escalaNovoPosto').innerHTML='<option value="">Manter posto atual</option>'+(refs.postos||[]).map(x=>`<option value="${esc(x.id)}">${esc(x.nome||'Posto')}</option>`).join('');
+  $('escalaNovoGcm').innerHTML='<option value="">Manter GCM atual</option>'+(refs.guardas||[]).filter(x=>Number(x.id)!==Number(item.guarda_id)).map(x=>`<option value="${esc(x.id)}">${esc(x.nome_guerra||x.nome_completo||'GCM')}</option>`).join('');
+  $('escalaMotivo').value='';$('escalaAjusteMsg').textContent='';$('escalaEditor').showModal();
+}
+async function salvarAjusteEscala(){
+  if(!escalaEditing)return;const posto=Number($('escalaNovoPosto').value)||0,gcm=Number($('escalaNovoGcm').value)||0,motivo=$('escalaMotivo').value.trim();
+  if(!posto&&!gcm)return alert('Selecione um novo posto ou um GCM substituto.');if(!motivo)return alert('Informe o motivo da alteração.');
+  $('escalaSalvarAjuste').disabled=true;$('escalaAjusteMsg').textContent='Registrando ajuste...';
+  try{const r=await provider.ajustarEscalaComando({escala_id:Number(escalaEditing.id),data:String(escalaEditing.data||'').slice(0,10),novo_posto_id:posto||null,novo_guarda_id:gcm||null,motivo});$('escalaAjusteMsg').textContent=r.message||'Alteração registrada para sincronização com o Desktop.';$('escalaEditor').close();await provider.load();renderEscalas();alert(r.message||'Alteração registrada.');}catch(e){$('escalaAjusteMsg').textContent=e.message;}finally{$('escalaSalvarAjuste').disabled=false;}
+}
+
 function detalhesQuadro(caminho){const [g,k]=String(caminho||'').split('.');if(!quadroAtual)return[];if(g==='efetivo')return quadroAtual.efetivo?.detalhes?.[k]||[];if(g==='viaturas')return quadroAtual.viaturas?.detalhes?.[k]||[];if(g==='postos'&&k==='cobertos')return quadroAtual.postos?.detalhamento||[];if(g==='faltas'&&k==='registros')return quadroAtual.faltas?.registros||[];return[]}
 function abrirQuadroDetalhe(titulo,caminho){const itens=detalhesQuadro(caminho);$('quadroModalTitulo').textContent=titulo||'Detalhes';$('quadroModalMeta').textContent=`Data de referência: ${fmt(quadroAtual?.data||$('quadroData').value)} · ${itens.length} registro(s)`;$('quadroModalLista').innerHTML=itens.length?itens.map(x=>`<div class="item"><strong>${esc(x.nome||'-')}</strong><span>${esc(x.complemento||'')}</span></div>`).join(''):'<div class="empty">Nenhum registro compõe este indicador na data selecionada.</div>';$('quadroModal').classList.remove('hidden')}
 function renderInicio(){
@@ -237,7 +260,7 @@ function renderInicio(){
 }
 async function carregarQuadro(){
   const data=$('quadroData')?.value||hoje();$('qAviso').textContent='Atualizando Quadro Operacional...';
-  try{const d=await provider.quadro(data);quadroAtual=d;$('qAtivos').textContent=d.efetivo?.ativos||0;$('qAfastados').textContent=d.efetivo?.afastados||0;$('qFerias').textContent=d.efetivo?.feristas||0;$('qViaturasTotal').textContent=d.viaturas?.total||0;$('qViaturasDisponiveis').textContent=d.viaturas?.disponivel||0;$('qViaturasUso').textContent=d.viaturas?.emUso||0;$('qViaturasBaixadas').textContent=d.viaturas?.baixadas||0;$('qViaturasManut').textContent=d.viaturas?.manutencao||0;$('qPostos').textContent=d.postos?.cobertos||0;if($('qFaltas'))$('qFaltas').textContent=d.faltas?.total||0;$('qAviso').textContent=(d.cnhVencidas||[]).length?`⚠ CNH vencida: ${d.cnhVencidas.length} GCM(s).`:'Sem avisos de CNH vencida para a data selecionada.'}catch(e){$('qAviso').textContent='Não foi possível carregar o Quadro Operacional: '+e.message}
+  try{const d=await provider.quadro(data);quadroAtual=d;$('qAtivos').textContent=d.efetivo?.ativos||0;$('qAfastados').textContent=d.efetivo?.afastados||0;$('qFerias').textContent=d.efetivo?.feristas||0;if($('qServicoA'))$('qServicoA').textContent=d.efetivo?.servicoA||0;if($('qServicoB'))$('qServicoB').textContent=d.efetivo?.servicoB||0;$('qViaturasTotal').textContent=d.viaturas?.total||0;$('qViaturasDisponiveis').textContent=d.viaturas?.disponivel||0;$('qViaturasUso').textContent=d.viaturas?.emUso||0;$('qViaturasBaixadas').textContent=d.viaturas?.baixadas||0;if($('qViaturasIndisponiveis'))$('qViaturasIndisponiveis').textContent=d.viaturas?.indisponivel||0;$('qViaturasManut').textContent=d.viaturas?.manutencao||0;$('qPostos').textContent=d.postos?.cobertos||0;if($('qFaltas'))$('qFaltas').textContent=d.faltas?.total||0;$('qAviso').textContent=(d.cnhVencidas||[]).length?`⚠ CNH vencida: ${d.cnhVencidas.length} GCM(s).`:'Sem avisos de CNH vencida para a data selecionada.'}catch(e){$('qAviso').textContent='Não foi possível carregar o Quadro Operacional: '+e.message}
 }
 function nomeCandidato(id){const x=provider.permutationCandidates().find(g=>Number(g.guarda_id)===Number(id));return x?.nome_guerra||'GCM';}
 function renderViaturas(){
@@ -649,3 +672,5 @@ async function boot(){
 boot();
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100049',{updateViaCache:'none'}).catch(()=>{});}
+
+$('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);
