@@ -1,185 +1,31 @@
 const BASE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
-const QUADRO_V62=BASE+'gcmbs-quadro-v62';
-const API_V6=BASE+'gcmbs-mobile-api-v6';
+const QUADRO=BASE+'gcmbs-quadro-v62';
+const API=BASE+'gcmbs-mobile-api-v6';
 const _fetch=window.fetch.bind(window);
-const hojeFortaleza=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
-const hojeUTC=()=>new Date().toISOString().slice(0,10);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-// Compatibilidade imediata: clientes 10.0.61 passam a usar as rotas corrigidas v62.
-window.fetch=async function(input,init){
-  let original=typeof input==='string'?input:(input instanceof Request?input.url:String(input));
-  let url=original
-    .replace('/gcmbs-quadro-v61','/gcmbs-quadro-v62')
-    .replace('/gcmbs-actions-v58','/gcmbs-actions-v62')
-    .replace('/gcmbs-extra-cession-v58','/gcmbs-extra-assumption-v62');
-  let nextInit=init?{...init}:{};
-  try{
-    if(url.includes('/gcmbs-mobile-api-v6')&&typeof nextInit.body==='string'){
-      const body=JSON.parse(nextInit.body);
-      if(String(body?.action||'').toLowerCase()==='login'){
-        body.remember=localStorage.getItem('gcmbs.login.remember')==='1';
-        nextInit.body=JSON.stringify(body);
-      }
-    }
-  }catch{}
-  if(input instanceof Request){
-    input=url===original?input:new Request(url,input);
-  }else input=url;
-  return _fetch(input,nextInit);
-};
-
-function fmtSync(iso){if(!iso)return 'ainda não registrada';try{return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Fortaleza'});}catch{return String(iso)}}
-function ensureBadge(){let el=document.getElementById('syncStatus');if(el)return el;const host=document.querySelector('.header-user')||document.querySelector('header');if(!host)return null;el=document.createElement('span');el.id='syncStatus';el.className='sync-status';Object.assign(el.style,{fontSize:'11px',color:'#cbd5e1',maxWidth:'330px',lineHeight:'1.25'});const first=host.querySelector('#headerUsuario');host.insertBefore(el,first||null);return el;}
-async function atualizar(){const el=ensureBadge();if(!el)return;const token=localStorage.getItem('gcmbs.mobile.token');if(!token){el.textContent='Sincronização: aguardando login';return;}try{const r=await _fetch(QUADRO_V62,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({action:'sync_status'}),cache:'no-store'});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.message||`HTTP ${r.status}`);const s=b.sincronizacao||{};el.textContent=`Última sincronização Desktop ↔ Online/App: ${fmtSync(s.ultima_sincronizacao)}${s.desktop_version?' · Desktop '+s.desktop_version:''}`;el.title=`Pendentes: ${Number(s.pendentes||0)} · Erros recentes: ${Number(s.erros_recentes||0)} · GCMBS Online/App 10.0.62`;el.style.color=Number(s.erros_recentes||0)>0?'#fecaca':Number(s.pendentes||0)>0?'#fde68a':'#bbf7d0';}catch(e){el.textContent='Sincronização: indisponível';el.title=e?.message||'Falha ao consultar sincronização';el.style.color='#fecaca';}}
-
-function corrigirDataBoot(){
-  const local=hojeFortaleza(),utc=hojeUTC();
-  if(local===utc)return;
-  let qMudou=false;
-  for(const id of ['quadroData','escalaIni','escalaFim','pmData','bcData','chkData','occData','msgDataServico']){
-    const el=document.getElementById(id);if(el&&el.value===utc){el.value=local;if(id==='quadroData')qMudou=true;}
-  }
-  if(qMudou)document.getElementById('quadroData')?.dispatchEvent(new Event('change',{bubbles:true}));
-}
-function corrigirDataNovo(id){setTimeout(()=>{const el=document.getElementById(id);if(el)el.value=hojeFortaleza();},20)}
-
-function corrigirRotulos(){
-  const n=document.getElementById('qViaturasBaixadas')?.closest('.dashboard-card');
-  if(n){const span=n.querySelector('span'),small=n.querySelector('small');if(span)span.textContent='Baixadas / indisponíveis';if(small)small.textContent='Fora de operação e fora de manutenção';n.dataset.title='Baixadas / indisponíveis';}
-}
-
-function instalarLembrarAcesso(){
-  const form=document.getElementById('loginForm');if(!form||document.getElementById('loginLembrar'))return;
-  const btn=document.getElementById('entrar');
-  const label=document.createElement('label');label.className='check';label.innerHTML='<input id="loginLembrar" type="checkbox"> Lembrar meu acesso neste dispositivo';
-  form.insertBefore(label,btn||null);
-  const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';label.querySelector('input').checked=lembrar;
-  const user=localStorage.getItem('gcmbs.login.usuario');if(lembrar&&user&&document.getElementById('loginUsuario'))document.getElementById('loginUsuario').value=user;
-  form.addEventListener('submit',()=>{const on=!!document.getElementById('loginLembrar')?.checked;localStorage.setItem('gcmbs.login.remember',on?'1':'0');const u=document.getElementById('loginUsuario')?.value||'';if(on&&u)localStorage.setItem('gcmbs.login.usuario',u);else localStorage.removeItem('gcmbs.login.usuario');},true);
-}
-
-async function api(action,payload={}){
-  const token=localStorage.getItem('gcmbs.mobile.token');
-  const r=await _fetch(API_V6,{method:'POST',headers:{'Content-Type':'application/json',...(token?{'Authorization':`Bearer ${token}`}:{})},body:JSON.stringify({action,...payload}),cache:'no-store'});
-  const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.message||`HTTP ${r.status}`);return b;
-}
-
-function instalarMinhaSenha(){
-  const host=document.querySelector('.header-user');if(!host||document.getElementById('minhaSenha'))return;
-  const b=document.createElement('button');b.id='minhaSenha';b.className='logout';b.type='button';b.textContent='Minha senha';
-  const sair=document.getElementById('sair');host.insertBefore(b,sair||null);
-  b.addEventListener('click',async()=>{
-    const atual=prompt('Informe sua senha atual:','');if(atual===null)return;
-    const nova=prompt('Informe a nova senha:','');if(!nova)return;
-    const conf=prompt('Confirme a nova senha:','');if(conf!==nova)return alert('A confirmação da nova senha não confere.');
-    try{await api('change_password',{senha_atual:atual,nova_senha:nova});alert('Senha alterada com sucesso.');}catch(e){alert(e.message||'Não foi possível alterar a senha.');}
-  });
-}
-
-const OCC_LABELS={id:'ID',data:'Data',hora:'Hora',tipo:'Tipo',posto:'Posto',viatura_id:'Viatura',equipe:'Equipe',responsavel_id:'Responsável',local:'Local',descricao:'Descrição',resultado:'Resultado',criado_em:'Criado em',naturezas:'Naturezas',natureza_outro:'Outra natureza',recebida_via:'Recebida via',recebida_via_outro:'Outro meio',suspeitos_dados:'Suspeitos',suspeitos_sexo:'Sexo dos suspeitos',suspeitos_sexo_outro:'Descrição do sexo dos suspeitos',vitimas_dados:'Vítimas',vitimas_sexo:'Sexo das vítimas',vitimas_sexo_outro:'Descrição do sexo das vítimas',testemunhas_dados:'Testemunhas',uso_algemas:'Uso de algemas',justificativa_algemas:'Justificativa das algemas',materiais_apreendidos:'Materiais apreendidos',composicao_equipe:'Composição da equipe',condutor_ocorrencia_id:'Condutor',procedimentos_adotados:'Procedimentos adotados',historico_ocorrencia:'Histórico',demais_arquivos:'Demais arquivos'};
-let occCache=null,refNomes=null;
-function valorOcc(k,v){
-  if(v===null||v===undefined||String(v).trim()==='')return '';
-  if((/foto|arquivo/i.test(k))&&String(v).length>500)return 'Arquivo/foto preservado no registro';
-  if(k==='composicao_equipe'){
-    try{const a=Array.isArray(v)?v:JSON.parse(v);if(Array.isArray(a)&&refNomes)return a.map(x=>refNomes.get(Number(x))||`GCM ${x}`).join(', ');}catch{}
-  }
-  if(k==='condutor_ocorrencia_id'&&refNomes)return refNomes.get(Number(v))||String(v);
-  if(typeof v==='object')return JSON.stringify(v);
-  if(typeof v==='string'&&/^[\[{]/.test(v.trim())){try{const p=JSON.parse(v);return Array.isArray(p)?p.join(', '):JSON.stringify(p);}catch{}}
-  return String(v);
-}
-async function carregarOccCache(){
-  const [o,r]=await Promise.all([api('entity_list',{entity:'ocorrencias_operacionais',limit:500,offset:0}),api('references').catch(()=>({guardas:[]}))]);
-  occCache=o.records||[];refNomes=new Map((r.guardas||[]).map(g=>[Number(g.id),g.nome_guerra||g.nome_completo||`GCM ${g.id}`]));
-}
-async function abrirOcorrenciaOnline(idx){
-  try{if(!occCache)await carregarOccCache();const rec=occCache?.[idx],d=rec?.data||{};if(!rec)return;
-    const keys=Object.keys(d).filter(k=>d[k]!==null&&d[k]!==undefined&&String(d[k]).trim()!=='');
-    const titulo=document.getElementById('quadroModalTitulo'),meta=document.getElementById('quadroModalMeta'),lista=document.getElementById('quadroModalLista'),modal=document.getElementById('quadroModal');
-    if(!titulo||!meta||!lista||!modal)return;
-    titulo.textContent=`Ocorrência ${d.id||''}`.trim();meta.textContent=`${d.data||''} ${d.hora||''} · ${keys.length} campo(s) registrado(s)`;
-    lista.innerHTML=keys.map(k=>`<div class="item"><small>${esc(OCC_LABELS[k]||k.replaceAll('_',' '))}</small><strong>${esc(valorOcc(k,d[k])||'—')}</strong></div>`).join('')||'<div class="empty">A ocorrência não possui campos preenchidos.</div>';
-    modal.classList.remove('hidden');
-  }catch(e){alert(e.message||'Não foi possível abrir a ocorrência completa.');}
-}
-function aprimorarOcorrencias(){
-  const host=document.getElementById('occLista');if(!host)return;
-  [...host.querySelectorAll('article.record-card')].forEach((card,idx)=>{if(card.dataset.v62Detalhe)return;card.dataset.v62Detalhe='1';card.style.cursor='pointer';card.title='Clique para ver a ocorrência completa';card.addEventListener('click',()=>abrirOcorrenciaOnline(idx));});
-}
-
-function fmtDataPermuta(v){
-  const s=String(v||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s||'-';
-  const [a,m,d]=s.split('-');return `${d}/${m}/${a}`;
-}
-function perfilGestor(s){
-  const role=String(s?.role||'').trim().toLowerCase(),cargo=String(s?.cargo||'').trim().toUpperCase();
-  return role==='comandante'||role==='subcomandante'||/\bSUBCOMANDANTE\b/.test(cargo)||(/\bCOMANDANTE\b/.test(cargo)&&!/SUBCOMANDANTE/.test(cargo));
-}
-function nomeRef(map,id,fallback='GCM'){return map.get(Number(id))||`${fallback} ${id||''}`.trim();}
-function ocultarFiltroCompetenciaComando(host,ocultar){
-  const scope=host?.closest('.card')||host?.parentElement;if(!scope)return;
-  const label=[...scope.querySelectorAll('label')].find(x=>/^Compet[eê]ncia\b/i.test(String(x.textContent||'').trim()));
-  if(label)label.style.display=ocultar?'none':'';
-}
-function tituloPermutasComando(texto){
-  const h=[...document.querySelectorAll('h1,h2,h3,h4,strong')].find(x=>String(x.textContent||'').trim()==='Minhas solicitações de permuta'||String(x.textContent||'').trim()==='Consulta geral de permutas — Comando/Subcomando');
-  if(h)h.textContent=texto;
-}
-const STATUS_PENDENTES=new Set(['PENDENTE','PENDENTE_DESKTOP','AGUARDANDO_ACEITE','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE']);
-let permutaFixing=false,permutaTimer=null;
-async function corrigirMinhasPermutas(){
-  const host=document.getElementById('listaPermutasSolicitadas');if(!host||permutaFixing)return;
-  permutaFixing=true;
-  try{
-    const [sess,data,refs]=await Promise.all([api('session'),api('data'),api('references').catch(()=>({guardas:[]}))]);
-    const s=sess?.session||{},meuId=Number(s.guarda_id||0),gestor=perfilGestor(s);
-    const todas=(data?.action_requests||[]).filter(x=>String(x?.tipo||'').toUpperCase()==='PERMUTA');
-    const nomes=new Map((refs?.guardas||[]).map(g=>[Number(g.id),g.nome_guerra||g.nome_completo||`GCM ${g.id}`]));
-
-    if(gestor){
-      ocultarFiltroCompetenciaComando(host,true);
-      tituloPermutasComando('Consulta geral de permutas — Comando/Subcomando');
-      const assinatura=todas.map(r=>`${r.id}:${r.status}:${r.resposta||''}`).join('|');
-      if(host.dataset.v62ComandoSig===assinatura&&host.querySelector('[data-v62-comando-lista]'))return;
-      host.dataset.v62ComandoSig=assinatura;
-      const lista=todas.slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-      host.innerHTML=lista.length?lista.map(r=>{
-        const q=r.payload||{},st=String(r.status||'PENDENTE').toUpperCase(),pend=STATUS_PENDENTES.has(st),sol=r.nome_guerra||r.nome_completo||nomeRef(nomes,r.guarda_id,'GCM'),sub=nomeRef(nomes,q.substituido_id,'GCM');
-        const modalidade=String(q.modalidade||'').toUpperCase();
-        const tipo=modalidade==='TROCA_EXTRA'?'Troca de serviço extra':modalidade==='CESSAO_EXTRA'?'Assunção de serviço extra':Number(q.servico_extra)?'Serviço extra':'Serviço ordinário';
-        return `<div class="item" data-v62-comando-lista="1"><small>Solicitada em ${esc(fmtDataPermuta(r.created_at))} · Serviço: ${esc(fmtDataPermuta(q.data))} · Turno ${esc(q.turno||'-')}</small><strong>Solicitante: ${esc(sol)} · GCM substituído: ${esc(sub)}</strong><span>${esc(tipo)}</span><span class="status-pill status-${esc(st)}">${esc(st)}</span><small><b>${pend?'AGUARDANDO ANÁLISE/CONCLUSÃO':'ANALISADA / HISTÓRICO'}</b>${r.resposta?' · '+esc(r.resposta):''}</small>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}</div>`;
-      }).join(''):'<div class="empty" data-v62-comando-lista="1">Nenhuma solicitação de permuta registrada.</div>';
-      return;
-    }
-
-    ocultarFiltroCompetenciaComando(host,false);
-    tituloPermutasComando('Minhas solicitações de permuta');
-    const cards=[...host.querySelectorAll(':scope > .item')],minhas=todas.filter(x=>Number(x?.guarda_id)===meuId);
-    if(!minhas.length){host.innerHTML='<div class="empty">Nenhuma solicitação de permuta enviada por você.</div>';return;}
-    if(cards.length!==todas.length)return;
-    const manter=[];
-    todas.forEach((r,i)=>{const card=cards[i];if(!card)return;if(Number(r.guarda_id)!==meuId)card.remove();else manter.push({card,r});});
-    for(const {card,r} of manter){
-      const small=card.querySelector('small');if(!small)continue;const q=r.payload||{};
-      small.textContent=`Solicitada em ${fmtDataPermuta(r.created_at)} · Serviço: ${fmtDataPermuta(q.data)} · Turno ${q.turno||'-'}`;
-    }
-  }catch(e){console.warn('[GCMBS] visão de permutas:',e?.message||e);}finally{permutaFixing=false;}
-}
-function observarMinhasPermutas(){
-  const host=document.getElementById('listaPermutasSolicitadas');if(!host||host.dataset.v62Observer)return;
-  host.dataset.v62Observer='1';
-  new MutationObserver(()=>{clearTimeout(permutaTimer);permutaTimer=setTimeout(corrigirMinhasPermutas,100);}).observe(host,{childList:true});
-  corrigirMinhasPermutas();
-}
-
-function aplicarCompatibilidade(){
-  corrigirRotulos();instalarLembrarAcesso();instalarMinhaSenha();corrigirDataBoot();aprimorarOcorrencias();observarMinhasPermutas();
-  const occ=document.getElementById('occLista');if(occ&&!occ.dataset.v62Observer){occ.dataset.v62Observer='1';new MutationObserver(()=>{occCache=null;aprimorarOcorrencias();}).observe(occ,{childList:true});}
-}
-
-document.addEventListener('click',e=>{const t=e.target instanceof Element?e.target:null;if(!t)return;if(t.closest('#occNovo'))corrigirDataNovo('occData');if(t.closest('#chkNovo'))corrigirDataNovo('chkData');},true);
-window.addEventListener('DOMContentLoaded',()=>{atualizar();setInterval(atualizar,15000);setTimeout(aplicarCompatibilidade,80);setTimeout(aplicarCompatibilidade,600)});
-window.addEventListener('gcmbs:sync-refresh',atualizar);
-console.info('[GCMBS] compatibilidade Online 10.0.62 ativa');
+const hoje=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
+const fmt=v=>{const s=String(v||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s||'-';const [a,m,d]=s.split('-');return `${d}/${m}/${a}`};
+const status=x=>String(x||'PENDENTE').toUpperCase();
+const PEND=new Set(['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','AGUARDANDO_ACEITE','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE']);
+window.fetch=async function(input,init){const old=typeof input==='string'?input:(input instanceof Request?input.url:String(input));const url=old.replace('/gcmbs-quadro-v61','/gcmbs-quadro-v62').replace('/gcmbs-actions-v58','/gcmbs-actions-v62').replace('/gcmbs-extra-cession-v58','/gcmbs-extra-assumption-v62');if(input instanceof Request&&url!==old)input=new Request(url,input);else if(!(input instanceof Request))input=url;return _fetch(input,init);};
+async function api(action,payload={}){const token=localStorage.getItem('gcmbs.mobile.token');const r=await _fetch(API,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({action,...payload}),cache:'no-store'});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.message||`HTTP ${r.status}`);return b;}
+async function syncStatus(){const token=localStorage.getItem('gcmbs.mobile.token');if(!token)return null;const r=await _fetch(QUADRO,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'sync_status'}),cache:'no-store'});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.message||`HTTP ${r.status}`);return b.sincronizacao||{};}
+function gestor(s){const role=String(s?.role||s?.perfil||'').toLowerCase(),cargo=String(s?.cargo||'').toUpperCase();return role==='comandante'||role==='subcomandante'||/SUBCOMANDANTE/.test(cargo)||(/COMANDANTE/.test(cargo)&&!/SUBCOMANDANTE/.test(cargo));}
+function competenciaReq(r){const q=r?.payload||{};return String(q.competencia_origem||q.competencia||q.data||r.created_at||'').slice(0,7);}
+function competenciaHist(r){return String(r?.data||'').slice(0,7);}
+function badge(){let e=document.getElementById('syncStatus');if(e)return e;const h=document.querySelector('.header-user')||document.querySelector('header');if(!h)return null;e=document.createElement('span');e.id='syncStatus';e.style.cssText='font-size:11px;color:#bbf7d0;max-width:340px;line-height:1.25';h.insertBefore(e,document.getElementById('headerUsuario')||h.firstChild);return e;}
+async function atualizarBadge(){const e=badge();if(!e)return;try{const s=await syncStatus();if(!s){e.textContent='Sincronização: aguardando login';return;}e.textContent=`Última sincronização Desktop ↔ Online/App: ${s.ultima_sincronizacao?new Date(s.ultima_sincronizacao).toLocaleString('pt-BR',{timeZone:'America/Fortaleza'}):'não registrada'}${s.desktop_version?' · Desktop '+s.desktop_version:''}`;e.style.color=Number(s.erros_recentes||0)?'#fecaca':Number(s.pendentes||0)?'#fde68a':'#bbf7d0';}catch(err){e.textContent='Sincronização: indisponível';e.title=err.message||'';e.style.color='#fecaca';}}
+function corrigirData(){const utc=new Date().toISOString().slice(0,10),local=hoje();for(const id of ['quadroData','escalaIni','escalaFim','pmData','bcData','chkData','occData','msgDataServico']){const e=document.getElementById(id);if(e&&e.value===utc)e.value=local;}const q=document.getElementById('quadroData');if(q&&q.value!==local&&!q.dataset.v62Touched){q.value=local;q.dispatchEvent(new Event('change',{bubbles:true}));}}
+function instalarSync(){if(document.getElementById('onlineSyncNow'))return;const q=document.getElementById('quadroData');if(!q)return;const b=document.createElement('button');b.id='onlineSyncNow';b.className='secondary';b.type='button';b.textContent='↻ Sincronizar agora';b.style.marginLeft='10px';q.parentElement?.after(b);b.onclick=async()=>{const old=b.textContent;b.disabled=true;b.textContent='Sincronizando...';try{await api('data');q.dispatchEvent(new Event('change',{bubbles:true}));window.dispatchEvent(new Event('gcmbs:sync-refresh'));await atualizarBadge();b.textContent='✓ Sincronizado';setTimeout(()=>b.textContent=old,1300);}catch(e){alert('Não foi possível atualizar: '+(e.message||e));b.textContent=old;}finally{b.disabled=false;}};}
+let nomes=new Map();function nome(id,fallback='GCM'){return nomes.get(Number(id))||`${fallback}${id?' '+id:''}`;}function acoes(id){return `<div class="request-actions"><button class="mini" data-v62-ok="${id}">Aprovar</button><button class="mini" data-v62-no="${id}">Recusar</button><button class="mini danger-soft" data-v62-del="${id}">Excluir solicitação</button></div>`;}
+function cardHist(h,req){const st=status(req?.status||h.status),sub=h.substituido_nome||nome(h.substituido_id),sbt=h.substituto_nome||nome(h.substituto_id),extra=Number(h.servico_extra)?'Serviço extra':'Serviço ordinário',pend=PEND.has(st);return `<article class="record-card"><div class="record-card-head"><strong>${esc(sub)} → ${esc(sbt)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${esc(fmt(h.data))} · Turno ${esc(h.turno||'-')} · ${extra} · Desktop #${esc(h.desktop_id||'')}</div>${h.observacao?`<div>${esc(h.observacao)}</div>`:''}${req?.resposta?`<small>${esc(req.resposta)}</small>`:''}${req&&pend?acoes(req.id):''}</article>`;}
+function cardReq(r){const q=r.payload||{},st=status(r.status),sol=r.nome_guerra||nome(r.guarda_id),sub=nome(q.substituido_id),tipo=String(q.modalidade||'').toUpperCase()==='TROCA_EXTRA'?'Troca bilateral de extras':String(q.modalidade||'').toUpperCase()==='CESSAO_EXTRA'?'Assunção de serviço extra':Number(q.servico_extra)?'Serviço extra':'Serviço ordinário';return `<article class="record-card"><div class="record-card-head"><strong>${esc(sol)} · ${esc(sub)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${esc(fmt(q.data))} · Turno ${esc(q.turno||'-')} · ${esc(tipo)} · Online #${r.id}</div>${q.observacao?`<div>${esc(q.observacao)}</div>`:''}${r.resposta?`<small>${esc(r.resposta)}</small>`:''}${PEND.has(st)?acoes(r.id):''}</article>`;}
+async function decidir(id,dec){let motivo='';if(dec==='NEGADA'){motivo=prompt('Informe o motivo da recusa:','')||'';if(!motivo.trim())return;}else motivo=prompt('Observação da aprovação (opcional):','')||'';await api('decide_permuta_request',{id,decisao:dec,motivo});await renderPermutasComando();}
+async function excluir(id){const motivo=prompt('Informe o motivo da exclusão administrativa:','Solicitação registrada de forma equivocada')||'';if(!motivo.trim())return;await api('admin_delete_permuta_request',{id,motivo});await renderPermutasComando();}
+let renderizando=false;async function renderPermutasComando(){const host=document.getElementById('listaPermutasSolicitadas'),compEl=document.getElementById('pmCompetenciaFiltro');if(!host||!compEl||renderizando)return;renderizando=true;try{const [sess,data,refs]=await Promise.all([api('session'),api('data'),api('references').catch(()=>({guardas:[]}))]);const s=sess.session||{};if(!gestor(s))return;nomes=new Map((refs.guardas||[]).map(g=>[Number(g.id),g.nome_guerra||g.nome_completo||`GCM ${g.id}`]));const comp=compEl.value||hoje().slice(0,7);const hist=(data.permutas||[]).filter(x=>competenciaHist(x)===comp);const req=(data.action_requests||[]).filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'&&competenciaReq(x)===comp);const byDesktop=new Map(req.filter(x=>x.desktop_referencia_id!=null).map(x=>[String(x.desktop_referencia_id),x]));const histIds=new Set(hist.map(x=>String(x.desktop_id??x.id??'')));const itens=[];for(const h of hist){const r=byDesktop.get(String(h.desktop_id??h.id??''));itens.push({pend:PEND.has(status(r?.status||h.status)),date:String(h.data||''),html:cardHist(h,r)});}for(const r of req){if(r.desktop_referencia_id!=null&&histIds.has(String(r.desktop_referencia_id)))continue;itens.push({pend:PEND.has(status(r.status)),date:String(r.payload?.data||r.created_at||''),html:cardReq(r)});}itens.sort((a,b)=>Number(b.pend)-Number(a.pend)||b.date.localeCompare(a.date));const pend=itens.filter(x=>x.pend),anal=itens.filter(x=>!x.pend);const title=document.getElementById('pmListaTitulo')||[...document.querySelectorAll('h2,h3,strong')].find(x=>/Minhas solicitações de permuta|Consulta.*permutas/i.test(x.textContent||''));if(title)title.textContent='Consulta de permutas — Comando/Subcomando';host.innerHTML=`<div class="notice"><b>${itens.length}</b> permuta(s) em ${esc(comp)} · <b>${pend.length}</b> aguardando fluxo/análise · <b>${anal.length}</b> analisada(s)/histórica(s). Consulta sem filtro por GCM ou status.</div>`+(pend.length?`<h3>Aguardando análise / conclusão</h3>${pend.map(x=>x.html).join('')}`:'<div class="empty">Nenhuma permuta pendente nesta competência.</div>')+(anal.length?`<h3 style="margin-top:18px">Analisadas / histórico</h3>${anal.map(x=>x.html).join('')}`:'');host.querySelectorAll('[data-v62-ok]').forEach(b=>b.onclick=()=>decidir(Number(b.dataset.v62Ok),'APROVADA'));host.querySelectorAll('[data-v62-no]').forEach(b=>b.onclick=()=>decidir(Number(b.dataset.v62No),'NEGADA'));host.querySelectorAll('[data-v62-del]').forEach(b=>b.onclick=()=>excluir(Number(b.dataset.v62Del)));document.getElementById('permutaGestaoCard')?.classList.add('hidden');}catch(e){console.warn('[GCMBS] permutas v62:',e);}finally{renderizando=false;}}
+function instalarPermutas(){const comp=document.getElementById('pmCompetenciaFiltro'),host=document.getElementById('listaPermutasSolicitadas');if(!comp||!host)return;if(!comp.dataset.v62){comp.dataset.v62='1';comp.addEventListener('change',()=>setTimeout(renderPermutasComando,50));}if(!host.dataset.v62obs){host.dataset.v62obs='1';new MutationObserver(()=>{if(!renderizando)setTimeout(renderPermutasComando,80)}).observe(host,{childList:true});}setTimeout(renderPermutasComando,50);}
+function aplicar(){corrigirData();instalarSync();instalarPermutas();}
+window.addEventListener('DOMContentLoaded',()=>{atualizarBadge();setInterval(atualizarBadge,15000);setTimeout(aplicar,100);setTimeout(aplicar,800);});
+document.addEventListener('click',e=>{const t=e.target instanceof Element?e.target:null;if(t?.closest('#occNovo'))setTimeout(()=>{const x=document.getElementById('occData');if(x)x.value=hoje()},20);if(t?.closest('#chkNovo'))setTimeout(()=>{const x=document.getElementById('chkData');if(x)x.value=hoje()},20);},true);
+window.addEventListener('gcmbs:sync-refresh',atualizarBadge);
+console.info('[GCMBS] consolidação Online 10.0.62 ativa');
