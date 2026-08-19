@@ -113,16 +113,50 @@ function fmtDataPermuta(v){
   const s=String(v||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s||'-';
   const [a,m,d]=s.split('-');return `${d}/${m}/${a}`;
 }
+function perfilGestor(s){
+  const role=String(s?.role||'').trim().toLowerCase(),cargo=String(s?.cargo||'').trim().toUpperCase();
+  return role==='comandante'||role==='subcomandante'||/\bSUBCOMANDANTE\b/.test(cargo)||(/\bCOMANDANTE\b/.test(cargo)&&!/SUBCOMANDANTE/.test(cargo));
+}
+function nomeRef(map,id,fallback='GCM'){return map.get(Number(id))||`${fallback} ${id||''}`.trim();}
+function ocultarFiltroCompetenciaComando(host,ocultar){
+  const scope=host?.closest('.card')||host?.parentElement;if(!scope)return;
+  const label=[...scope.querySelectorAll('label')].find(x=>/^Compet[eê]ncia\b/i.test(String(x.textContent||'').trim()));
+  if(label)label.style.display=ocultar?'none':'';
+}
+function tituloPermutasComando(texto){
+  const h=[...document.querySelectorAll('h1,h2,h3,h4,strong')].find(x=>String(x.textContent||'').trim()==='Minhas solicitações de permuta'||String(x.textContent||'').trim()==='Consulta geral de permutas — Comando/Subcomando');
+  if(h)h.textContent=texto;
+}
+const STATUS_PENDENTES=new Set(['PENDENTE','PENDENTE_DESKTOP','AGUARDANDO_ACEITE','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE']);
 let permutaFixing=false,permutaTimer=null;
 async function corrigirMinhasPermutas(){
   const host=document.getElementById('listaPermutasSolicitadas');if(!host||permutaFixing)return;
-  const cards=[...host.querySelectorAll(':scope > .item')];if(!cards.length)return;
   permutaFixing=true;
   try{
-    const [sess,data]=await Promise.all([api('session'),api('data')]);
-    const meuId=Number(sess?.session?.guarda_id||0);
+    const [sess,data,refs]=await Promise.all([api('session'),api('data'),api('references').catch(()=>({guardas:[]}))]);
+    const s=sess?.session||{},meuId=Number(s.guarda_id||0),gestor=perfilGestor(s);
     const todas=(data?.action_requests||[]).filter(x=>String(x?.tipo||'').toUpperCase()==='PERMUTA');
-    const minhas=todas.filter(x=>Number(x?.guarda_id)===meuId);
+    const nomes=new Map((refs?.guardas||[]).map(g=>[Number(g.id),g.nome_guerra||g.nome_completo||`GCM ${g.id}`]));
+
+    if(gestor){
+      ocultarFiltroCompetenciaComando(host,true);
+      tituloPermutasComando('Consulta geral de permutas — Comando/Subcomando');
+      const assinatura=todas.map(r=>`${r.id}:${r.status}:${r.resposta||''}`).join('|');
+      if(host.dataset.v62ComandoSig===assinatura&&host.querySelector('[data-v62-comando-lista]'))return;
+      host.dataset.v62ComandoSig=assinatura;
+      const lista=todas.slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+      host.innerHTML=lista.length?lista.map(r=>{
+        const q=r.payload||{},st=String(r.status||'PENDENTE').toUpperCase(),pend=STATUS_PENDENTES.has(st),sol=r.nome_guerra||r.nome_completo||nomeRef(nomes,r.guarda_id,'GCM'),sub=nomeRef(nomes,q.substituido_id,'GCM');
+        const modalidade=String(q.modalidade||'').toUpperCase();
+        const tipo=modalidade==='TROCA_EXTRA'?'Troca de serviço extra':modalidade==='CESSAO_EXTRA'?'Assunção de serviço extra':Number(q.servico_extra)?'Serviço extra':'Serviço ordinário';
+        return `<div class="item" data-v62-comando-lista="1"><small>Solicitada em ${esc(fmtDataPermuta(r.created_at))} · Serviço: ${esc(fmtDataPermuta(q.data))} · Turno ${esc(q.turno||'-')}</small><strong>Solicitante: ${esc(sol)} · GCM substituído: ${esc(sub)}</strong><span>${esc(tipo)}</span><span class="status-pill status-${esc(st)}">${esc(st)}</span><small><b>${pend?'AGUARDANDO ANÁLISE/CONCLUSÃO':'ANALISADA / HISTÓRICO'}</b>${r.resposta?' · '+esc(r.resposta):''}</small>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}</div>`;
+      }).join(''):'<div class="empty" data-v62-comando-lista="1">Nenhuma solicitação de permuta registrada.</div>';
+      return;
+    }
+
+    ocultarFiltroCompetenciaComando(host,false);
+    tituloPermutasComando('Minhas solicitações de permuta');
+    const cards=[...host.querySelectorAll(':scope > .item')],minhas=todas.filter(x=>Number(x?.guarda_id)===meuId);
     if(!minhas.length){host.innerHTML='<div class="empty">Nenhuma solicitação de permuta enviada por você.</div>';return;}
     if(cards.length!==todas.length)return;
     const manter=[];
@@ -131,12 +165,12 @@ async function corrigirMinhasPermutas(){
       const small=card.querySelector('small');if(!small)continue;const q=r.payload||{};
       small.textContent=`Solicitada em ${fmtDataPermuta(r.created_at)} · Serviço: ${fmtDataPermuta(q.data)} · Turno ${q.turno||'-'}`;
     }
-  }catch(e){console.warn('[GCMBS] filtro de minhas permutas:',e?.message||e);}finally{permutaFixing=false;}
+  }catch(e){console.warn('[GCMBS] visão de permutas:',e?.message||e);}finally{permutaFixing=false;}
 }
 function observarMinhasPermutas(){
   const host=document.getElementById('listaPermutasSolicitadas');if(!host||host.dataset.v62Observer)return;
   host.dataset.v62Observer='1';
-  new MutationObserver(()=>{clearTimeout(permutaTimer);permutaTimer=setTimeout(corrigirMinhasPermutas,80);}).observe(host,{childList:true});
+  new MutationObserver(()=>{clearTimeout(permutaTimer);permutaTimer=setTimeout(corrigirMinhasPermutas,100);}).observe(host,{childList:true});
   corrigirMinhasPermutas();
 }
 
