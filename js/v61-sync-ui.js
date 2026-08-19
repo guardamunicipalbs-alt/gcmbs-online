@@ -109,8 +109,39 @@ function aprimorarOcorrencias(){
   [...host.querySelectorAll('article.record-card')].forEach((card,idx)=>{if(card.dataset.v62Detalhe)return;card.dataset.v62Detalhe='1';card.style.cursor='pointer';card.title='Clique para ver a ocorrência completa';card.addEventListener('click',()=>abrirOcorrenciaOnline(idx));});
 }
 
+function fmtDataPermuta(v){
+  const s=String(v||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s||'-';
+  const [a,m,d]=s.split('-');return `${d}/${m}/${a}`;
+}
+let permutaFixing=false,permutaTimer=null;
+async function corrigirMinhasPermutas(){
+  const host=document.getElementById('listaPermutasSolicitadas');if(!host||permutaFixing)return;
+  const cards=[...host.querySelectorAll(':scope > .item')];if(!cards.length)return;
+  permutaFixing=true;
+  try{
+    const [sess,data]=await Promise.all([api('session'),api('data')]);
+    const meuId=Number(sess?.session?.guarda_id||0);
+    const todas=(data?.action_requests||[]).filter(x=>String(x?.tipo||'').toUpperCase()==='PERMUTA');
+    const minhas=todas.filter(x=>Number(x?.guarda_id)===meuId);
+    if(!minhas.length){host.innerHTML='<div class="empty">Nenhuma solicitação de permuta enviada por você.</div>';return;}
+    if(cards.length!==todas.length)return;
+    const manter=[];
+    todas.forEach((r,i)=>{const card=cards[i];if(!card)return;if(Number(r.guarda_id)!==meuId)card.remove();else manter.push({card,r});});
+    for(const {card,r} of manter){
+      const small=card.querySelector('small');if(!small)continue;const q=r.payload||{};
+      small.textContent=`Solicitada em ${fmtDataPermuta(r.created_at)} · Serviço: ${fmtDataPermuta(q.data)} · Turno ${q.turno||'-'}`;
+    }
+  }catch(e){console.warn('[GCMBS] filtro de minhas permutas:',e?.message||e);}finally{permutaFixing=false;}
+}
+function observarMinhasPermutas(){
+  const host=document.getElementById('listaPermutasSolicitadas');if(!host||host.dataset.v62Observer)return;
+  host.dataset.v62Observer='1';
+  new MutationObserver(()=>{clearTimeout(permutaTimer);permutaTimer=setTimeout(corrigirMinhasPermutas,80);}).observe(host,{childList:true});
+  corrigirMinhasPermutas();
+}
+
 function aplicarCompatibilidade(){
-  corrigirRotulos();instalarLembrarAcesso();instalarMinhaSenha();corrigirDataBoot();aprimorarOcorrencias();
+  corrigirRotulos();instalarLembrarAcesso();instalarMinhaSenha();corrigirDataBoot();aprimorarOcorrencias();observarMinhasPermutas();
   const occ=document.getElementById('occLista');if(occ&&!occ.dataset.v62Observer){occ.dataset.v62Observer='1';new MutationObserver(()=>{occCache=null;aprimorarOcorrencias();}).observe(occ,{childList:true});}
 }
 
