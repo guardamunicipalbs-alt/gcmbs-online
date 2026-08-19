@@ -2,7 +2,7 @@ import './v61-sync-ui.js?v=100061';
 import './v58-ui.js?v=100059';
 import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js';
 
-const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6';
+const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
 const ACTIONS_V58='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-actions-v58';
 const QUADRO_V61='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v61';
