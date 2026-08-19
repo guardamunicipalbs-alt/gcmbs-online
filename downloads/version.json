@@ -1,12 +1,12 @@
 {
-  "version": "10.0.58",
-  "versionCode": 58,
-  "apk": "GCMBS-10.0.58.apk",
+  "version": "10.0.62",
+  "versionCode": 62,
+  "apk": "GCMBS-10.0.62.apk",
   "available": false,
-  "publishedAt": "2026-08-16T16:53:00-03:00",
+  "publishedAt": "2026-08-19T17:38:00-03:00",
   "notes": [
-    "Código Online/PWA atualizado para 10.0.58",
-    "Permutas de extras, filtros por competência e novas regras integradas",
-    "APK 10.0.58 aguardando recompilação em ambiente com dependências Gradle disponíveis"
+    "Online/Mobile atualizados para GCMBS 10.0.62",
+    "Permutas por competência, sincronização manual e correções de paridade integradas",
+    "APK 10.0.62 deve ser publicado somente com a assinatura definitiva compatível com a instalação existente"
   ]
 }
