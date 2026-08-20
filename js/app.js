@@ -13,7 +13,7 @@ function gcmbsFormatarDatasTexto(root=document.body){
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
   for(const node of nodes)node.nodeValue=(node.nodeValue||'').replace(GCMBS_ISO_DATE_RE,'$3/$2/$1');
 }
-const gcmbsEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const gcmbsEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function gcmbsDataAtual(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});}
 function gcmbsDataIsoTexto(v){const s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:'';}
 function gcmbsDataBr(v){const iso=gcmbsDataIsoTexto(v);if(!iso)return String(v||'');const [a,m,d]=iso.split('-');return `${d}/${m}/${a}`;}
