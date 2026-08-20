@@ -3,10 +3,15 @@
   "versionCode": 62,
   "apk": "GCMBS-10.0.62.apk",
   "available": false,
-  "publishedAt": "2026-08-19T17:38:00-03:00",
   "notes": [
-    "Online/Mobile atualizados para GCMBS 10.0.62",
-    "Permutas por competência, sincronização manual e correções de paridade integradas",
-    "APK 10.0.62 deve ser publicado somente com a assinatura definitiva compatível com a instalação existente"
-  ]
+    "Versão consolidada 10.0.62: base Desktop 10.0.60 + correções Online 10.0.61.",
+    "Quadro Operacional: os cards A/B contam somente o efetivo ordinário; serviços extras aparecem no detalhamento identificados como Extra.",
+    "Frota: baixadas/indisponíveis não repetem mais as viaturas disponíveis.",
+    "Ocorrências: cards abrem a visualização completa dos campos efetivamente registrados.",
+    "Permutas extras: assunção depende da autorização do GCM originalmente escalado antes do Comando; candidatos em ordem cronológica.",
+    "Sincronização: ação manual no Desktop e recuperação segura dos históricos importados do Supabase.",
+    "Senha redefinida pelo Comando é temporária e exige alteração no próximo acesso.",
+    "APK 10.0.62 deve ser recompilado e validado antes de marcar esta versão como disponível."
+  ],
+  "publishedAt": null
 }

@@ -4,8 +4,8 @@ import {MODULOS_GCMBS} from './access-catalog.js';
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.57';
-const GCMBS_APP_VERSION_CODE=57;
+const GCMBS_APP_VERSION='10.0.62';
+const GCMBS_APP_VERSION_CODE=62;
 const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
 const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
 async function verificarAtualizacaoApp(){
@@ -24,9 +24,13 @@ async function verificarAtualizacaoApp(){
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
+const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'}).slice(0,7);
+const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia||p.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
+const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.55';
+const APP_VERSION='10.0.62';
 let provider=new AuthenticatedProvider();
+let permutasEspelho=[];
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
 
 const ONLINE_LABELS={
@@ -46,6 +50,12 @@ const ONLINE_LABELS={
   competencia:'Competência',classe:'Classe',minutos:'Minutos',natureza:'Natureza',origem:'Origem',posto_nome:'Posto',turno:'Turno',ativo:'Ativo',ativa:'Ativa',participa_gerador:'Participa do gerador',modo_distribuicao:'Modo de distribuição',grupo_id:'Grupo de ativação',equipe_servico_id:'Equipe de serviço',justificativa_id:'Justificativa vinculada'
 };
 const ONLINE_HIDE_FIELDS=new Set(['criado_por','analisado_por','arquivo_dados','arquivo_tipo','criado_em','atualizado_em','password','password_hash','token','token_sha256','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','entidade_id','usuario_id','escala_id','extra_id']);
+const ONLINE_ENTITY_HIDE_FIELDS={
+  guardas:new Set(['data_cadastro']),
+  ocorrencias_operacionais:new Set(['resultado']),
+  tipos_escalas:new Set(['cor'])
+};
+function campoOcultoNaEntidade(nome){return ONLINE_ENTITY_HIDE_FIELDS[onlineCurrent?.entity]?.has(String(nome||'').toLowerCase())===true;}
 const onlineLabel=k=>ONLINE_LABELS[k]||String(k||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 const refData=()=>provider.references?.()||{viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[]};
 function viaturaPorId(v){const x=(refData().viaturas||[]).find(r=>Number(r.id)===Number(v));return x?[x.prefixo,x.placa].filter(Boolean).join(' · '):''}
@@ -85,7 +95,7 @@ const ENTITY_UI={
   eventos_extras:{titulo:'Serviço Extra por Evento',action:'Novo evento',descricao:'Eventos extraordinários, local e período operacional.',order:['nome','data','horario_inicio','horario_fim','local','observacao','status'],sections:[['Evento',['nome','status']],['Data, horário e local',['data','horario_inicio','horario_fim','local']],['Observação',['observacao']]]},
   folha_pagamento_config:{titulo:'Folha de Pagamento',action:'Nova configuração',descricao:'Parâmetros e configurações da folha de pagamento autorizados ao perfil atual.'},
   viaturas:{titulo:'Cadastro de Viaturas',action:'Nova viatura',descricao:'Frota institucional, distinguindo viatura e motopatrulha, com parâmetros operacionais e de manutenção.',order:['prefixo','placa','marca','modelo','ano_fabricacao','ano_modelo','tipo','status','combustivel','intervalo_troca_oleo_km','km_ultima_troca_oleo','observacao'],sections:[['Identificação da viatura',['prefixo','placa','marca','modelo','ano_fabricacao','ano_modelo','tipo','status']],['Características',['combustivel']],['Troca de óleo',['intervalo_troca_oleo_km','km_ultima_troca_oleo']],['Observações',['observacao']]]},
-  manutencao_viaturas:{titulo:'Manutenção de Viaturas',action:'Nova manutenção',descricao:'Baixa, acompanhamento e retorno de viaturas. Exclusão fica restrita ao Comando/Subcomando.',order:['viatura_id','data_manutencao','tipo_manutencao','descricao','quilometragem','encaminhado_por','empresa','atendente_oficina','valor','status','consertado','data_retorno','recebido_por','observacao'],sections:[['Viatura e entrada',['viatura_id','data_manutencao','quilometragem','tipo_manutencao','status']],['Serviço / oficina',['descricao','encaminhado_por','empresa','atendente_oficina','valor']],['Retorno',['consertado','data_retorno','recebido_por']],['Observações',['observacao']]]},
+  manutencao_viaturas:{titulo:'Manutenção de Viaturas',action:'Nova manutenção',descricao:'Baixa, acompanhamento e retorno de viaturas. Exclusão fica restrita ao Comando/Subcomando.',order:['viatura_id','data_manutencao','tipo_manutencao','descricao','quilometragem','encaminhado_por','empresa','atendente_oficina','valor','responsavel','status','consertado','data_retorno','recebido_por','observacao'],sections:[['Viatura e entrada',['viatura_id','data_manutencao','quilometragem','tipo_manutencao','status']],['Serviço / oficina',['descricao','encaminhado_por','empresa','atendente_oficina','valor','responsavel']],['Retorno',['consertado','data_retorno','recebido_por']],['Observações',['observacao']]]},
   abastecimento_viaturas:{titulo:'Abastecimento',action:'Novo abastecimento',descricao:'Registro e histórico de abastecimentos da frota.',order:['viatura_id','data_abastecimento','quilometragem','litros','motorista_id','observacao'],sections:[['Abastecimento',['viatura_id','data_abastecimento','quilometragem','litros']],['Condutor e observação',['motorista_id','observacao']]]},
   equipamentos_cautelas:{titulo:'Equipamentos e Cautelas',action:'Nova cautela',descricao:'Cautelas individuais, de viatura e coletivas, com entrega, situação e devolução.',order:['equipamento','patrimonio','tipo','modalidade_uso','guarda_id','viatura_id','data_entrega','data_devolucao','situacao','observacao'],sections:[['Equipamento',['equipamento','patrimonio','tipo','modalidade_uso','situacao']],['Responsabilidade',['guarda_id','viatura_id']],['Datas',['data_entrega','data_devolucao']],['Observações',['observacao']]]},
   cursos_habilitacoes:{titulo:'Cursos e Habilitações',action:'Novo curso',descricao:'Cursos e habilitações dos GCMs, incluindo início, conclusão, validade e comprovantes.',order:['guarda_id','curso','instituicao','data_inicio','data_conclusao','validade','certificado','observacao','ativo'],sections:[['GCM e curso',['guarda_id','curso','instituicao','ativo']],['Datas',['data_inicio','data_conclusao','validade']],['Comprovante e observação',['certificado','observacao']]]},
@@ -201,7 +211,7 @@ async function aplicarIdentidadeVisualRemota(){
   }catch{}
 }
 
-function hoje(){return new Date().toISOString().slice(0,10)}
+function hoje(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'})}
 function normalizar(v){return String(v??'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 function horarioRelatorio(item){
   const turno=String(item.turno||'').toUpperCase();
@@ -304,7 +314,11 @@ async function atualizarChecklistContexto(){const vid=Number($('chkViatura').val
 function abrirNovoChecklist(){$('chkFormCard').classList.remove('hidden');$('chkData').value=hoje();$('chkHora').value=nowTime();$('chkSituacao').value='APTA';$('chkObs').value='';$('chkKm').value='';$('chkViatura').value='';$('chkTrocaOleo').checked=false;$('chkKmTrocaBox').classList.add('hidden');CHECK_ITEMS.forEach(i=>{if($(`chk_${i}`))$(`chk_${i}`).value='OK'});$('chkPendencia').classList.add('hidden');$('chkFormCard').scrollIntoView({behavior:'smooth',block:'start'})}
 async function salvarChecklist(e){e.preventDefault();try{const vid=Number($('chkViatura').value);if(!vid)throw new Error('Selecione a viatura.');const d={viatura_id:vid,guarda_id:Number(provider.session?.guarda_id),data:$('chkData').value,hora:$('chkHora').value,km:$('chkKm').value?Number($('chkKm').value):null,situacao:$('chkSituacao').value,observacao:$('chkObs').value,troca_oleo_realizada:$('chkTrocaOleo').checked?1:0,km_troca_oleo:$('chkTrocaOleo').checked?(Number($('chkKmTroca').value)||Number($('chkKm').value)||null):null,pendencias_anteriores:JSON.stringify(chkPending),pendencias_resolvidas:JSON.stringify([...document.querySelectorAll('.chk-resolved:checked')].map(x=>x.value))};CHECK_ITEMS.forEach(i=>d[i]=$(`chk_${i}`).value);if(CHECK_ITEMS.some(i=>d[i]==='NÃO CONFORME'))d.situacao='NÃO APTA';else if(CHECK_ITEMS.some(i=>d[i]==='ATENÇÃO')&&d.situacao==='APTA')d.situacao='APTA COM RESSALVA';await provider.entityMutate('checklist_viaturas','','UPSERT',d);$('chkMsg').textContent='Check-list salvo e enviado para sincronização.';$('chkFormCard').classList.add('hidden');await carregarChecklist()}catch(err){$('chkMsg').textContent=err.message}}
 async function carregarOcorrencias(){if(!$('occNaturezas'))return;$('occNaturezas').innerHTML=OCC_NATUREZAS.map(n=>`<label><input type="checkbox" class="occ-nat" value="${esc(n)}"> ${esc(n)}</label>`).join('');const b=await provider.entityList('ocorrencias_operacionais',500,0);occRecords=b.records||[];renderOcorrencias()}
-function renderOcorrencias(){const el=$('occLista');if(!el)return;el.innerHTML=occRecords.slice(0,60).map(r=>{const d=r.data||{},n=parseMaybeJson(d.naturezas,[]);return `<article class="record-card"><div class="record-card-head"><strong>${esc(n.join(', ')||d.tipo||'Ocorrência')}</strong><span>${fmt(d.data)} ${esc(d.hora||'')}</span></div><div class="record-meta">${esc(d.local||'Local não informado')} · ${esc(d.recebida_via||'Via não informada')}</div><div>${esc(d.historico_ocorrencia||d.descricao||'')}</div></article>`}).join('')||'<div class="empty">Nenhuma ocorrência registrada.</div>'}
+const OCC_LABELS={id:'ID',data:'Data',hora:'Hora',tipo:'Tipo',posto:'Posto',viatura_id:'Viatura',equipe:'Equipe',responsavel_id:'Responsável',local:'Local',descricao:'Descrição',resultado:'Resultado',criado_em:'Criado em',naturezas:'Naturezas',natureza_outro:'Outra natureza',recebida_via:'Recebida via',recebida_via_outro:'Outro meio',suspeitos_dados:'Suspeitos',suspeitos_sexo:'Sexo dos suspeitos',suspeitos_sexo_outro:'Outro sexo — suspeitos',vitimas_dados:'Vítimas',vitimas_sexo:'Sexo das vítimas',vitimas_sexo_outro:'Outro sexo — vítimas',testemunhas_dados:'Testemunhas',uso_algemas:'Uso de algemas',justificativa_algemas:'Justificativa das algemas',materiais_apreendidos:'Materiais apreendidos',composicao_equipe:'Composição da equipe',condutor_ocorrencia_id:'Condutor da ocorrência',procedimentos_adotados:'Procedimentos adotados',historico_ocorrencia:'Histórico da ocorrência',demais_arquivos:'Demais arquivos'};
+function occNomeGuarda(id){const g=(provider.references().guardas||[]).find(x=>Number(x.id)===Number(id));return g?(g.nome_guerra||g.nome_completo||`GCM ${id}`):id;}
+function occValor(k,v){if(v==null||v==='')return '';if(k==='viatura_id')return viaturaPorId(v)||v;if(['responsavel_id','condutor_ocorrencia_id'].includes(k))return occNomeGuarda(v);if(k==='composicao_equipe'){const a=parseMaybeJson(v,[]);return Array.isArray(a)?a.map(occNomeGuarda).join(', '):String(v);}if(k==='naturezas'){const a=parseMaybeJson(v,[]);return Array.isArray(a)?a.join(', '):String(v);}if(typeof v==='object'&&v?.__gcmbs_type==='base64')return '[arquivo armazenado]';if(typeof v==='object')return JSON.stringify(v);return String(v);}
+function abrirOcorrenciaCompleta(idx){const r=occRecords[idx],d=r?.data||{};if(!r)return;const keys=Object.keys(d).filter(k=>d[k]!==null&&d[k]!==undefined&&String(d[k]).trim()!=='');const itens=keys.map(k=>{const foto=/_(foto|arquivo|arquivos|dados)$/i.test(k)||/foto_/i.test(k);const val=occValor(k,d[k]);return `<div class="item"><small>${esc(OCC_LABELS[k]||k.replaceAll('_',' '))}</small><strong>${esc(val||'—')}</strong>${foto&&String(d[k]||'').length>500?'<span class="muted">Arquivo/foto preservado no registro. O conteúdo binário não é exibido como texto.</span>':''}</div>`}).join('');$('quadroModalTitulo').textContent=`Ocorrência ${d.id||''}`.trim();$('quadroModalMeta').textContent=`${fmt(d.data)} ${d.hora||''} · ${keys.length} campo(s) registrado(s)`;$('quadroModalLista').innerHTML=itens||'<div class="empty">A ocorrência não possui campos preenchidos.</div>';$('quadroModal').classList.remove('hidden');}
+function renderOcorrencias(){const el=$('occLista');if(!el)return;el.innerHTML=occRecords.slice(0,60).map((r,i)=>{const d=r.data||{},n=parseMaybeJson(d.naturezas,[]);return `<button type="button" class="record-card record-card-button" data-occ-open="${i}"><div class="record-card-head"><strong>${esc(n.join(', ')||d.tipo||'Ocorrência')}</strong><span>${fmt(d.data)} ${esc(d.hora||'')}</span></div><div class="record-meta">${esc(d.local||'Local não informado')} · ${esc(d.recebida_via||'Via não informada')}</div><div>${esc(d.historico_ocorrencia||d.descricao||'')}</div><small class="muted">Clique/toque para ver a ocorrência completa</small></button>`}).join('')||'<div class="empty">Nenhuma ocorrência registrada.</div>';document.querySelectorAll('[data-occ-open]').forEach(b=>b.onclick=()=>abrirOcorrenciaCompleta(Number(b.dataset.occOpen)));}
 function occEquipeIds(){return [...document.querySelectorAll('.occ-team:checked')].map(x=>Number(x.value)).filter(Boolean)}
 function atualizarOccCondutor(){const ids=occEquipeIds(),cur=Number($('occCondutor').value)||0,refs=provider.references().guardas||[];$('occCondutor').innerHTML='<option value="">Selecione...</option>'+refs.filter(g=>ids.includes(Number(g.id))).map(g=>`<option value="${g.id}">${esc(g.nome_guerra||g.nome_completo)}</option>`).join('');if(ids.includes(cur))$('occCondutor').value=String(cur);else if(ids.includes(Number(provider.session?.guarda_id)))$('occCondutor').value=String(provider.session.guarda_id)}
 async function preencherEquipeOcorrencia(){const data=$('occData').value,hora=$('occHora').value||nowTime();let ctx={team:[]};try{ctx=await provider.occurrenceContext(data,hora)}catch{}const teamIds=new Set((ctx.team||[]).map(x=>Number(x.guarda_id)));teamIds.add(Number(provider.session?.guarda_id));const refs=provider.references().guardas||[];$('occEquipe').innerHTML=refs.map(g=>`<label class="${teamIds.has(Number(g.id))?'suggested':''}"><input type="checkbox" class="occ-team" value="${g.id}" ${teamIds.has(Number(g.id))?'checked':''}> ${esc(g.nome_guerra||g.nome_completo)}</label>`).join('');document.querySelectorAll('.occ-team').forEach(x=>x.addEventListener('change',atualizarOccCondutor));atualizarOccCondutor()}
@@ -323,29 +337,47 @@ async function atualizarSubstituidosPermuta(){
     if(!lista.length)sel.innerHTML='<option value="">Nenhum GCM escalado neste período</option>';else{sel.disabled=false;if(btn)btn.disabled=false;}
   }catch(e){sel.innerHTML='<option value="">Não foi possível consultar</option>';if(msg){msg.textContent=e.message;msg.classList.add('error');}}
 }
+async function carregarTrocaExtraOpcoes(){const a=$('pmExtraMeu'),b=$('pmExtraOutro');if(!a||!b)return;try{const r=await provider.extraSwapCandidates(),ord=(x,y)=>String(x.data||'').localeCompare(String(y.data||''))||String(x.horario_inicio||'').localeCompare(String(y.horario_inicio||''));r.mine=(r.mine||[]).sort(ord);r.others=(r.others||[]).sort(ord);const opt=x=>`${fmt(x.data)} · ${esc(x.horario_inicio||'')}–${esc(x.horario_fim||'')} · ${Math.round(Number(x.minutos||0))/60}h · ${esc(x.classe||'50')}%`;a.innerHTML='<option value="">Selecione seu extra...</option>'+(r.mine||[]).map(x=>`<option value="${x.id}" data-classe="${esc(x.classe||'')}" data-minutos="${Number(x.minutos||0)}">${opt(x)}</option>`).join('');b.innerHTML='<option value="">Selecione o extra do outro GCM...</option>'+(r.others||[]).map(x=>`<option value="${x.id}" data-classe="${esc(x.classe||'')}" data-minutos="${Number(x.minutos||0)}">${esc(x.nome_guerra||'GCM')} · ${opt(x)}</option>`).join('');const aviso=()=>{const oa=a.selectedOptions[0],ob=b.selectedOptions[0],host=$('pmTrocaAviso');if(!host)return;if(!oa?.value||!ob?.value){host.textContent='A troca bilateral é financeiramente neutra. Diferenças de duração ou classificação 50%/100% são permitidas, mas serão destacadas antes do aceite e da aprovação.';return}const ca=oa.dataset.classe||'',cb=ob.dataset.classe||'',ma=Number(oa.dataset.minutos||0),mb=Number(ob.dataset.minutos||0),dif=ca!==cb||ma!==mb;host.textContent=dif?`ATENÇÃO: os serviços não são equivalentes (${ma/60}h · ${ca}% ↔ ${mb/60}h · ${cb}%). A troca é permitida e permanecerá financeiramente neutra, mas exige ciência expressa dos dois GCMs e do Comando.`:`Serviços equivalentes (${ma/60}h · ${ca}%). A troca permanecerá financeiramente neutra e seguirá para aceite do outro GCM e aprovação do Comando.`;host.classList.toggle('warning',dif)};a.onchange=aviso;b.onchange=aviso;aviso()}catch(e){a.innerHTML='<option>Falha ao consultar extras</option>';b.innerHTML='<option>Falha ao consultar extras</option>';if($('pmMsg'))$('pmMsg').textContent=e.message}}
+async function atualizarModoPermuta(){const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',extraMode=swap||cessao;document.querySelectorAll('.pm-normal').forEach(x=>x.classList.toggle('hidden',extraMode));document.querySelectorAll('.pm-swap').forEach(x=>x.classList.toggle('hidden',!extraMode));$('pmExtraMeuLabel')?.classList.toggle('hidden',cessao);if($('pmTrocaAviso'))$('pmTrocaAviso').textContent=cessao?'Selecione o serviço extra de outro GCM que deseja assumir. O GCM originalmente escalado deverá autorizar primeiro; somente depois a solicitação seguirá ao Comando.':'A troca bilateral é financeiramente neutra. Diferenças de duração ou classificação 50%/100% são permitidas, mas serão destacadas antes do aceite e da aprovação.';if(extraMode)await carregarTrocaExtraOpcoes();else await atualizarSubstituidosPermuta();}
+function descricaoTrocaExtra(q){const o=q.extra_origem||{},c=q.extra_contrapartida||{};const a=`${fmt(o.data||q.data)} · ${esc(o.horario_inicio||'')}–${esc(o.horario_fim||'')} · ${Number(o.minutos||q.minutos_extra_origem||0)/60}h · ${esc(o.classe||q.classe_extra_origem||'50')}%`;const b=`${fmt(c.data||'')} · ${esc(c.horario_inicio||'')}–${esc(c.horario_fim||'')} · ${Number(c.minutos||q.minutos_extra_contrapartida||0)/60}h · ${esc(c.classe||q.classe_extra_contrapartida||'50')}%`;const dif=String(o.classe||q.classe_extra_origem||'50')!==String(c.classe||q.classe_extra_contrapartida||'50')||Number(o.minutos||q.minutos_extra_origem||0)!==Number(c.minutos||q.minutos_extra_contrapartida||0);return {a,b,dif};}
 function renderPermutas(){
   const el=$('listaPermutasSolicitadas');if(!el)return;
-  const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA');
-  el.innerHTML=req.length?req.map(x=>{const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),nome=nomeCandidato(q.substituido_id||q.substituto_id);return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(q.data||'')} · Turno ${esc(q.turno||'-')}</small><strong>GCM substituído: ${esc(nome)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${x.editable?`<div class="request-actions"><button class="mini" data-pm-edit="${x.id}">Editar</button><button class="mini" data-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de permuta enviada.</div>';
+  const gestor=provider.gestor();
+  if(gestor){
+    if(!permutasEspelho.length){provider.entityList('permutas',500,0).then(r=>{permutasEspelho=(r.records||[]).map(x=>x.data||{});renderPermutas();}).catch(e=>console.warn('[GCMBS] espelho de permutas:',e?.message||e));}
+    const espelho=filtraCompetencia(permutasEspelho.slice(),'pmCompetenciaFiltro').sort((a,b)=>String(b.data||b.criado_em||'').localeCompare(String(a.data||a.criado_em||'')));
+    const pendentes=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'),'pmCompetenciaFiltro');
+    const espelhoIds=new Set(espelho.map(x=>String(x.id||x.desktop_id||'')));
+    const extras=pendentes.filter(x=>!x.desktop_referencia_id||!espelhoIds.has(String(x.desktop_referencia_id)));
+    const titulo=el.closest('.card')?.querySelector('h2');if(titulo)titulo.textContent='Permutas da competência — consulta do Comando/Subcomando';
+    const renderHistorico=x=>{const st=String(x.status||'PENDENTE').toUpperCase(),substituido=pessoaPorId(x.substituido_id)||x.substituido_nome||'GCM',substituto=pessoaPorId(x.substituto_id)||x.substituto_nome||'GCM',modal=String(x.modalidade||'ASSUNCAO').toUpperCase(),extra=Number(x.servico_extra||0)===1||modal.includes('EXTRA');return `<article class="record-card"><div class="record-card-head"><strong>${esc(substituto)} ↔ ${esc(substituido)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${fmt(x.data)} · Turno ${esc(x.turno||'-')} · ${extra?'Serviço extra':'Serviço ordinário'}</div>${x.motivo?`<div>${esc(x.motivo)}</div>`:''}${x.motivo_decisao?`<small>Decisão: ${esc(x.motivo_decisao)}</small>`:''}</article>`};
+    const renderPendente=x=>{const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(sol)} — solicitação online</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${fmt(q.data)} · Turno ${esc(q.turno||'-')}</div><div>${esc(sub)} · aguardando consolidação no Desktop</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</article>`};
+    el.innerHTML=(extras.map(renderPendente).join('')+espelho.map(renderHistorico).join(''))||'<div class="empty">Nenhuma permuta encontrada nesta competência.</div>';
+    return;
+  }
+  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'),'pmCompetenciaFiltro');
+  el.innerHTML=req.length?req.map(x=>{const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),troca=String(q.modalidade||'').toUpperCase()==='TROCA_EXTRA',assuncaoExtra=String(q.modalidade||'').toUpperCase()==='CESSAO_EXTRA',nome=nomeCandidato(q.substituido_id||q.substituto_id),dt=troca?descricaoTrocaExtra(q):null;return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${troca?'Troca bilateral de extras':`${esc(q.data||'')} · Turno ${esc(q.turno||'-')}`}</small><strong>${troca?'Troca de serviço extra':`GCM substituído: ${esc(nome)}`}</strong>${troca?`<span>Seu/serviço de origem: ${dt.a}</span><span>Serviço em contrapartida: ${dt.b}</span>${dt.dif?'<div class="record-warning">Atenção: há diferença de duração e/ou classificação 50%/100%. A troca é permitida e financeiramente neutra.</div>':''}`:''}<span class="status-pill status-${esc(st)}">${esc(st)}</span>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${Number(q.contraparte_id)===Number(provider.session?.guarda_id)&&['AGUARDANDO_ACEITE','PENDENTE'].includes(st)?`<div class="request-actions"><button class="mini" data-pm-accept="${x.id}">Autorizar/aceitar</button><button class="mini" data-pm-reject="${x.id}">Recusar</button></div>`:''}${x.editable&&!troca?`<div class="request-actions"><button class="mini" data-pm-edit="${x.id}">Editar</button><button class="mini" data-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de permuta enviada.</div>';
   document.querySelectorAll('[data-pm-edit]').forEach(b=>b.onclick=()=>editarPermutaSolicitacao(Number(b.dataset.pmEdit)));
   document.querySelectorAll('[data-pm-del]').forEach(b=>b.onclick=()=>cancelarPermutaSolicitacao(Number(b.dataset.pmDel)));
+  document.querySelectorAll('[data-pm-accept]').forEach(b=>b.onclick=async()=>{if(!confirm('Você confirma que leu os dados do serviço e autoriza/aceita esta permuta de serviço extra?'))return;try{await provider.acceptExtraSwap(Number(b.dataset.pmAccept),true);await provider.load();renderTudo(false)}catch(e){alert(e.message)}});
+  document.querySelectorAll('[data-pm-reject]').forEach(b=>b.onclick=async()=>{if(!confirm('Recusar esta solicitação de serviço extra?'))return;try{await provider.acceptExtraSwap(Number(b.dataset.pmReject),false);await provider.load();renderTudo(false)}catch(e){alert(e.message)}});
 }
-
 function renderPermutasGestao(){
   const card=$('permutaGestaoCard'),el=$('listaPermutasGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('permutas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
-  const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA');
-  el.innerHTML=req.length?req.map(x=>{const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM';const pend=['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE'].includes(st);return `<article class="record-card"><div class="record-card-head"><strong>${esc(sol)} assume serviço de ${esc(sub)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${fmt(q.data)} · Turno ${esc(q.turno||'-')} · ${Number(q.servico_extra)?'Serviço extra':'Serviço ordinário'}</div>${q.observacao?`<div>${esc(q.observacao)}</div>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="request-actions"><button class="mini" data-cmd-pm-ok="${x.id}">Aprovar</button><button class="mini" data-cmd-pm-no="${x.id}">Recusar</button><button class="mini danger-soft" data-cmd-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de permuta visível ao Comando.</div>';
+  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'),'pmCompetenciaFiltro');
+  const titulo=card.querySelector('h2');if(titulo)titulo.textContent='Solicitações online — análise e histórico da competência';
+  el.innerHTML=req.length?req.map(x=>{const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),troca=String(q.modalidade||'').toUpperCase()==='TROCA_EXTRA',assuncaoExtra=String(q.modalidade||'').toUpperCase()==='CESSAO_EXTRA',sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM',dt=troca?descricaoTrocaExtra(q):null;const exigeAceite=troca||assuncaoExtra,aceiteOk=!exigeAceite||Number(q.aceite_contraparte)===1;const pend=['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE','ACEITE_PENDENTE_DESKTOP'].includes(st)&&st!=='AGUARDANDO_ACEITE'&&aceiteOk;return `<article class="record-card"><div class="record-card-head"><strong>${troca?`Troca bilateral de extras · ${esc(sol)}`:`${esc(sol)} assume serviço de ${esc(sub)}`}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div>${troca?`<div class="record-meta">Origem: ${dt.a}<br>Contrapartida: ${dt.b}</div>${dt.dif?'<div class="record-warning"><b>Atenção:</b> serviços com duração e/ou classificação 50%/100% diferentes. A troca é permitida e financeiramente neutra. Confirme a ciência antes de aprovar.</div>':''}<div class="record-ok">Aceite do outro GCM: ${aceiteOk?'CONFIRMADO':'AGUARDANDO'}</div>`:`<div class="record-meta">${fmt(q.data)} · Turno ${esc(q.turno||'-')} · ${Number(q.servico_extra)?'Serviço extra':'Serviço ordinário'}</div>${assuncaoExtra?`<div class="record-ok">Autorização do GCM originalmente escalado: ${aceiteOk?'CONFIRMADA':'AGUARDANDO'}</div>`:''}`}${q.observacao?`<div>${esc(q.observacao)}</div>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="request-actions"><button class="mini" data-cmd-pm-ok="${x.id}">Aprovar${troca?' com ciência':''}</button><button class="mini" data-cmd-pm-no="${x.id}">Recusar</button><button class="mini danger-soft" data-cmd-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de permuta visível ao Comando.</div>';
   el.querySelectorAll('[data-cmd-pm-ok]').forEach(b=>b.onclick=()=>decidirPermutaComando(Number(b.dataset.cmdPmOk),'APROVADA'));
   el.querySelectorAll('[data-cmd-pm-no]').forEach(b=>b.onclick=()=>decidirPermutaComando(Number(b.dataset.cmdPmNo),'NEGADA'));
   el.querySelectorAll('[data-cmd-pm-del]').forEach(b=>b.onclick=()=>excluirPermutaComando(Number(b.dataset.cmdPmDel)));
 }
 async function decidirPermutaComando(id,decisao){let motivo='';if(decisao==='NEGADA'){motivo=prompt('Informe o motivo da recusa da permuta:','')||'';if(!motivo.trim())return alert('O motivo da recusa é obrigatório.')}else{motivo=prompt('Observação da aprovação (opcional):','')||'';}try{await provider.decidePermutaRequest(id,decisao,motivo);renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
 async function excluirPermutaComando(id){const motivo=prompt('Informe o motivo da exclusão/cancelamento administrativo:','Solicitação registrada de forma equivocada')||'';if(!motivo.trim())return;if(!confirm('Retirar esta solicitação pendente da fila? O histórico administrativo será preservado.'))return;try{await provider.adminDeletePermutaRequest(id,motivo);renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
-function resetPermutaForm(){permutaEditingId=null;$('pmTitulo').textContent='Nova solicitação de permuta';$('pmEnviar').textContent='Enviar solicitação';$('pmCancelarEdicao').classList.add('hidden');$('pmData').value='';$('pmTurno').value='A';$('pmExtra').value='0';$('pmSubstituto').value='';$('pmObs').value='';$('pmTermo').checked=false;}
+function resetPermutaForm(){permutaEditingId=null;if($('pmModalidade'))$('pmModalidade').value='ASSUNCAO';$('pmTitulo').textContent='Nova solicitação de permuta';$('pmEnviar').textContent='Enviar solicitação';$('pmCancelarEdicao').classList.add('hidden');$('pmData').value='';$('pmTurno').value='A';$('pmExtra').value='0';$('pmSubstituto').value='';$('pmObs').value='';$('pmTermo').checked=false;atualizarModoPermuta();}
 async function editarPermutaSolicitacao(id){const x=provider.actionRequests().find(r=>Number(r.id)===id&&String(r.tipo).toUpperCase()==='PERMUTA');if(!x||!x.editable)return;const q=x.payload||{};permutaEditingId=id;$('pmTitulo').textContent='Editar solicitação de permuta';$('pmEnviar').textContent='Salvar alteração';$('pmCancelarEdicao').classList.remove('hidden');$('pmData').value=q.data||'';$('pmTurno').value=q.turno||'A';$('pmExtra').value=String(Number(q.servico_extra||0));$('pmObs').value=q.observacao||'';$('pmTermo').checked=!!q.concordou_termo;await atualizarSubstituidosPermuta();$('pmSubstituto').value=String(q.substituido_id||q.substituto_id||'');$('permutaCard').scrollIntoView({behavior:'smooth',block:'start'});}
 async function cancelarPermutaSolicitacao(id){if(!confirm('Excluir/cancelar esta solicitação de permuta enquanto ainda está pendente?'))return;try{await provider.cancelPermutaRequest(id);renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
 function renderBanco(){
-  const b=meuBanco(),gestor=provider.gestor();let c50=0,c100=0,d=0;
+  const b=filtraCompetencia(meuBanco(),'bhCompetenciaFiltro'),gestor=provider.gestor();let c50=0,c100=0,d=0;
   if($('tituloBanco')) $('tituloBanco').textContent=gestor?'Banco de horas autorizado':'Meu banco de horas';
   for(const x of b){
     const sign=String(x.natureza).toUpperCase()==='DEBITO'?-1:1;
@@ -356,13 +388,13 @@ function renderBanco(){
   $('bh50').textContent=horas(c50);$('bh100').textContent=horas(c100);$('bhDeb').textContent=horas(d);$('bhSaldo').textContent=horas(c50+c100);
   $('listaBanco').innerHTML=b.slice(0,40).map(x=>`<div class="item"><small>${fmt(x.data_fato)} · ${esc(x.classe||'50')}%${gestor&&x.nome_guerra?' · '+esc(x.nome_guerra):''}</small><strong>${esc(x.tipo||x.origem||'Movimentação')}</strong><span>${String(x.natureza).toUpperCase()==='DEBITO'?'-':'+'}${horas(x.minutos)}</span></div>`).join('')||'<div class="empty">Sem movimentações.</div>';
 
-  const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO');
+  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro');
   const lr=$('listaCorrecoes');if(lr)lr.innerHTML=req.length?req.map(x=>{const p=x.payload||{},min=Number(p.minutos_solicitados||0),status=String(x.status||'PENDENTE').toUpperCase();return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(p.data_servico||'')} · ${horas(min)}</small><strong>${esc(status)}</strong><span>${esc(p.descricao||'Solicitação de correção')}</span>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de correção enviada.</div>';
 }
 
 function renderBancoGestao(){
   const card=$('bancoGestaoCard'),el=$('listaBancoGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('banco_horas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
-  const req=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO');
+  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro');
   el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Competência ${esc(p.competencia||'-')} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
   el.querySelectorAll('[data-cmd-bh-ok]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhOk),'APROVADA'));
   el.querySelectorAll('[data-cmd-bh-no]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhNo),'RECUSADA'));
@@ -401,7 +433,7 @@ async function abrirModuloOnline(modulo){
   renderCatalogoOnline();
 }
 function renderEntityTabs(){
-  const host=$('onlineEntityTabs');if(!host)return;const itens=onlineCatalog.filter(c=>c.modulo===onlineModuleFilter);
+  const host=$('onlineEntityTabs');if(!host)return;const itens=onlineCatalog.filter(c=>c.modulo===onlineModuleFilter&&c.entity!=='viatura_substituicoes');
   host.innerHTML=itens.length>1?itens.map(c=>`<button type="button" class="module-tab ${onlineCurrent?.entity===c.entity?'active':''}" data-entity-tab="${esc(c.entity)}">${esc(c.titulo)}</button>`).join(''):'';
   host.classList.toggle('hidden',itens.length<=1);host.querySelectorAll('[data-entity-tab]').forEach(b=>b.addEventListener('click',()=>abrirEntidadeOnline(b.dataset.entityTab)));
 }
@@ -421,7 +453,7 @@ function renderRegistrosOnline(){
   const cfg=uiEntity();
   el.innerHTML=list.map(r=>{
     const d=r.data||{},ord=cfg.order||[];const keys=[...ord.filter(k=>Object.prototype.hasOwnProperty.call(d,k)),...Object.keys(d).filter(k=>!ord.includes(k))];
-    const pairs=keys.filter(k=>!ONLINE_HIDE_FIELDS.has(String(k).toLowerCase())&&!['id'].includes(String(k).toLowerCase())).slice(0,18).map(k=>[k,d[k]]);
+    const pairs=keys.filter(k=>!ONLINE_HIDE_FIELDS.has(String(k).toLowerCase())&&!campoOcultoNaEntidade(k)&&!['id'].includes(String(k).toLowerCase())).slice(0,18).map(k=>[k,d[k]]);
     return `<div class="item" data-online-key="${esc(r.record_key)}"><div class="online-kv">${pairs.map(([k,v])=>`<b>${esc(onlineLabel(k))}</b><span>${esc(rotuloOnline(k,v))}</span>`).join('')}</div>${onlineCurrent.can_edit?`<div class="online-record-actions"><button class="mini" data-online-edit="${esc(r.record_key)}">Editar</button>${(onlineCurrent.entity!=='manutencao_viaturas'||provider.gestor())?`<button class="mini danger-soft" data-online-del="${esc(r.record_key)}">Excluir</button>`:''}</div>`:''}</div>`;
   }).join('')||'<div class="empty">Nenhum registro.</div>';
   document.querySelectorAll('[data-online-edit]').forEach(b=>b.addEventListener('click',()=>editarOnline(b.dataset.onlineEdit)));
@@ -429,7 +461,7 @@ function renderRegistrosOnline(){
 }
 function campoOnline(col,val){
   const name=String(col.name||''),lower=name.toLowerCase();
-  if(Number(col.pk)>0||['criado_por','analisado_por','criado_em','atualizado_em','arquivo_dados','arquivo_tipo','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','entidade_id','usuario_id','escala_id','extra_id'].includes(lower))return'';
+  if(Number(col.pk)>0||campoOcultoNaEntidade(lower)||['criado_por','analisado_por','criado_em','atualizado_em','arquivo_dados','arquivo_tipo','origem_id','referencia_id','movimentacao_id','movimento_vinculado_id','entidade_id','usuario_id','escala_id','extra_id'].includes(lower))return'';
   if(onlineCurrent?.entity==='justificativas_faltas'&&['status','arquivo_nome'].includes(lower))return'';
   if(onlineCurrent?.entity==='abastecimento_viaturas'&&lower==='motorista')return'';
   if(lower==='guarda_id'&&!provider.gestor())return'';
@@ -484,6 +516,7 @@ function campoOnline(col,val){
   if(['autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h','exige_motorista','funcionamento_24h','ativa','participa_gerador'].includes(lower))return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="1" ${['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Sim</option><option value="0" ${!['1','SIM','TRUE'].includes(String(v).toUpperCase())?'selected':''}>Não</option></select></label>`;
   if(lower==='combustivel')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Selecione...</option>${['GASOLINA','ETANOL','DIESEL','FLEX'].map(x=>`<option ${String(v).toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='tipo'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="VIATURA" ${String(v||'VIATURA').toUpperCase()==='VIATURA'?'selected':''}>Viatura / carro</option><option value="MOTO" ${['MOTO','MOTOPATRULHA'].includes(String(v).toUpperCase())?'selected':''}>Motopatrulha</option></select></label>`;
+  if(lower==='status'&&onlineCurrent?.entity==='manutencao_viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="ABERTA" ${String(v||'ABERTA').toUpperCase()!=='CONCLUIDA'?'selected':''}>ABERTA</option><option value="CONCLUIDA" ${String(v).toUpperCase()==='CONCLUIDA'?'selected':''}>CONCLUÍDA</option></select></label>`;
   if(lower==='status'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['ATIVA','INDISPONIVEL','BAIXADA','INATIVA'].map(x=>`<option value="${x}" ${String(v||'ATIVA').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='modalidade_uso')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['INDIVIDUAL','VIATURA','COLETIVO'].map(x=>`<option ${String(v||'INDIVIDUAL').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='tipo_servico'&&onlineCurrent?.entity==='frequencia_registros')return `<label>${esc(label)}<select data-online-field="${esc(name)}" disabled><option value="${esc(v)}">${esc(v||'Selecione GCM e data')}</option></select><small>Preenchido automaticamente pela escala gravada.</small></label>`;
@@ -500,7 +533,250 @@ function campoOnline(col,val){
   return `<label>${esc(label)}<input data-online-field="${esc(name)}" value="${esc(v)}"></label>`;
 }
 
-function editarOnline(key=null){
+function coletarSubstitutasViaturaEditor(){
+  const itens=[...document.querySelectorAll('[data-viatura-sub-id]:checked')].map(ch=>{
+    const id=Number(ch.dataset.viaturaSubId||0);
+    const ordemEl=document.querySelector(`[data-viatura-sub-ordem="${id}"]`);
+    const ordem=Math.max(1,Number(ordemEl?.value||9999));
+    return {id,ordem};
+  }).filter(x=>Number.isInteger(x.id)&&x.id>0);
+  itens.sort((a,b)=>a.ordem-b.ordem||a.id-b.id);
+  return itens.map((x,i)=>({id:x.id,ordem:i+1}));
+}
+
+async function renderSubstitutasViaturaEditor(){
+  if(onlineCurrent?.entity!=='viaturas')return;
+  const host=$('onlineCampos');if(!host)return;
+
+  const d=onlineEditing?.data||{};
+  const principalId=Number(d.id||onlineEditing?.record_key||0);
+
+  if(!Number.isInteger(principalId)||principalId<=0){
+    host.insertAdjacentHTML('beforeend',`
+      <section class="form-section module-editor-section">
+        <h3>Substitutas operacionais</h3>
+        <div class="form-grid">
+          <div class="field-auto full">
+            Para uma viatura criada pelo Online/App, salve primeiro.
+            Após o Desktop processar a sincronização e atribuir o ID definitivo,
+            reabra o cadastro para configurar as substitutas.
+          </div>
+        </div>
+      </section>
+    `);
+    return;
+  }
+
+  try{
+    const b=await provider.entityList('viatura_substituicoes',500,0);
+
+    const atuais=(b.records||[]).filter(r=>
+      Number(r.data?.viatura_principal_id)===principalId &&
+      Number(r.data?.ativa??1)!==0
+    );
+
+    const porSub=new Map(
+      atuais.map(r=>[
+        Number(r.data?.viatura_substituta_id),
+        r
+      ])
+    );
+
+    const candidatas=(refData().viaturas||[])
+      .filter(x=>Number(x.id)!==principalId)
+      .slice()
+      .sort((a,b)=>
+        String(a.prefixo||a.placa||'')
+          .localeCompare(
+            String(b.prefixo||b.placa||''),
+            'pt-BR'
+          )
+      );
+
+    const campos=candidatas.map((x,idx)=>{
+      const id=Number(x.id);
+      const atual=porSub.get(id);
+      const marcada=!!atual;
+      const ordem=Math.max(
+        1,
+        Number(atual?.data?.ordem||idx+1)
+      );
+
+      const nome=[
+        x.prefixo,
+        x.placa,
+        x.modelo
+      ].filter(Boolean).join(' · ')||`Viatura ${id}`;
+
+      const situacao=
+        x.situacao_operacional||
+        x.status||
+        'ATIVA';
+
+      return `
+        <label>
+          <span>
+            <input
+              type="checkbox"
+              data-viatura-sub-id="${esc(id)}"
+              ${marcada?'checked':''}
+            >
+            ${esc(nome)}
+          </span>
+
+          <small>
+            Situação: ${esc(situacao)} ·
+            prioridade de substituição
+          </small>
+
+          <input
+            type="number"
+            min="1"
+            step="1"
+            data-viatura-sub-ordem="${esc(id)}"
+            value="${esc(ordem)}"
+          >
+        </label>
+      `;
+    }).join('');
+
+    host.insertAdjacentHTML('beforeend',`
+      <section class="form-section module-editor-section">
+        <h3>Substitutas operacionais</h3>
+
+        <div class="form-grid">
+          ${campos||`
+            <div class="field-auto full">
+              Nenhuma outra viatura cadastrada.
+            </div>
+          `}
+        </div>
+
+        <small class="full">
+          Marque somente as viaturas autorizadas a substituir esta
+          viatura. A prioridade 1 será tentada primeiro.
+          Se nenhuma marcada estiver disponível, o sistema não
+          selecionará outra viatura automaticamente.
+        </small>
+      </section>
+    `);
+
+  }catch(e){
+    host.insertAdjacentHTML('beforeend',`
+      <section class="form-section module-editor-section">
+        <h3>Substitutas operacionais</h3>
+        <div class="field-auto full">
+          Não foi possível carregar as substitutas:
+          ${esc(e?.message||e)}
+        </div>
+      </section>
+    `);
+  }
+}
+
+async function salvarSubstituicoesViatura(principalId,selecionadas){
+  principalId=Number(principalId);
+
+  if(!Number.isInteger(principalId)||principalId<=0)
+    throw new Error('ID da viatura principal ainda não sincronizado.');
+
+  const b=await provider.entityList(
+    'viatura_substituicoes',
+    500,
+    0
+  );
+
+  const atuais=(b.records||[]).filter(r=>
+    Number(r.data?.viatura_principal_id)===principalId
+  );
+
+  const desejadas=new Map(
+    (selecionadas||[]).map(x=>[
+      Number(x.id),
+      {
+        id:Number(x.id),
+        ordem:Number(x.ordem)
+      }
+    ])
+  );
+
+  const grupos=new Map();
+
+  for(const r of atuais){
+    const sid=Number(r.data?.viatura_substituta_id||0);
+    if(!sid)continue;
+    if(!grupos.has(sid))grupos.set(sid,[]);
+    grupos.get(sid).push(r);
+  }
+
+  for(const [sid,registros] of grupos){
+
+    const desejada=desejadas.get(sid);
+
+    if(!desejada){
+      for(const r of registros){
+        await provider.entityMutate(
+          'viatura_substituicoes',
+          r.record_key,
+          'DELETE',
+          r.data||{}
+        );
+      }
+      continue;
+    }
+
+    const manter=registros[0];
+
+    for(const duplicada of registros.slice(1)){
+      await provider.entityMutate(
+        'viatura_substituicoes',
+        duplicada.record_key,
+        'DELETE',
+        duplicada.data||{}
+      );
+    }
+
+    const payload={
+      ...(manter.data||{}),
+      viatura_principal_id:principalId,
+      viatura_substituta_id:sid,
+      ordem:desejada.ordem,
+      ativa:1
+    };
+
+    const mudou=
+      Number(manter.data?.ordem||0)!==Number(desejada.ordem) ||
+      Number(manter.data?.ativa??1)!==1 ||
+      Number(manter.data?.viatura_principal_id)!==principalId ||
+      Number(manter.data?.viatura_substituta_id)!==sid;
+
+    if(mudou){
+      await provider.entityMutate(
+        'viatura_substituicoes',
+        manter.record_key,
+        'UPSERT',
+        payload
+      );
+    }
+
+    desejadas.delete(sid);
+  }
+
+  for(const item of desejadas.values()){
+    await provider.entityMutate(
+      'viatura_substituicoes',
+      '',
+      'UPSERT',
+      {
+        viatura_principal_id:principalId,
+        viatura_substituta_id:item.id,
+        ordem:item.ordem,
+        ativa:1
+      }
+    );
+  }
+}
+async function editarOnline(key=null){
   onlineEditing=key?onlineRecords.find(r=>String(r.record_key)===String(key)):null;const d=onlineEditing?.data||{},cfg=uiEntity();
   $('onlineEditorTitulo').textContent=(onlineEditing?'Editar ':'Novo ')+(cfg.titulo||onlineCurrent?.titulo||'registro');
   const cols=orderedColumns(),map=new Map(cols.map(c=>[c.name,c]));let html='';
@@ -511,6 +787,7 @@ function editarOnline(key=null){
     $('onlineCampos').insertAdjacentHTML('beforeend',`<label class="full">Documento comprobatório (JPG, PNG ou PDF)<input id="onlineArquivoJustificativa" type="file" accept="image/jpeg,image/png,application/pdf"><small>${d.arquivo_nome?`Atual: ${esc(d.arquivo_nome)}`:'Opcional'}</small></label>`);
   }
   $('onlineMsg').textContent='';$('onlineEditor').showModal();
+  if(onlineCurrent?.entity==='viaturas')await renderSubstitutasViaturaEditor();
   if(onlineCurrent?.entity==='frequencia_registros'){
     const atualizar=async()=>{const g=Number(document.querySelector('[data-online-field="guarda_id"]')?.value||0),dt=document.querySelector('[data-online-field="data"]')?.value,ts=document.querySelector('[data-online-field="tipo_servico"]'),ref=document.querySelector('[data-online-field="referencia_id"]');if(!g||!dt||!ts)return;try{const rr=await provider.frequencyServices(g,dt),sv=rr.services||[];ts.disabled=false;ts.innerHTML=sv.length?sv.map(x=>`<option value="${esc(x.tipo_servico)}" data-ref="${esc(x.referencia_id)}">${esc(x.tipo_servico==='ORDINARIO'?'Serviço ordinário':'Serviço extra')} · ${esc(x.turno||'')} · ${esc(x.referencia||'')}</option>`).join(''):'<option value="">Nenhum serviço gravado nesta data</option>';const setref=()=>{if(ref)ref.value=ts.selectedOptions[0]?.dataset.ref||''};ts.onchange=setref;setref()}catch(e){ts.innerHTML=`<option value="">${esc(e.message)}</option>`}};document.querySelector('[data-online-field="guarda_id"]')?.addEventListener('change',atualizar);document.querySelector('[data-online-field="data"]')?.addEventListener('change',atualizar);atualizar();
   }
@@ -518,6 +795,7 @@ function editarOnline(key=null){
 async function salvarOnline(){
   try{
     const d={...(onlineEditing?.data||{})};
+    const substitutasSelecionadas=onlineCurrent.entity==='viaturas'?coletarSubstitutasViaturaEditor():[];
     document.querySelectorAll('[data-online-field]').forEach(i=>{let v=i.value;const c=onlineCurrent.columns.find(x=>x.name===i.dataset.onlineField);if(/INT|REAL|NUM/i.test(String(c?.type||''))&&v!=='')v=Number(v);d[i.dataset.onlineField]=v});
     if(onlineCurrent.entity==='justificativas_faltas'){
       if(!provider.gestor())d.guarda_id=Number(provider.session?.guarda_id);
@@ -525,11 +803,37 @@ async function salvarOnline(){
       d.status=d.status||'ATIVA';d.tipo_servico=d.tipo_servico||'ORDINARIO';
       const f=$('onlineArquivoJustificativa')?.files?.[0];if(f){if(f.size>5*1024*1024)throw new Error('O documento deve ter no máximo 5 MB.');const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||'').split(',')[1]||'');r.onerror=()=>rej(new Error('Não foi possível ler o documento.'));r.readAsDataURL(f)});d.arquivo_nome=f.name;d.arquivo_tipo=f.type;d.arquivo_dados=b64;}
     }
+    if(onlineCurrent.entity==='manutencao_viaturas'){
+      const consertado=Number(d.consertado||0)===1;d.status=consertado?'CONCLUIDA':'ABERTA';
+      if(!consertado){d.data_retorno=null;d.recebido_por=null;}
+    }
     if(onlineCurrent.entity==='abastecimento_viaturas'){
       if(!d.motorista_id)d.motorista_id=Number(provider.session?.guarda_id)||null;
       d.motorista=guardaPorId(d.motorista_id)||pessoaPorId(d.motorista_id)||d.motorista||'';
     }
-    await provider.entityMutate(onlineCurrent.entity,onlineEditing?.record_key||'','UPSERT',d);
+    const resultadoViatura=await provider.entityMutate(onlineCurrent.entity,onlineEditing?.record_key||'','UPSERT',d);
+
+    if(onlineCurrent.entity==='viaturas'){
+      const principalId=Number(
+        d.id||
+        onlineEditing?.data?.id||
+        onlineEditing?.record_key||
+        0
+      );
+
+      if(Number.isInteger(principalId)&&principalId>0){
+        await salvarSubstituicoesViatura(
+          principalId,
+          substitutasSelecionadas
+        );
+      }else if(String(resultadoViatura?.record_key||'').startsWith('cloud:')){
+        alert(
+          'Viatura salva e enviada para sincronização. '+
+          'Após o Desktop atribuir o ID definitivo, reabra o cadastro '+
+          'para configurar as substitutas operacionais.'
+        );
+      }
+    }
     $('onlineEditor').close();await abrirEntidadeOnline(onlineCurrent.entity);
   }catch(e){$('onlineMsg').textContent=e.message}
 }
@@ -552,8 +856,8 @@ function renderAvisosInstitucionais(){
 }
 
 function renderAvisos(){
-  const lista=provider.notifications().slice();
-  const decisoes=provider.actionRequests().filter(x=>['APROVADA','RECUSADA','REPROVADA','CANCELADA'].includes(String(x.status||'').toUpperCase())).map(x=>({created_at:x.processado_em||x.created_at,titulo:String(x.tipo).toUpperCase()==='PERMUTA'?'Decisão de permuta':'Decisão do Banco de Horas',mensagem:x.resposta||`Situação: ${x.status}`,synthetic:true}));
+  const lista=filtraCompetencia(provider.notifications().slice(),'avisosCompetenciaFiltro');
+  const decisoes=filtraCompetencia(provider.actionRequests().filter(x=>['APROVADA','RECUSADA','REPROVADA','CANCELADA'].includes(String(x.status||'').toUpperCase())),'avisosCompetenciaFiltro').map(x=>({created_at:x.processado_em||x.created_at,titulo:String(x.tipo).toUpperCase()==='PERMUTA'?'Decisão de permuta':'Decisão do Banco de Horas',mensagem:x.resposta||`Situação: ${x.status}`,synthetic:true}));
   const naoLidas=lista.filter(x=>!x.lida_em).length;
   const badge=$('navAvisosBadge'); if(badge){badge.textContent=naoLidas?String(naoLidas):'';badge.classList.toggle('hidden',!naoLidas);}
   const todos=[...decisoes,...lista];
@@ -582,10 +886,10 @@ async function enviarBancoCorrecao(ev){
 }
 async function enviarPermuta(ev){
   ev.preventDefault();const msg=$('pmMsg');msg.className='full request-message';msg.textContent='Enviando...';
-  try{const req={data:$('pmData').value,turno:$('pmTurno').value,servico_extra:Number($('pmExtra').value),substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked};const r=permutaEditingId?await provider.updatePermutaRequest(permutaEditingId,req):await provider.requestPermuta(req);msg.textContent=permutaEditingId?'Solicitação atualizada. Aguardando decisão do Comando.':'Solicitação enviada. Acompanhe o histórico nesta tela.';msg.classList.add('success');resetPermutaForm();renderTudo(false);setView('permutas')}catch(e){msg.textContent=e.message;msg.classList.add('error')}
+  try{const modalidade=$('pmModalidade')?.value||'ASSUNCAO';const req=modalidade==='TROCA_EXTRA'?{modalidade,extra_id:Number($('pmExtraMeu').value),extra_contrapartida_id:Number($('pmExtraOutro').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked}:modalidade==='CESSAO_EXTRA'?{modalidade,extra_id:Number($('pmExtraOutro').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked}:{modalidade,data:$('pmData').value,turno:$('pmTurno').value,servico_extra:0,substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked};if(modalidade==='TROCA_EXTRA'&&permutaEditingId)throw new Error('Trocas bilaterais de extras devem ser canceladas e refeitas, preservando a auditoria.');const r=permutaEditingId?await provider.updatePermutaRequest(permutaEditingId,req):await provider.requestPermuta(req);msg.textContent=r.warning|| (permutaEditingId?'Solicitação atualizada. Aguardando decisão do Comando.':'Solicitação enviada. Acompanhe o histórico nesta tela.');msg.classList.add('success');resetPermutaForm();renderTudo(false);setView('permutas')}catch(e){msg.textContent=e.message;msg.classList.add('error')}
 }
 
-async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,nivel:$('msgNivel')?.value||'NORMAL',fim_em:$('msgFim')?.value||null,destino,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';if($('msgFim'))$('msgFim').value='';if($('msgNivel'))$('msgNivel').value='NORMAL';await provider.load();renderAvisosInstitucionais();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
+async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,nivel:$('msgNivel')?.value||'NORMAL',fim_em:$('msgFim')?.value||null,destino,data_servico:$('msgDataServico')?.value||null,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';if($('msgFim'))$('msgFim').value='';if($('msgNivel'))$('msgNivel').value='NORMAL';await provider.load();renderAvisosInstitucionais();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
 function renderMensagemComando(){const card=$('mensagemComandoCard');if(!card)return;const permitido=provider.gestor()&&provider.pode('central_pendencias','EDICAO');card.classList.toggle('hidden',!permitido);if(!permitido)return;const sel=$('msgGcms');const pessoas=(refData().guardas||[]).map(x=>({guarda_id:x.guarda_id||x.id,nome_guerra:x.nome_guerra||x.nome_completo}));sel.innerHTML=pessoas.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');}
 function renderRelatoriosFrota(){
   const el=$('frotaRelatorioAtalhos');if(!el)return;const mods=[['viaturas','Cadastro de Viaturas','Frota, tipo e situação'],['manutencao_viaturas','Manutenções','Baixas, oficinas e retornos'],['abastecimento_viaturas','Abastecimentos','Consumo, km e motorista'],['checklist_viaturas','Check-lists','Inspeções e pendências']].filter(x=>temAcesso(x[0]));
@@ -623,15 +927,18 @@ function renderTudo(resetView=true){
 
 function atualizarStatusConexao(){const el=$('connectionStatus');if(!el)return;const on=navigator.onLine;el.textContent=on?'Online':'Sem conexão';el.className='connection-status '+(on?'online':'offline');}
 
+let senhaObrigatoria=false;
+function exigirTrocaSenha(){senhaObrigatoria=true;$('senhaResetComando')?.classList.add('hidden');$('senhaFechar')?.classList.add('hidden');$('senhaMsg').textContent='Sua senha foi redefinida pelo Comando e é temporária. Crie uma nova senha para continuar.';$('senhaEditor')?.showModal();}
 async function entrar(e){
   e.preventDefault();
   $('loginErro').textContent='';
   $('entrar').disabled=true;
   try{
-    await provider.login($('loginUsuario').value,$('loginSenha').value);
+    const lembrar=!!$('loginLembrar')?.checked;const sessao=await provider.login($('loginUsuario').value,$('loginSenha').value,lembrar);localStorage.setItem('gcmbs.login.remember',lembrar?'1':'0');if(lembrar)localStorage.setItem('gcmbs.login.usuario',$('loginUsuario').value);else localStorage.removeItem('gcmbs.login.usuario');
     configurarPushNativo(provider).catch(()=>{});
     $('loginTela').classList.add('hidden');
     $('appTela').classList.remove('hidden');
+    if(Number(sessao?.senha_trocada||0)===0){exigirTrocaSenha();return;}
     renderTudo();
     aplicarIdentidadeVisualRemota().catch(()=>{});
     carregarOnlineCatalog().catch(()=>{});carregarQuadro().catch(()=>{});
@@ -642,23 +949,33 @@ async function entrar(e){
   }
 }
 async function sair(){
-  await provider.logout();
-  $('appTela').classList.add('hidden');
-  $('loginTela').classList.remove('hidden');
-  $('loginSenha').value='';
-  $('loginErro').textContent='';
+  const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';
+  await provider.logout(lembrar);
+  $('appTela').classList.add('hidden');$('loginTela').classList.remove('hidden');$('loginSenha').value='';$('loginErro').textContent='';
+  if(!lembrar){localStorage.removeItem('gcmbs.login.usuario');localStorage.removeItem('gcmbs.mobile.token');$('loginUsuario').value='';if($('loginLembrar'))$('loginLembrar').checked=false}else{$('loginUsuario').value=localStorage.getItem('gcmbs.login.usuario')||$('loginUsuario').value;if($('loginLembrar'))$('loginLembrar').checked=true}
 }
+function abrirSenha(){
+  senhaObrigatoria=false;$('senhaFechar')?.classList.remove('hidden');
+  $('senhaMsg').textContent='';['senhaAtual','senhaNova','senhaConfirmar'].forEach(id=>{if($(id))$(id).value=''});
+  const cmd=provider.gestor?.()||['comandante','subcomandante'].includes(String(provider.session?.role||'').toLowerCase());$('senhaResetComando')?.classList.toggle('hidden',!cmd);
+  if(cmd&&$('senhaResetGcm'))$('senhaResetGcm').innerHTML='<option value="">Selecione...</option>'+(provider.guardas()||[]).map(g=>`<option value="${Number(g.id)}">${esc(g.nome_guerra||g.nome_completo||'GCM')}</option>`).join('');
+  $('senhaEditor')?.showModal();
+}
+async function alterarSenhaOnline(){const a=$('senhaAtual').value,n=$('senhaNova').value,c=$('senhaConfirmar').value,m=$('senhaMsg');m.textContent='';if(!a||n.length<6||n!==c){m.textContent=n!==c?'A confirmação da nova senha não coincide.':'Informe a senha atual e uma nova senha com pelo menos 6 caracteres.';return}try{const r=await provider.changePassword(a,n);provider.session={...(provider.session||{}),senha_trocada:1};m.textContent=r.message||'Senha alterada.';$('senhaAtual').value=$('senhaNova').value=$('senhaConfirmar').value='';if(senhaObrigatoria){senhaObrigatoria=false;$('senhaFechar')?.classList.remove('hidden');await provider.load();$('senhaEditor')?.close();renderTudo();carregarQuadro().catch(()=>{});}}catch(e){m.textContent=e.message}}
+async function resetSenhaComando(){const id=Number($('senhaResetGcm')?.value||0),m=$('senhaMsg');if(!id){m.textContent='Selecione o GCM.';return}if(!confirm('Redefinir a senha deste GCM para o CPF cadastrado?'))return;try{const r=await provider.resetPasswordAdmin(id);m.textContent=r.message||'Senha redefinida.'}catch(e){m.textContent=e.message}}
+
 async function boot(){
-  await aplicarIdentidadeVisual();atualizarStatusConexao();window.addEventListener('online',atualizarStatusConexao);window.addEventListener('offline',atualizarStatusConexao);if($('quadroData'))$('quadroData').value=hoje();if($('escalaIni'))$('escalaIni').value=hoje();if($('escalaFim'))$('escalaFim').value=hoje();
-  $('loginForm').addEventListener('submit',entrar);
-  $('sair').addEventListener('click',sair);
+  await aplicarIdentidadeVisual();atualizarStatusConexao();window.addEventListener('online',atualizarStatusConexao);window.addEventListener('offline',atualizarStatusConexao);if($('quadroData'))$('quadroData').value=hoje();if($('escalaIni'))$('escalaIni').value=hoje();if($('escalaFim'))$('escalaFim').value=hoje();['pmCompetenciaFiltro','bhCompetenciaFiltro','avisosCompetenciaFiltro'].forEach(id=>{if($(id)&&!$(id).value)$(id).value=competenciaAtual();});
+  const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';if($('loginLembrar'))$('loginLembrar').checked=lembrar;if(lembrar&&$('loginUsuario'))$('loginUsuario').value=localStorage.getItem('gcmbs.login.usuario')||'';else if(!lembrar)localStorage.removeItem('gcmbs.mobile.token');
+  $('loginForm').addEventListener('submit',entrar);$('sair').addEventListener('click',sair);$('minhaSenha')?.addEventListener('click',abrirSenha);$('senhaFechar')?.addEventListener('click',()=>{if(!senhaObrigatoria)$('senhaEditor')?.close()});$('senhaEditor')?.addEventListener('cancel',e=>{if(senhaObrigatoria)e.preventDefault()});$('senhaSalvar')?.addEventListener('click',alterarSenhaOnline);$('senhaResetar')?.addEventListener('click',resetSenhaComando);
+  ['pmCompetenciaFiltro','bhCompetenciaFiltro','avisosCompetenciaFiltro'].forEach(id=>$(id)?.addEventListener('change',()=>renderTudo(false)));
   $('formBancoCorrecao')?.addEventListener('submit',enviarBancoCorrecao);
   $('formPermuta')?.addEventListener('submit',enviarPermuta);
-  $('pmCancelarEdicao')?.addEventListener('click',resetPermutaForm);
+  $('pmCancelarEdicao')?.addEventListener('click',resetPermutaForm);$('pmModalidade')?.addEventListener('change',atualizarModoPermuta);
   $('abrirAbastecimento')?.addEventListener('click',()=>abrirModuloOnline('abastecimento_viaturas'));
   $('abrirManutencao')?.addEventListener('click',()=>abrirModuloOnline('manutencao_viaturas'));
   $('formMensagemComando')?.addEventListener('submit',enviarMensagemComando);
-  $('msgDestino')?.addEventListener('change',()=>$('msgGcmsLabel').classList.toggle('hidden',$('msgDestino').value!=='SELECIONADOS'));
+  $('msgDestino')?.addEventListener('change',()=>{const v=$('msgDestino').value;$('msgGcmsLabel')?.classList.toggle('hidden',v!=='SELECIONADOS');$('msgDataServicoLabel')?.classList.toggle('hidden',v!=='SERVICO_DATA');});
   $('verificarAtualizacaoApp')?.addEventListener('click',verificarAtualizacaoApp);
   document.querySelectorAll('#mainNav [data-fixed][data-go]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.go)));
   document.querySelectorAll('#quadroAvisosHome [data-go="avisos"]').forEach(b=>b.addEventListener('click',()=>setView('avisos')));
@@ -684,6 +1001,7 @@ async function boot(){
     configurarPushNativo(provider).catch(()=>{});
     $('loginTela').classList.add('hidden');
     $('appTela').classList.remove('hidden');
+    if(Number(s?.senha_trocada||0)===0){exigirTrocaSenha();return;}
     renderTudo();
     aplicarIdentidadeVisualRemota().catch(()=>{});
     carregarOnlineCatalog().catch(()=>{});carregarQuadro().catch(()=>{});
@@ -693,6 +1011,6 @@ async function boot(){
 }
 boot();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100049',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100062',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

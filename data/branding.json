@@ -1,6 +1,9 @@
 {
   "formato": "GCMBS_MOBILE_BRANDING_V1",
   "gerado_em": null,
-  "icone": {"arquivo": "icon.png", "origem": "fallback"},
+  "icone": {
+    "arquivo": "icon.png",
+    "origem": "brasao_oficial_20260819"
+  },
   "login": null
 }
