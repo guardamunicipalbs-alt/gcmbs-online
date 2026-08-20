@@ -1,3 +1,5 @@
+import './central-pendencias-fix.js';
+
 // Politica de seguranca do login GCMBS.
 // Quando "Lembrar meu acesso" estiver desmarcado, nenhum dado de login
 // deve permanecer visivel/persistido depois de sair ou fechar a pagina.
