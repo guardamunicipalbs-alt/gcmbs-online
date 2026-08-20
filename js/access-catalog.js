@@ -17,8 +17,8 @@ const carregarModuloIndependente=(caminho,id,rotulo)=>{
 const carregarExtensoesOpcionais=()=>{
   if(extensoesAgendadas)return;
   extensoesAgendadas=true;
-  setTimeout(()=>importarOpcional('./p0-online-workflows.js?v=100062p05','P0'),400);
-  setTimeout(()=>carregarModuloIndependente('./folha-online-v62.js?v=100062p05','gcmbsFolhaV62Module','Folha'),900);
+  setTimeout(()=>importarOpcional('./p0-online-workflows.js?v=100062p06','P0'),400);
+  setTimeout(()=>carregarModuloIndependente('./folha-online-v62.js?v=100062p06','gcmbsFolhaV62Module','Folha'),900);
 };
 if(document.readyState==='complete') carregarExtensoesOpcionais();
 else window.addEventListener('load',carregarExtensoesOpcionais,{once:true});
