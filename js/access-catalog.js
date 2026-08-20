@@ -1,6 +1,17 @@
-import './audit-pending-fixes.js';
-import './p0-online-workflows.js';
-import './folha-online-v62.js';
+// Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
+// Falha em Auditoria/P0/Folha fica isolada ao respectivo modulo.
+const carregarExtensoesOpcionais=async()=>{
+  const resultados=await Promise.allSettled([
+    import('./audit-pending-fixes.js'),
+    import('./p0-online-workflows.js'),
+    import('./folha-online-v62.js')
+  ]);
+  resultados.forEach((r,i)=>{
+    if(r.status==='rejected') console.error('[GCMBS] Falha em extensao opcional',i,r.reason);
+  });
+};
+if(document.readyState==='complete') setTimeout(carregarExtensoesOpcionais,0);
+else window.addEventListener('load',()=>setTimeout(carregarExtensoesOpcionais,0),{once:true});
 
 export const MODULOS_GCMBS = [
   {id:'dashboard',nome:'Quadro Operacional',descricao:'Indicadores integrados do efetivo, escalas e frota',mobile:'inicio'},
