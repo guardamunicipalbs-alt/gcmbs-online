@@ -19,15 +19,21 @@ const p0Titulo=()=>String(p0$('onlineTitulo')?.textContent||'').trim();
 const p0IsExtra=()=>p0Titulo()==='Escala Extra Manual';
 const p0IsJust=()=>p0Titulo()==='Justificativa de Faltas';
 const p0IsEvento=()=>p0Titulo()==='Serviço Extra por Evento';
+const p0ModuloAtivo=()=>p0IsExtra()||p0IsJust()||p0IsEvento();
 
 function p0Mensagem(text,erro=false){const e=p0$('onlineMsg');if(e){e.textContent=text;e.style.color=erro?'#b91c1c':'#15803d';}}
 function p0RefreshModule(mod){setTimeout(()=>{const b=document.querySelector(`#mainNav [data-module="${mod}"]`);if(b)b.click();},150);}
+function p0RotularBotao(b,text,title){
+  if(!b)return;
+  if(String(b.textContent||'')!==text)b.textContent=text;
+  if(b.title!==title)b.title=title;
+}
 
 // Extra Manual: criação pelas regras do repositório; registros ativos não são editados em SQL.
 function p0AjustarExtra(){
   if(!p0IsExtra())return;
   document.querySelectorAll('#onlineRegistros [data-online-edit]').forEach(b=>b.remove());
-  document.querySelectorAll('#onlineRegistros [data-online-del]').forEach(b=>{b.textContent='Cancelar extra';b.title='Cancela o serviço extra preservando o histórico.';});
+  document.querySelectorAll('#onlineRegistros [data-online-del]').forEach(b=>p0RotularBotao(b,'Cancelar extra','Cancela o serviço extra preservando o histórico.'));
   const dlg=p0$('onlineEditor');if(!dlg?.open)return;
   const status=dlg.querySelector('[data-online-field="status"]');if(status){status.value='ATIVA';status.closest('label')?.classList.add('hidden');}
   const posto=dlg.querySelector('[data-online-field="posto"]');if(posto)posto.closest('label')?.classList.add('hidden');
@@ -68,7 +74,7 @@ async function p0AjustarEvento(){
       host.querySelectorAll('[data-online-key]').forEach(card=>{const key=String(card.dataset.onlineKey||''),names=[...(map.get(key)?.values()||[])];if(names.length&&!card.querySelector('[data-p0-evento-participantes]'))card.querySelector('.online-kv')?.insertAdjacentHTML('beforeend',`<b data-p0-evento-participantes>Participantes</b><span>${p0Esc(names.join(', '))}</span>`);});
     }catch{}
   }
-  document.querySelectorAll('#onlineRegistros [data-online-del]').forEach(b=>{b.textContent='Cancelar evento';b.title='Cancela o evento e estorna os créditos automáticos, preservando o histórico.';});
+  document.querySelectorAll('#onlineRegistros [data-online-del]').forEach(b=>p0RotularBotao(b,'Cancelar evento','Cancela o evento e estorna os créditos automáticos, preservando o histórico.'));
   const dlg=p0$('onlineEditor');if(!dlg?.open)return;
   if(p0$('p0EventoParticipantes'))return;
   const refs=await p0GetRefs(),selected=await p0EventoSelecionados();
@@ -113,8 +119,15 @@ function p0Capture(e){
   }
 }
 function p0Ajustar(){
-  if(p0Scheduled)return;p0Scheduled=true;queueMicrotask(async()=>{p0Scheduled=false;try{p0AjustarExtra();await p0AjustarJustificativa();await p0AjustarEvento();}catch{}});
+  if(p0Scheduled||!p0ModuloAtivo())return;
+  p0Scheduled=true;
+  queueMicrotask(async()=>{p0Scheduled=false;try{p0AjustarExtra();await p0AjustarJustificativa();await p0AjustarEvento();}catch{}});
 }
 document.addEventListener('click',p0Capture,true);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',p0Ajustar,{once:true});else p0Ajustar();
-new MutationObserver(()=>{const h=p0$('onlineRegistros');if(h&&!p0IsEvento())delete h.dataset.p0EventoResumo;p0Ajustar();}).observe(document.documentElement,{subtree:true,childList:true});
+new MutationObserver(()=>{
+  if(!p0ModuloAtivo())return;
+  const h=p0$('onlineRegistros');
+  if(h&&!p0IsEvento()&&h.dataset.p0EventoResumo)delete h.dataset.p0EventoResumo;
+  p0Ajustar();
+}).observe(document.documentElement,{subtree:true,childList:true});
