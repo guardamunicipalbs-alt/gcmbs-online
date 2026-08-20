@@ -151,6 +151,7 @@ function gcmbsAjustarOficios(){
 let gcmbsFrequenciaProvider=null;
 let gcmbsFrequenciaGestor=null;
 let gcmbsFrequenciaDataSelecionada='';
+let gcmbsFrequenciaDataCarregada='';
 let gcmbsFrequenciaLinhas=[];
 let gcmbsFrequenciaCarregando=false;
 let gcmbsFrequenciaChaveRender='';
@@ -264,6 +265,9 @@ function gcmbsRenderFrequenciaDia(){
   const q=String(filtro.value||'').trim().toLowerCase();
   const list=gcmbsFrequenciaLinhas.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q));
   const data=gcmbsFrequenciaDataSelecionada||gcmbsDataAtual();
+  const renderKey=`${data}|${q}|${list.length}`;
+  const jaCustom=host.querySelector('[data-gcmbs-frequencia],[data-gcmbs-frequencia-empty]');
+  if(gcmbsFrequenciaChaveRender===renderKey&&jaCustom)return;
 
   host.innerHTML=list.length?list.map(r=>{
     const tipo=r.tipo_servico==='EXTRA'?'Extra':'Ordinário';
@@ -277,13 +281,13 @@ function gcmbsRenderFrequenciaDia(){
       <div style="margin-top:7px;font-size:.92em">${gcmbsEsc(tipo)}${r.viatura&&r.viatura!=='—'?` · ${gcmbsEsc(r.viatura)}`:''} · ${gcmbsEsc(detalheFreq)}</div>
       ${r.observacao?`<div style="margin-top:7px">${gcmbsEsc(r.observacao)}</div>`:''}
     </div>`;
-  }).join(''):`<div class="empty">Nenhum GCM escalado em ${gcmbsEsc(gcmbsDataBr(data))}.</div>`;
+  }).join(''):`<div data-gcmbs-frequencia-empty="1" class="empty">Nenhum GCM escalado em ${gcmbsEsc(gcmbsDataBr(data))}.</div>`;
 
   const total=document.getElementById('onlineTotal');
   if(total)total.textContent=String(list.length);
   const filtrados=document.getElementById('onlineFiltrados');
   if(filtrados)filtrados.textContent=`${list.length} registro(s) · ${gcmbsDataBr(data)}`;
-  gcmbsFrequenciaChaveRender=`${data}|${q}|${list.length}`;
+  gcmbsFrequenciaChaveRender=renderKey;
 }
 
 async function gcmbsAjustarFrequenciaComando(forcar=false){
@@ -291,6 +295,7 @@ async function gcmbsAjustarFrequenciaComando(forcar=false){
   const wrapAntigo=document.getElementById('gcmbsFrequenciaDiaWrap');
   if(titulo!=='Frequência'){
     if(wrapAntigo)wrapAntigo.remove();
+    gcmbsFrequenciaDataCarregada='';
     return;
   }
   const filtro=document.getElementById('onlineFiltro');
@@ -313,6 +318,7 @@ async function gcmbsAjustarFrequenciaComando(forcar=false){
       const inp=wrap.querySelector('#gcmbsFrequenciaData');
       inp?.addEventListener('change',()=>{
         gcmbsFrequenciaDataSelecionada=inp.value||gcmbsDataAtual();
+        gcmbsFrequenciaDataCarregada='';
         gcmbsFrequenciaChaveRender='';
         gcmbsAjustarFrequenciaComando(true);
       });
@@ -322,8 +328,7 @@ async function gcmbsAjustarFrequenciaComando(forcar=false){
       }
     }
 
-    const chave=`${gcmbsFrequenciaDataSelecionada}|${String(filtro.value||'').trim().toLowerCase()}`;
-    if(!forcar&&gcmbsFrequenciaLinhas.length&&gcmbsFrequenciaChaveRender.startsWith(chave.split('|')[0])){
+    if(!forcar&&gcmbsFrequenciaDataCarregada===gcmbsFrequenciaDataSelecionada){
       gcmbsRenderFrequenciaDia();
       return;
     }
@@ -339,8 +344,10 @@ async function gcmbsAjustarFrequenciaComando(forcar=false){
     const freqs=(freqResp.records||[]).map(x=>x.data||{});
     const extras=(extraResp.records||[]).map(x=>x.data||{});
     gcmbsFrequenciaLinhas=gcmbsMontarFrequenciaDia(escalas,freqs,extras,gcmbsFrequenciaDataSelecionada);
+    gcmbsFrequenciaDataCarregada=gcmbsFrequenciaDataSelecionada;
     gcmbsRenderFrequenciaDia();
   }catch(e){
+    gcmbsFrequenciaDataCarregada='';
     host.innerHTML=`<div class="empty">Não foi possível carregar o histórico da frequência: ${gcmbsEsc(e?.message||e)}</div>`;
   }finally{
     gcmbsFrequenciaCarregando=false;
