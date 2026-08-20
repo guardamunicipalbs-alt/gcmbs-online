@@ -1,3 +1,6 @@
+import './audit-pending-fixes.js';
+import './p0-online-workflows.js';
+
 export const MODULOS_GCMBS = [
   {id:'dashboard',nome:'Quadro Operacional',descricao:'Indicadores integrados do efetivo, escalas e frota',mobile:'inicio'},
   {id:'cadastro_guardas',nome:'Cadastro de Guardas',descricao:'Dados pessoais, habilitações e configuração operacional'},
