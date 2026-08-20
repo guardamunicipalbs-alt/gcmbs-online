@@ -1,19 +1,27 @@
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
-// P0 e Folha sao carregados de forma isolada, escalonada e com fallback caso o evento load ja tenha ocorrido.
+// P0 usa import opcional; Folha e carregada como script ES module independente.
 let extensoesAgendadas=false;
 const importarOpcional=async(caminho,rotulo)=>{
   try{await import(caminho);}catch(e){console.error(`[GCMBS] Falha em extensao opcional ${rotulo}`,e);}
 };
+const carregarModuloIndependente=(caminho,id,rotulo)=>{
+  if(document.getElementById(id))return;
+  const s=document.createElement('script');
+  s.id=id;
+  s.type='module';
+  s.src=new URL(caminho,import.meta.url).href;
+  s.addEventListener('error',e=>console.error(`[GCMBS] Falha ao carregar modulo ${rotulo}`,e));
+  document.head.appendChild(s);
+};
 const carregarExtensoesOpcionais=()=>{
   if(extensoesAgendadas)return;
   extensoesAgendadas=true;
-  setTimeout(()=>importarOpcional('./p0-online-workflows.js?v=100062p04','P0'),400);
-  setTimeout(()=>importarOpcional('./folha-online-v62.js?v=100062p04','Folha'),900);
+  setTimeout(()=>importarOpcional('./p0-online-workflows.js?v=100062p05','P0'),400);
+  setTimeout(()=>carregarModuloIndependente('./folha-online-v62.js?v=100062p05','gcmbsFolhaV62Module','Folha'),900);
 };
 if(document.readyState==='complete') carregarExtensoesOpcionais();
 else window.addEventListener('load',carregarExtensoesOpcionais,{once:true});
-// Fallback: garante o carregamento mesmo se o módulo for resolvido após o evento load.
 setTimeout(carregarExtensoesOpcionais,1500);
 
 export const MODULOS_GCMBS = [
