@@ -1,4 +1,5 @@
 import './central-pendencias-fix.js';
+import './relatorios-route-fix.js';
 
 // Politica de seguranca do login GCMBS.
 // Quando "Lembrar meu acesso" estiver desmarcado, nenhum dado de login
