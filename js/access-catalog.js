@@ -1,3 +1,5 @@
+import './stability-hotfix-v62.js?v=100062s01';
+
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
 // P0 usa import opcional; Folha e carregada como script ES module independente.
