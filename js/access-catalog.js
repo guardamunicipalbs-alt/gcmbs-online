@@ -1,5 +1,6 @@
 import './audit-pending-fixes.js';
 import './p0-online-workflows.js';
+import './folha-online-v62.js';
 
 export const MODULOS_GCMBS = [
   {id:'dashboard',nome:'Quadro Operacional',descricao:'Indicadores integrados do efetivo, escalas e frota',mobile:'inicio'},
