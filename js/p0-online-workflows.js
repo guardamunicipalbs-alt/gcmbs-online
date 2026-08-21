@@ -2,7 +2,7 @@
 // A gravação só é liberada quando o catálogo recebido do Desktop indicar writable=true.
 const P0_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const p0$=id=>document.getElementById(id);
-const p0Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p0Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 let p0Session=null,p0Refs=null,p0EventKey='',p0Busy=false,p0Scheduled=false,p0EventoComandoIds=null,p0EventoAjustando=false;
 
 async function p0Api(action,payload={}){
@@ -95,22 +95,28 @@ function p0EventoAjustarOrigem(dlg){
 }
 function p0EventoReorganizarCampos(dlg){
   const host=p0$('onlineCampos');if(!host)return;
-  const nome=dlg.querySelector('[data-online-field="nome"]')?.closest('label');
   const origem=dlg.querySelector('[data-online-field="origem_evento"]')?.closest('label');
   const oficio=dlg.querySelector('[data-online-field="oficio_id"]')?.closest('label');
-  if(!nome&&!origem&&!oficio)return;
-  let sec=p0$('p0EventoIdentificacao');
+  if(!origem&&!oficio)return;
+  let sec=p0$('p0EventoOrigem');
   if(!sec){
-    sec=document.createElement('section');sec.id='p0EventoIdentificacao';sec.className='form-section module-editor-section';
-    sec.innerHTML='<h3>Evento</h3><div class="form-grid"></div>';
+    sec=document.createElement('section');sec.id='p0EventoOrigem';sec.className='form-section module-editor-section';
+    sec.innerHTML='<h3>Origem</h3><div class="form-grid"></div>';
     host.insertBefore(sec,host.firstChild);
   }
   const grid=sec.querySelector('.form-grid');
-  [origem,oficio,nome].filter(Boolean).forEach(el=>grid.appendChild(el));
+  [origem,oficio].filter(Boolean).forEach(el=>grid.appendChild(el));
   [...host.querySelectorAll('section.form-section.module-editor-section')].forEach(s=>{
-    if(s.id==='p0EventoIdentificacao'||s.id==='p0EventoParticipantes')return;
+    if(s.id==='p0EventoOrigem'||s.id==='p0EventoParticipantes')return;
     if(!s.querySelector('[data-online-field]'))s.remove();
   });
+}
+function p0EventoReconciliarEditor(){
+  const dlg=p0$('onlineEditor');
+  if(!p0IsEvento()||!dlg?.open)return;
+  p0EventoAjustarOrigem(dlg);
+  p0EventoReorganizarCampos(dlg);
+  p0EventoDeduplicarParticipantes(dlg);
 }
 function p0EventoAtualizarContador(){
   const scope=p0$('p0EventoParticipantes');
@@ -138,13 +144,13 @@ async function p0AjustarEvento(){
     }
     document.querySelectorAll('#onlineRegistros [data-online-del]').forEach(b=>p0RotularBotao(b,'Cancelar evento','Cancela o evento e estorna os créditos automáticos, preservando o histórico.'));
     const dlg=p0$('onlineEditor');if(!dlg?.open)return;
-    p0EventoAjustarOrigem(dlg);
-    p0EventoReorganizarCampos(dlg);
+    p0EventoReconciliarEditor();
     const status=dlg.querySelector('[data-online-field="status"]');if(status){status.value='ATIVO';status.closest('label')?.classList.add('hidden');}
     const eq=dlg.querySelector('[data-online-field="equipe_servico_id"]');if(eq)eq.closest('label')?.classList.add('hidden');
     if(p0EventoDeduplicarParticipantes(dlg))return;
     const [refs,selected,comandoIds]=await Promise.all([p0GetRefs(),p0EventoSelecionados(),p0EventoIdsComando()]);
     if(!dlg.open||!p0IsEvento())return;
+    p0EventoReconciliarEditor();
     if(p0EventoDeduplicarParticipantes(dlg))return;
     const guardas=(refs.guardas||[]).filter(g=>['ATIVO','ATIVA',''].includes(String(g.status||'').toUpperCase())&&!comandoIds.has(Number(g.id))&&!p0EventoCargoComando(g)).sort((a,b)=>String(a.nome_guerra||a.nome_completo).localeCompare(String(b.nome_guerra||b.nome_completo),'pt-BR'));
     const html=guardas.map(g=>`<label class="check"><input type="checkbox" data-p0-evento-gcm value="${p0Esc(g.id)}" ${selected.has(Number(g.id))?'checked':''}> ${p0Esc(g.nome_guerra||g.nome_completo||`GCM ${g.id}`)}</label>`).join('');
@@ -154,7 +160,11 @@ async function p0AjustarEvento(){
     p0$('p0EventoTodos')?.addEventListener('click',()=>{bloco?.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.checked=true);p0EventoAtualizarContador();});
     p0$('p0EventoLimpar')?.addEventListener('click',()=>{bloco?.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.checked=false);p0EventoAtualizarContador();});
     p0EventoAtualizarContador();
-  }finally{p0EventoAjustando=false;}
+    p0EventoReconciliarEditor();
+  }finally{
+    p0EventoAjustando=false;
+    if(p0IsEvento()&&p0$('onlineEditor')?.open){setTimeout(p0EventoReconciliarEditor,25);setTimeout(p0EventoReconciliarEditor,120);}
+  }
 }
 function p0ColetarEvento(){
   const d={};
