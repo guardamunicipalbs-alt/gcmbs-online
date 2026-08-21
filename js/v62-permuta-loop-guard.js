@@ -1,18 +1,21 @@
-// GCMBS 10.0.62 — estabilização de carga Online.
-// 1) Impede o observer auto-recursivo de Permutas.
-// 2) Evita salto desnecessário por Edge Functions intermediárias quando a API v6
-//    já possui exatamente a mesma rota, autenticação e CORS.
-// 3) Reduz a atualização do status de sincronização de 15s para 60s.
-// 4) Restaura Cadastro de Guardas ao contrato funcional de 24 campos.
-// 5) Alinha Equipes aos 6 campos funcionais do Desktop.
-// 6) Alinha Postos Operacionais aos 13 campos funcionais do Desktop.
-// Não altera dados existentes ou Gerador de Escala.
+// GCMBS 10.0.62 — estabilização e paridade Online/App.
+// Mantém o Desktop como referência funcional sem alterar dados existentes.
 
 const GCMBS_EDGE_BASE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
 const GCMBS_API_CORS=GCMBS_EDGE_BASE+'gcmbs-mobile-api-v6-cors';
 const GCMBS_API_V6=GCMBS_EDGE_BASE+'gcmbs-mobile-api-v6';
 const GCMBS_QUADRO_V62=GCMBS_EDGE_BASE+'gcmbs-quadro-v62';
 const GCMBS_ACOES_EXCLUSIVAS_CORS=new Set(['entity_catalog','entity_list','entity_mutate','frequency_services']);
+let gcmbsPostoEditKey='';
+
+function gcmbsEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// Guarda a chave do registro antes de o app-core abrir o editor.
+document.addEventListener('click',e=>{
+  const edit=e.target?.closest?.('[data-online-edit]');
+  if(edit)gcmbsPostoEditKey=String(edit.dataset.onlineEdit||'');
+  if(e.target?.closest?.('#onlineNovo'))gcmbsPostoEditKey='';
+},true);
 
 function gcmbsBloquearObserverRecursivoPermutas(){
   const host=document.getElementById('listaPermutasSolicitadas');
@@ -20,7 +23,7 @@ function gcmbsBloquearObserverRecursivoPermutas(){
   if(!host.dataset.v62obs)host.dataset.v62obs='loop-guard';
   return true;
 }
-if(!gcmbsBloquearObserverRecursivoPermutas() && document.readyState==='loading'){
+if(!gcmbsBloquearObserverRecursivoPermutas()&&document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',gcmbsBloquearObserverRecursivoPermutas,{once:true});
 }
 
@@ -47,118 +50,145 @@ if(!window.__gcmbsLowPressureInterval){
   };
 }
 
-function gcmbsAjustarFormularioGuardas(){
+async function gcmbsApi(action,payload={}){
+  const token=localStorage.getItem('gcmbs.mobile.token');
+  const r=await fetch(GCMBS_API_CORS,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({action,...payload}),cache:'no-store'});
+  let b={};try{b=await r.json()}catch{}
+  if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);
+  return b;
+}
+
+function gcmbsFormContext(regex){
   const dialog=document.getElementById('onlineEditor');
   const titulo=String(document.getElementById('onlineEditorTitulo')?.textContent||'').trim();
   const host=document.getElementById('onlineCampos');
-  if(!dialog||!host||!dialog.open||!/Cadastro de Guardas/i.test(titulo))return;
-  const secoes=[...host.querySelectorAll('.form-section')];
-  const grid=nome=>secoes.find(s=>String(s.querySelector('h3')?.textContent||'').trim()===nome)?.querySelector('.form-grid')||null;
-  const identificacao=grid('Identificação funcional'),pessoais=grid('Dados pessoais'),cnh=grid('CNH e autorizações');
+  return {dialog,titulo,host,ok:!!(dialog&&host&&dialog.open&&regex.test(titulo))};
+}
+function gcmbsCampo(host,nome){return host?.querySelector(`[data-online-field="${nome}"]`)||null;}
+function gcmbsLabel(host,nome){return gcmbsCampo(host,nome)?.closest('label')||null;}
+function gcmbsTrocarRotulo(host,nome,texto){
+  const el=gcmbsLabel(host,nome);if(!el)return;
+  const txt=[...el.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.nodeValue||'').trim());
+  if(txt)txt.nodeValue=texto;
+}
+function gcmbsGrid(host,nome){
+  return [...(host?.querySelectorAll('.form-section')||[])].find(s=>String(s.querySelector('h3')?.textContent||'').trim()===nome)?.querySelector('.form-grid')||null;
+}
+
+function gcmbsAjustarFormularioGuardas(){
+  const {titulo,host,ok}=gcmbsFormContext(/Cadastro de Guardas/i);if(!ok)return;
+  const identificacao=gcmbsGrid(host,'Identificação funcional'),pessoais=gcmbsGrid(host,'Dados pessoais'),cnh=gcmbsGrid(host,'CNH e autorizações');
   const rotulos={rg:'RG',cnh:'Número da CNH',categoria_cnh_validade:'Validade da CNH',pai:'Pai',mae:'Mãe',naturalidade:'Naturalidade',email:'E-mail',telefone:'Telefone'};
-  const campo=nome=>host.querySelector(`[data-online-field="${nome}"]`);
-  const label=nome=>campo(nome)?.closest('label')||null;
-  const renomear=nome=>{const el=label(nome);if(!el)return;const txt=[...el.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.nodeValue||'').trim());if(txt)txt.nodeValue=rotulos[nome]||nome;};
-  const mover=(nome,destino)=>{const el=label(nome);if(el&&destino)destino.appendChild(el);renomear(nome);};
+  const mover=(nome,destino)=>{const el=gcmbsLabel(host,nome);if(el&&destino)destino.appendChild(el);gcmbsTrocarRotulo(host,nome,rotulos[nome]||nome);};
   mover('rg',identificacao);
-  for(const nome of ['pai','mae','naturalidade','email','telefone'])mover(nome,pessoais);
-  for(const nome of ['cnh','categoria_cnh_validade'])mover(nome,cnh);
-  const validade=campo('categoria_cnh_validade');if(validade){validade.type='date';validade.value=String(validade.value||'').slice(0,10);}
-  const email=campo('email');if(email)email.type='email';
-  const telefone=campo('telefone');if(telefone)telefone.type='tel';
+  for(const n of ['pai','mae','naturalidade','email','telefone'])mover(n,pessoais);
+  for(const n of ['cnh','categoria_cnh_validade'])mover(n,cnh);
+  const validade=gcmbsCampo(host,'categoria_cnh_validade');if(validade){validade.type='date';validade.value=String(validade.value||'').slice(0,10);}
+  const email=gcmbsCampo(host,'email');if(email)email.type='email';
+  const telefone=gcmbsCampo(host,'telefone');if(telefone)telefone.type='tel';
   if(/^Novo\s+/i.test(titulo)){
-    const status=campo('status');if(status&&(!String(status.value||'').trim()||String(status.value).toUpperCase()==='ATIVA'))status.value='ATIVO';
-    for(const nome of ['disponivel_escala','pode_noite','pode_24h']){const el=campo(nome);if(el&&(!String(el.value||'').trim()||String(el.value)==='0'))el.value='1';}
+    const status=gcmbsCampo(host,'status');if(status&&(!String(status.value||'').trim()||String(status.value).toUpperCase()==='ATIVA'))status.value='ATIVO';
+    for(const n of ['disponivel_escala','pode_noite','pode_24h']){const el=gcmbsCampo(host,n);if(el&&(!String(el.value||'').trim()||String(el.value)==='0'))el.value='1';}
   }
-  for(const sec of [...host.querySelectorAll('.form-section')])if(String(sec.querySelector('h3')?.textContent||'').trim()==='Outros dados'&&!sec.querySelector('[data-online-field]'))sec.remove();
+  for(const s of [...host.querySelectorAll('.form-section')])if(String(s.querySelector('h3')?.textContent||'').trim()==='Outros dados'&&!s.querySelector('[data-online-field]'))s.remove();
 }
 
 function gcmbsAjustarFormularioEquipes(){
-  const dialog=document.getElementById('onlineEditor');
-  const titulo=String(document.getElementById('onlineEditorTitulo')?.textContent||'').trim();
-  const host=document.getElementById('onlineCampos');
-  if(!dialog||!host||!dialog.open||!/Equipes/i.test(titulo))return;
-  const campo=nome=>host.querySelector(`[data-online-field="${nome}"]`);
-  const label=nome=>campo(nome)?.closest('label')||null;
-  const trocarRotulo=(nome,texto)=>{const el=label(nome);if(!el)return;const txt=[...el.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.nodeValue||'').trim());if(txt)txt.nodeValue=texto;};
-  label('modo_distribuicao')?.remove();
-  trocarRotulo('tipo_escala_id','Tipo de Escala');trocarRotulo('turno_inicio','Turno inicial');
-  const turno=campo('turno_inicio');
+  const {titulo,host,ok}=gcmbsFormContext(/Equipes/i);if(!ok)return;
+  gcmbsLabel(host,'modo_distribuicao')?.remove();
+  gcmbsTrocarRotulo(host,'tipo_escala_id','Tipo de Escala');gcmbsTrocarRotulo(host,'turno_inicio','Turno inicial');
+  const turno=gcmbsCampo(host,'turno_inicio');
   if(turno&&turno.tagName!=='SELECT'){
     const atual=String(turno.value||'A').toUpperCase(),sel=document.createElement('select');sel.dataset.onlineField='turno_inicio';
     sel.innerHTML=`<option value="A" ${atual!=='B'?'selected':''}>A</option><option value="B" ${atual==='B'?'selected':''}>B</option>`;turno.replaceWith(sel);
   }
-  const ciclo=campo('ciclo');if(ciclo){ciclo.min='1';ciclo.step='1';}
-  const participa=campo('participa_gerador');
+  const ciclo=gcmbsCampo(host,'ciclo');if(ciclo){ciclo.min='1';ciclo.step='1';}
+  const participa=gcmbsCampo(host,'participa_gerador');
   if(participa){
     const atual=String(participa.value||'1');participa.innerHTML=`<option value="1" ${atual!=='0'?'selected':''}>Não</option><option value="0" ${atual==='0'?'selected':''}>Sim</option>`;
-    trocarRotulo('participa_gerador','Equipe de Comando / Comandantes');
+    gcmbsTrocarRotulo(host,'participa_gerador','Equipe de Comando / Comandantes');
     const lab=participa.closest('label');if(lab&&!lab.querySelector('.gcmbs-equipe-comando-ajuda')){const small=document.createElement('small');small.className='gcmbs-equipe-comando-ajuda';small.textContent='Quando Sim, a equipe pode permanecer ativa, mas não participa da geração automática de escala.';lab.appendChild(small);}
   }
   if(/^Novo\s+/i.test(titulo)){
-    const ativa=campo('ativa');if(ativa)ativa.value='1';
-    const c=campo('ciclo');if(c&&!String(c.value||'').trim())c.value='1';
-    const t=host.querySelector('[data-online-field="turno_inicio"]');if(t&&!String(t.value||'').trim())t.value='A';
-    const p=campo('participa_gerador');if(p)p.value='1';
+    const ativa=gcmbsCampo(host,'ativa');if(ativa)ativa.value='1';
+    const c=gcmbsCampo(host,'ciclo');if(c&&!String(c.value||'').trim())c.value='1';
+    const t=gcmbsCampo(host,'turno_inicio');if(t&&!String(t.value||'').trim())t.value='A';
+    const p=gcmbsCampo(host,'participa_gerador');if(p)p.value='1';
   }
-  for(const sec of [...host.querySelectorAll('.form-section')])if(!sec.querySelector('[data-online-field]'))sec.remove();
+  for(const s of [...host.querySelectorAll('.form-section')])if(!s.querySelector('[data-online-field]'))s.remove();
 }
 
-function gcmbsAjustarFormularioPostos(){
-  const dialog=document.getElementById('onlineEditor');
-  const titulo=String(document.getElementById('onlineEditorTitulo')?.textContent||'').trim();
-  const host=document.getElementById('onlineCampos');
-  if(!dialog||!host||!dialog.open||!/Postos Operacionais/i.test(titulo))return;
-  const campo=nome=>host.querySelector(`[data-online-field="${nome}"]`);
-  const label=nome=>campo(nome)?.closest('label')||null;
-  const trocarRotulo=(nome,texto)=>{const el=label(nome);if(!el)return;const txt=[...el.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.nodeValue||'').trim());if(txt)txt.nodeValue=texto;};
+function gcmbsCriarSelectBool(nome,rotulo,valor='0'){
+  const lab=document.createElement('label');lab.append(document.createTextNode(rotulo));
+  const sel=document.createElement('select');sel.dataset.onlineField=nome;
+  sel.innerHTML=`<option value="0" ${String(valor)!=='1'?'selected':''}>Não</option><option value="1" ${String(valor)==='1'?'selected':''}>Sim</option>`;lab.appendChild(sel);return lab;
+}
+function gcmbsCriarSelectViatura(valor=''){
+  const lab=document.createElement('label');lab.append(document.createTextNode('Viatura vinculada'));
+  const sel=document.createElement('select');sel.dataset.onlineField='viatura_id';sel.innerHTML='<option value="">Carregando viaturas...</option>';sel.dataset.valorAtual=String(valor??'');lab.appendChild(sel);return lab;
+}
+async function gcmbsPopularViaturasPosto(host,valor=''){
+  const sel=gcmbsCampo(host,'viatura_id');if(!sel)return;
+  try{
+    const r=await gcmbsApi('references');const lista=Array.isArray(r.viaturas)?r.viaturas:(r.references?.viaturas||[]);
+    const atual=String(valor??sel.dataset.valorAtual??sel.value??'');
+    const indisponiveis=new Set(['MANUTENCAO','MANUTENÇÃO','INDISPONIVEL','INDISPONÍVEL','BAIXADA','INATIVA']);
+    sel.innerHTML='<option value="">Sem viatura vinculada</option>'+lista.map(v=>{
+      const id=String(v.id??''),status=String(v.situacao_operacional||v.status||'ATIVA').toUpperCase(),ind=indisponiveis.has(status)&&id!==atual;
+      const nome=[v.prefixo,v.placa,v.modelo].filter(Boolean).join(' · ')||`Viatura ${id}`;
+      return `<option value="${gcmbsEsc(id)}" ${id===atual?'selected':''} ${ind?'disabled':''}>${gcmbsEsc(nome)}${status?` — ${gcmbsEsc(status)}`:''}</option>`;
+    }).join('');
+    if(atual&&[...sel.options].some(o=>o.value===atual))sel.value=atual;
+  }catch(e){sel.innerHTML=`<option value="${gcmbsEsc(valor)}">${valor?'Viatura vinculada atual':'Não foi possível carregar viaturas'}</option>`;}
+}
+async function gcmbsCarregarValoresPostoEdicao(host){
+  if(!gcmbsPostoEditKey)return null;
+  try{
+    const b=await gcmbsApi('entity_list',{entity:'postos',limit:500,offset:0});
+    const r=(b.records||[]).find(x=>String(x.record_key)===String(gcmbsPostoEditKey));return r?.data||null;
+  }catch{return null;}
+}
+async function gcmbsAjustarFormularioPostos(){
+  const {titulo,host,ok}=gcmbsFormContext(/Postos Operacionais/i);if(!ok)return;
+  const novo=/^Novo\s+/i.test(titulo);if(novo)gcmbsPostoEditKey='';
 
-  trocarRotulo('quantidade_minima','Efetivo mínimo');trocarRotulo('quantidade_maxima','Efetivo máximo');
-  trocarRotulo('horario_inicio','Horário inicial');trocarRotulo('horario_fim','Horário final');
-  trocarRotulo('funcionamento_24h','Funcionamento 24h');trocarRotulo('exige_motorista','Exige motorista');
-  trocarRotulo('exige_viatura','Exige viatura');trocarRotulo('viatura_id','Viatura vinculada');
+  gcmbsTrocarRotulo(host,'quantidade_minima','Efetivo mínimo');gcmbsTrocarRotulo(host,'quantidade_maxima','Efetivo máximo');
+  gcmbsTrocarRotulo(host,'horario_inicio','Horário inicial');gcmbsTrocarRotulo(host,'horario_fim','Horário final');gcmbsTrocarRotulo(host,'funcionamento_24h','Funcionamento 24h');
 
-  const tipo=campo('tipo');
+  const tipo=gcmbsCampo(host,'tipo');
   if(tipo&&tipo.tagName!=='SELECT'){
-    const atual=String(tipo.value||'FIXO').toUpperCase(),sel=document.createElement('select');sel.dataset.onlineField='tipo';
-    const opcoes=['FIXO','ADMINISTRATIVO','VIATURA'];
-    if(atual&&!opcoes.includes(atual))opcoes.push(atual);
-    sel.innerHTML=opcoes.map(x=>`<option value="${x}" ${x===atual?'selected':''}>${x==='FIXO'?'Posto fixo':x==='ADMINISTRATIVO'?'Administrativo':x==='VIATURA'?'Viatura / posto móvel':x}</option>`).join('');
-    tipo.replaceWith(sel);
-  }
-
-  const exigeViatura=campo('exige_viatura');
-  if(exigeViatura&&exigeViatura.tagName!=='SELECT'){
-    const atual=['1','SIM','TRUE'].includes(String(exigeViatura.value||'0').toUpperCase()),sel=document.createElement('select');sel.dataset.onlineField='exige_viatura';
-    sel.innerHTML=`<option value="0" ${!atual?'selected':''}>Não</option><option value="1" ${atual?'selected':''}>Sim</option>`;exigeViatura.replaceWith(sel);
+    const atual=String(tipo.value||'FIXO').toUpperCase(),sel=document.createElement('select');sel.dataset.onlineField='tipo';const ops=['FIXO','ADMINISTRATIVO','VIATURA'];if(atual&&!ops.includes(atual))ops.push(atual);
+    sel.innerHTML=ops.map(x=>`<option value="${x}" ${x===atual?'selected':''}>${x==='FIXO'?'Posto fixo':x==='ADMINISTRATIVO'?'Administrativo':x==='VIATURA'?'Viatura / posto móvel':x}</option>`).join('');tipo.replaceWith(sel);
   }
 
   let sec=[...host.querySelectorAll('.form-section')].find(s=>String(s.querySelector('h3')?.textContent||'').trim()==='Recursos operacionais');
-  if(!sec){
-    sec=document.createElement('section');sec.className='form-section';sec.innerHTML='<h3>Recursos operacionais</h3><div class="form-grid"></div>';
-    const obs=[...host.querySelectorAll('.form-section')].find(s=>String(s.querySelector('h3')?.textContent||'').trim()==='Observações');
-    if(obs)host.insertBefore(sec,obs);else host.appendChild(sec);
-  }
+  if(!sec){sec=document.createElement('section');sec.className='form-section module-editor-section';sec.innerHTML='<h3>Recursos operacionais</h3><div class="form-grid"></div>';const obs=[...host.querySelectorAll('.form-section')].find(s=>String(s.querySelector('h3')?.textContent||'').trim()==='Observações');if(obs)host.insertBefore(sec,obs);else host.appendChild(sec);}
   const grid=sec.querySelector('.form-grid');
-  for(const nome of ['exige_motorista','exige_viatura','viatura_id']){const el=label(nome);if(el)grid.appendChild(el);}
 
-  const atualizaViatura=()=>{const ex=host.querySelector('[data-online-field="exige_viatura"]'),v=campo('viatura_id');if(v)v.disabled=String(ex?.value||'0')!=='1';};
-  host.querySelector('[data-online-field="exige_viatura"]')?.addEventListener('change',atualizaViatura);atualizaViatura();
+  if(!gcmbsCampo(host,'exige_motorista'))grid.appendChild(gcmbsCriarSelectBool('exige_motorista','Exige motorista','0'));
+  if(!gcmbsCampo(host,'exige_viatura'))grid.appendChild(gcmbsCriarSelectBool('exige_viatura','Exige viatura','0'));
+  if(!gcmbsCampo(host,'viatura_id'))grid.appendChild(gcmbsCriarSelectViatura(''));
 
-  if(/^Novo\s+/i.test(titulo)){
-    const ativo=campo('ativo');if(ativo)ativo.value='1';
-    const t=host.querySelector('[data-online-field="tipo"]');if(t)t.value='FIXO';
-    const em=campo('exige_motorista');if(em)em.value='0';
-    const ev=host.querySelector('[data-online-field="exige_viatura"]');if(ev)ev.value='0';
-    atualizaViatura();
-  }
-  for(const secao of [...host.querySelectorAll('.form-section')])if(!secao.querySelector('[data-online-field]'))secao.remove();
+  for(const n of ['exige_motorista','exige_viatura','viatura_id']){const lab=gcmbsLabel(host,n);if(lab&&lab.parentElement!==grid)grid.appendChild(lab);}
+  gcmbsTrocarRotulo(host,'exige_motorista','Exige motorista');gcmbsTrocarRotulo(host,'exige_viatura','Exige viatura');gcmbsTrocarRotulo(host,'viatura_id','Viatura vinculada');
+
+  let dados=null;
+  if(!novo)dados=await gcmbsCarregarValoresPostoEdicao(host);
+  const motor=gcmbsCampo(host,'exige_motorista'),exige=gcmbsCampo(host,'exige_viatura'),viatura=gcmbsCampo(host,'viatura_id');
+  if(dados){if(motor)motor.value=Number(dados.exige_motorista||0)?'1':'0';if(exige)exige.value=Number(dados.exige_viatura||0)?'1':'0';if(viatura)viatura.dataset.valorAtual=String(dados.viatura_id??'');}
+  if(novo){const ativo=gcmbsCampo(host,'ativo');if(ativo)ativo.value='1';const t=gcmbsCampo(host,'tipo');if(t)t.value='FIXO';if(motor)motor.value='0';if(exige)exige.value='0';if(viatura)viatura.dataset.valorAtual='';}
+
+  await gcmbsPopularViaturasPosto(host,dados?.viatura_id??'');
+  const atualiza=()=>{const ex=gcmbsCampo(host,'exige_viatura'),v=gcmbsCampo(host,'viatura_id');if(v)v.disabled=String(ex?.value||'0')!=='1';};
+  exige?.addEventListener('change',atualiza);atualiza();
+
+  for(const s of [...host.querySelectorAll('.form-section')])if(!s.querySelector('[data-online-field]'))s.remove();
 }
 
 function gcmbsAjustarFormulariosParidade(){
   gcmbsAjustarFormularioGuardas();
   gcmbsAjustarFormularioEquipes();
-  gcmbsAjustarFormularioPostos();
+  void gcmbsAjustarFormularioPostos();
 }
 
 if(!window.__gcmbsFormParity){
@@ -170,4 +200,4 @@ if(!window.__gcmbsFormParity){
   }
 }
 
-console.info('[GCMBS] proteção anti-loop, baixa pressão e paridade Guardas/Equipes/Postos ativas');
+console.info('[GCMBS] proteção anti-loop, baixa pressão e paridade Guardas/Equipes/Postos 13 campos ativas');
