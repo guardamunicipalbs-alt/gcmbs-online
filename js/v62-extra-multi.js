@@ -24,18 +24,47 @@ async function extraApi(action,payload={}){
   return b;
 }
 
+function extraAtivo(g){
+  const st=String(g?.status||'ATIVO').toUpperCase();
+  const ativo=String(g?.ativo??'1').toUpperCase();
+  return ['ATIVO','ATIVA',''].includes(st)&&!['0','FALSE','NAO','NÃO','INATIVO'].includes(ativo);
+}
+function extraCargoComando(g){
+  return /\b(SUBCOMANDANTE|COMANDANTE)\b/i.test(String(g?.cargo||''));
+}
+
+async function extraIdsEquipeComando(){
+  const ids=new Set();
+  try{
+    const [eqResp,vincResp]=await Promise.all([
+      extraApi('entity_list',{entity:'equipes',limit:500,offset:0}),
+      extraApi('entity_list',{entity:'guarda_equipes',limit:3000,offset:0})
+    ]);
+    const equipes=(eqResp.records||[]).map(r=>r.data||{});
+    const eqComando=new Set(
+      equipes.filter(e=>/COMAND/i.test(String(e.nome||''))).map(e=>Number(e.id)).filter(Number.isFinite)
+    );
+    for(const rec of (vincResp.records||[])){
+      const v=rec.data||{};
+      if(eqComando.has(Number(v.equipe_id)))ids.add(Number(v.guarda_id));
+    }
+  }catch(e){
+    console.warn('[GCMBS] vínculo da equipe Comando indisponível para pré-filtro:',e?.message||e);
+  }
+  return ids;
+}
+
 async function extraCarregarGuardas(){
   try{
-    const r=await extraApi('references');
+    const [r,comandoIds]=await Promise.all([extraApi('references'),extraIdsEquipeComando()]);
     const lista=Array.isArray(r.guardas)?r.guardas:(r.references?.guardas||[]);
-    return lista.filter(g=>{
-      const st=String(g.status||'ATIVO').toUpperCase();
-      const ativo=String(g.ativo??'1').toUpperCase();
-      return ['ATIVO','ATIVA',''].includes(st)&&!['0','FALSE','NAO','NÃO','INATIVO'].includes(ativo);
-    }).sort((a,b)=>String(a.nome_guerra||a.nome_completo||'').localeCompare(String(b.nome_guerra||b.nome_completo||''),'pt-BR'));
+    return lista.filter(g=>extraAtivo(g)&&!comandoIds.has(Number(g.id))&&!extraCargoComando(g))
+      .sort((a,b)=>String(a.nome_guerra||a.nome_completo||'').localeCompare(String(b.nome_guerra||b.nome_completo||''),'pt-BR'));
   }catch{
     const sel=extraCampo('guarda_id');
-    return [...(sel?.options||[])].filter(o=>o.value).map(o=>({id:Number(o.value),nome_guerra:o.textContent||`GCM ${o.value}`}));
+    return [...(sel?.options||[])]
+      .filter(o=>o.value&&!/\b(SUBCOMANDANTE|COMANDANTE)\b/i.test(String(o.textContent||'')))
+      .map(o=>({id:Number(o.value),nome_guerra:o.textContent||`GCM ${o.value}`}));
   }
 }
 
@@ -69,10 +98,10 @@ async function extraAjustarFormulario(){
       <small id="gcmbsExtraSelecionados" class="muted">0 GCMs selecionados</small>
     </div>
     <div id="gcmbsExtraGcms" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:250px;overflow:auto;border:1px solid #dbe4f0;border-radius:10px;padding:10px;background:#fff">
-      ${guardas.map(g=>{const id=Number(g.id||0),nome=g.nome_guerra||g.nome_completo||`GCM ${id}`;return `<label style="display:flex;gap:8px;align-items:center;padding:7px 8px;border:1px solid #e5eaf1;border-radius:8px;cursor:pointer"><input type="checkbox" data-extra-gcm="1" data-nome="${extraEsc(nome)}" value="${id}"><span>${extraEsc(nome)}</span></label>`;}).join('')||'<div class="muted">Nenhum GCM ativo disponível na referência online.</div>'}
+      ${guardas.map(g=>{const id=Number(g.id||0),nome=g.nome_guerra||g.nome_completo||`GCM ${id}`;return `<label style="display:flex;gap:8px;align-items:center;padding:7px 8px;border:1px solid #e5eaf1;border-radius:8px;cursor:pointer"><input type="checkbox" data-extra-gcm="1" data-nome="${extraEsc(nome)}" value="${id}"><span>${extraEsc(nome)}</span></label>`;}).join('')||'<div class="muted">Nenhum GCM elegível disponível na referência online.</div>'}
     </div>
     <input id="gcmbsExtraGuardaFallback" data-online-field="guarda_id" type="hidden" value="">
-    <small class="muted">Selecione um ou mais GCMs. Cada inclusão será validada individualmente pelo Desktop; posto e função de motorista continuam automáticos.</small>`;
+    <small class="muted">Integrantes da equipe de Comando não são exibidos. Cada inclusão será validada individualmente pelo Desktop; posto e função de motorista continuam automáticos.</small>`;
 
   lab.querySelectorAll('[data-extra-gcm]').forEach(i=>i.addEventListener('change',extraAtualizarResumo));
   lab.querySelector('#gcmbsExtraSelecionarTodos')?.addEventListener('click',()=>{lab.querySelectorAll('[data-extra-gcm]').forEach(i=>i.checked=true);extraAtualizarResumo();});
@@ -98,7 +127,8 @@ async function extraSalvarLote(ev){
   if(!data||!inicio||!fim){if(msg)msg.textContent='Informe data, horário inicial e horário final.';return;}
   if(!gcms.length){if(msg)msg.textContent='Selecione pelo menos um GCM.';return;}
 
-  const texto=btn.textContent;btn.disabled=true;btn.textContent='Enviando...';if(msg)msg.textContent='Enviando GCMs selecionados para validação do Desktop...';
+  const texto=btn.textContent;btn.disabled=true;btn.textContent='Enviando...';
+  if(msg)msg.textContent='Enviando GCMs selecionados para validação do Desktop...';
   let ok=0;const falhas=[];
 
   for(const g of gcms){
@@ -136,4 +166,4 @@ function extraInstalar(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',extraInstalar,{once:true});
 else extraInstalar();
 
-console.info('[GCMBS] Escala Extra Manual com seleção múltipla de GCMs ativa');
+console.info('[GCMBS] Escala Extra Manual com seleção múltipla e pré-filtro de Comando ativa');
