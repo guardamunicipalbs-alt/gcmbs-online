@@ -10,6 +10,19 @@ let gcmbsPostoEditKey='',gcmbsTipoEscalaEditKey='';
 
 function gcmbsEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+// Proteção P0 de Eventos: appendChild de um nó que já está no mesmo grid é no-op.
+// Evita o ciclo MutationObserver -> reappend -> MutationObserver sem afetar outros módulos.
+if(!window.__gcmbsP0EventAppendGuard){
+  window.__gcmbsP0EventAppendGuard=true;
+  const nativeAppendChild=Node.prototype.appendChild;
+  Node.prototype.appendChild=function(node){
+    try{
+      if(node&&node.parentNode===this&&this instanceof Element&&this.classList?.contains('form-grid')&&this.closest?.('#p0EventoOrigem'))return node;
+    }catch{}
+    return nativeAppendChild.call(this,node);
+  };
+}
+
 // Guarda a chave do registro antes de o app-core abrir o editor.
 document.addEventListener('click',e=>{
   const edit=e.target?.closest?.('[data-online-edit]');
