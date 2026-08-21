@@ -20,7 +20,7 @@ const BANCO_ORIGENS={
   PENALIZACAO:'Penalização',
   CANCELAMENTO:'Cancelamento'
 };
-let bancoCache=null,bancoCacheAt=0,bancoBusy=false,bancoScheduled=false;
+let bancoCache=null,bancoCacheAt=0,bancoBusy=false,bancoScheduled=false,bancoUltimaCompFiltro='';
 
 function bancoAtivo(){const v=document.querySelector('[data-view="banco"]');return !!v&&!v.classList.contains('hidden');}
 async function bancoApi(action){
@@ -53,6 +53,21 @@ function bancoInjetarEstilo(){
   `;document.head.appendChild(s);
 }
 function bancoAjustarTitulos(){const h=banco$('listaBanco')?.closest('.card')?.querySelector('h2');if(h&&h.textContent!=='Movimentações da competência')h.textContent='Movimentações da competência';}
+function bancoSincronizarCompetenciaCorrecao(force=false){
+  const filtro=banco$('bhCompetenciaFiltro'),campo=banco$('bcComp');if(!campo)return;
+  const alvo=filtro?.value||bancoCompAtual(),anterior=bancoUltimaCompFiltro;
+  if(force||!campo.value||(anterior&&campo.value===anterior))campo.value=alvo;
+  bancoUltimaCompFiltro=alvo;
+}
+function bancoValidarCompetenciaCorrecao(ev){
+  if(ev.target?.id!=='formBancoCorrecao')return;
+  const comp=banco$('bcComp')?.value||'',data=banco$('bcData')?.value||'';
+  if(comp&&data&&data.slice(0,7)!==comp){
+    ev.preventDefault();ev.stopImmediatePropagation();
+    const msg=banco$('bcMsg');if(msg){msg.className='full request-message error';msg.textContent='A data do serviço deve pertencer à mesma competência selecionada.';}
+    banco$('bcData')?.focus();
+  }
+}
 function bancoRenderMinhas(ctx){
   const host=banco$('listaCorrecoes');if(!host)return;const comp=banco$('bhCompetenciaFiltro')?.value||bancoCompAtual(),gid=Number(ctx.session?.guarda_id||0);
   const req=ctx.requests.filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'&&bancoCompetenciaRegistro(x)===comp&&Number(x.guarda_id||x.payload?.guarda_id||0)===gid);
@@ -93,8 +108,8 @@ function bancoRenderPorGcm(ctx){
   card.innerHTML=`<div class="toolbar"><div><h2>Resumo por GCM</h2><p class="muted">Somatórios informativos da competência ${bancoEsc(comp)}; nenhuma coluna abaixo substitui o cálculo oficial do Desktop.</p></div></div><div class="v62-banco-table-wrap"><table><thead><tr><th>GCM</th><th>50%</th><th>100%</th><th>Débitos</th><th>Saldo exibido</th><th>Programado futuro</th></tr></thead><tbody>${corpo||'<tr><td colspan="6">Sem movimentações nesta competência.</td></tr>'}</tbody>${rows.length?`<tfoot><tr><td>Total</td><td>${bancoHoras(total.c50)}</td><td>${bancoHoras(total.c100)}</td><td>${bancoHoras(total.deb)}</td><td>${bancoHoras(total.c50+total.c100-total.deb)}</td><td>${bancoHoras(total.futuro)}</td></tr></tfoot>`:''}</table></div><small class="muted">“Programado futuro” apenas identifica créditos já existentes no Banco de Horas para serviços com data posterior a hoje. Esses lançamentos continuam sujeitos aos mesmos débitos, estornos e demais regras do Desktop.</small>`;
 }
 async function bancoAplicar(force=false){
-  if(!bancoAtivo()||bancoBusy)return;bancoInjetarEstilo();bancoAjustarTitulos();bancoFiltrarAnalise();bancoHumanizarMovimentacoes();bancoBusy=true;
-  try{const ctx=await bancoContexto(force);if(!bancoAtivo())return;bancoRenderMinhas(ctx);bancoRenderPorGcm(ctx);bancoAjustarTitulos();bancoFiltrarAnalise();bancoHumanizarMovimentacoes();}
+  if(!bancoAtivo()||bancoBusy)return;bancoInjetarEstilo();bancoAjustarTitulos();bancoSincronizarCompetenciaCorrecao(false);bancoFiltrarAnalise();bancoHumanizarMovimentacoes();bancoBusy=true;
+  try{const ctx=await bancoContexto(force);if(!bancoAtivo())return;bancoRenderMinhas(ctx);bancoRenderPorGcm(ctx);bancoSincronizarCompetenciaCorrecao(false);bancoAjustarTitulos();bancoFiltrarAnalise();bancoHumanizarMovimentacoes();}
   catch(e){console.warn('[GCMBS] Banco de Horas: correção visual não aplicada:',e?.message||e);}
   finally{bancoBusy=false;}
 }
@@ -102,6 +117,7 @@ function bancoSchedule(force=false){
   if(force){bancoCache=null;bancoCacheAt=0;}if(bancoScheduled)return;bancoScheduled=true;requestAnimationFrame(()=>{bancoScheduled=false;void bancoAplicar(force);});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>bancoSchedule(false),{once:true});else bancoSchedule(false);
-document.addEventListener('change',e=>{if(e.target?.id==='bhCompetenciaFiltro')bancoSchedule(true);},true);
-document.addEventListener('click',e=>{if(e.target.closest?.('[data-module="banco_horas"]'))setTimeout(()=>bancoSchedule(true),80);if(e.target.closest?.('#bcEnviar,[data-cmd-bh-ok],[data-cmd-bh-no]')){bancoCache=null;bancoCacheAt=0;}},true);
+document.addEventListener('submit',bancoValidarCompetenciaCorrecao,true);
+document.addEventListener('change',e=>{if(e.target?.id==='bhCompetenciaFiltro'){bancoSincronizarCompetenciaCorrecao(true);bancoSchedule(true);}},true);
+document.addEventListener('click',e=>{if(e.target.closest?.('[data-module="banco_horas"]'))setTimeout(()=>{bancoSincronizarCompetenciaCorrecao(false);bancoSchedule(true);},80);if(e.target.closest?.('#bcEnviar,[data-cmd-bh-ok],[data-cmd-bh-no]')){bancoCache=null;bancoCacheAt=0;}},true);
 new MutationObserver(()=>bancoSchedule(false)).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
