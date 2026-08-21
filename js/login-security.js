@@ -4,6 +4,7 @@ import './central-pendencias-fix.js';
 import './relatorios-route-fix.js';
 import './audit-pending-fixes.js?v=100062';
 import './v62-folha-ui.js?v=100062-folha01';
+import './v62-folha-legenda.js?v=100062-folha02';
 
 // Politica de seguranca do login GCMBS.
 // Quando "Lembrar meu acesso" estiver desmarcado, nenhum dado de login
