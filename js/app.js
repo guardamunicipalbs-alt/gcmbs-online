@@ -1,3 +1,4 @@
+import './v62-permuta-loop-guard.js?v=100062s05';
 import './app-core.js';
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
@@ -78,7 +79,7 @@ function gcmbsFreqEnsureControls(){
   wrap.querySelector('#gcmbsFreqTipo')?.addEventListener('change',gcmbsFreqRender);
   wrap.querySelector('#gcmbsFreqGcm')?.addEventListener('change',gcmbsFreqRender);
   for(const id of ['gcmbsFreqIni','gcmbsFreqFim'])wrap.querySelector('#'+id)?.addEventListener('change',()=>{gcmbsFreqLoadedKey='';});
-  if(!gcmbsFreqTimer)gcmbsFreqTimer=setInterval(()=>{if(String(document.getElementById('onlineTitulo')?.textContent||'').trim()==='Frequência'&&!gcmbsFreqDirty.size&&!gcmbsFreqLoading)gcmbsFreqLoad(true,true);},15000);
+  if(!gcmbsFreqTimer)gcmbsFreqTimer=setInterval(()=>{if(String(document.getElementById('onlineTitulo')?.textContent||'').trim()==='Frequência'&&!gcmbsFreqDirty.size&&!gcmbsFreqLoading)gcmbsFreqLoad(true,true);},60000);
   return wrap;
 }
 function gcmbsFreqFiltered(){
