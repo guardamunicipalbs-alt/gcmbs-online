@@ -2,6 +2,7 @@
 // 1) Impede o observer auto-recursivo de Permutas.
 // 2) Evita salto desnecessário por Edge Functions intermediárias quando a API v6
 //    já possui exatamente a mesma rota, autenticação e CORS.
+// 3) Reduz a atualização do status de sincronização de 15s para 60s.
 // Não altera regras de negócio, dados ou Gerador de Escala.
 
 const GCMBS_EDGE_BASE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
@@ -50,6 +51,20 @@ if(!window.__gcmbsLowPressureFetch){
     }
 
     return nativeFetch(destino,init);
+  };
+}
+
+// O badge de sincronização é apenas informativo. Um minuto é suficiente e evita
+// manter uma Edge Function/consulta ativa quatro vezes por minuto em cada dispositivo.
+if(!window.__gcmbsLowPressureInterval){
+  window.__gcmbsLowPressureInterval=true;
+  const nativeSetInterval=window.setInterval.bind(window);
+  window.setInterval=function(callback,delay,...args){
+    const nome=typeof callback==='function'?String(callback.name||''):'';
+    if(Number(delay)===15000 && nome==='atualizarBadge'){
+      return nativeSetInterval(callback,60000,...args);
+    }
+    return nativeSetInterval(callback,delay,...args);
   };
 }
 
