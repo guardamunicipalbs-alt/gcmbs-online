@@ -85,6 +85,12 @@ function ajustarFormulario(){
 function ajustarRotulosLista(){
   if(!tituloViaturas())return;
   const card=document.getElementById('onlineRegistrosCard');if(!card||card.classList.contains('hidden'))return;
+
+  // O Desktop não possui fluxo de exclusão física do cadastro de viaturas.
+  // Ações operacionais usam status/manutenção; por isso removemos o DELETE
+  // genérico que a tela Online acrescentava automaticamente.
+  card.querySelectorAll('[data-online-del]').forEach(b=>b.remove());
+
   for(const item of card.querySelectorAll('.online-kv')){
     for(const b of item.querySelectorAll('b')){
       const atual=String(b.textContent||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
