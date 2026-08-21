@@ -1,5 +1,6 @@
 import './stability-hotfix-v62.js?v=100062s01';
 import './sync-button-hotfix-v62.js?v=100062s02';
+import './v62-abastecimento-ui-fix.js?v=100062-abastecimento01';
 
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
