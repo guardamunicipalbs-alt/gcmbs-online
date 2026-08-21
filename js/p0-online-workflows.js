@@ -2,7 +2,7 @@
 // A gravação só é liberada quando o catálogo recebido do Desktop indicar writable=true.
 const P0_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const p0$=id=>document.getElementById(id);
-const p0Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const p0Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let p0Session=null,p0Refs=null,p0EventKey='',p0Busy=false,p0Scheduled=false,p0EventoComandoIds=null,p0EventoAjustando=false;
 
 async function p0Api(action,payload={}){
