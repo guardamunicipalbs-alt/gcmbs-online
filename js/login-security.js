@@ -1,3 +1,4 @@
+import './v62-permuta-loop-guard.js?v=100062s04';
 import './central-pendencias-fix.js';
 import './relatorios-route-fix.js';
 import './audit-pending-fixes.js?v=100062';
