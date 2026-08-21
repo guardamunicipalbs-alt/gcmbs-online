@@ -6,6 +6,7 @@ import './audit-pending-fixes.js?v=100062';
 import './v62-folha-ui.js?v=100062-folha01';
 import './v62-folha-legenda.js?v=100062-folha02';
 import './v62-banco-ui-fix.js?v=100062-banco01';
+import './v62-permuta-ui-fix.js?v=100062-permuta01';
 import './v62-escala-mobile-ui.js?v=100062-escala01';
 import './v62-viaturas-ui-fix.js?v=100062-viaturas01';
 
