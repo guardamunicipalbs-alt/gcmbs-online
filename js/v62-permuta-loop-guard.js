@@ -4,7 +4,8 @@
 //    já possui exatamente a mesma rota, autenticação e CORS.
 // 3) Reduz a atualização do status de sincronização de 15s para 60s.
 // 4) Restaura a apresentação do Cadastro de Guardas ao contrato funcional de 24 campos.
-// Não altera regras de negócio, dados existentes ou Gerador de Escala.
+// 5) Alinha Equipes aos 6 campos funcionais do Desktop e aos padrões operacionais.
+// Não altera dados existentes ou Gerador de Escala.
 
 const GCMBS_EDGE_BASE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
 const GCMBS_API_CORS=GCMBS_EDGE_BASE+'gcmbs-mobile-api-v6-cors';
@@ -20,7 +21,6 @@ const GCMBS_ACOES_EXCLUSIVAS_CORS=new Set([
 function gcmbsBloquearObserverRecursivoPermutas(){
   const host=document.getElementById('listaPermutasSolicitadas');
   if(!host)return false;
-  // v62-sync-ui só instala o MutationObserver quando este marcador não existe.
   if(!host.dataset.v62obs)host.dataset.v62obs='loop-guard';
   return true;
 }
@@ -29,9 +29,6 @@ if(!gcmbsBloquearObserverRecursivoPermutas() && document.readyState==='loading')
   document.addEventListener('DOMContentLoaded',gcmbsBloquearObserverRecursivoPermutas,{once:true});
 }
 
-// Roteamento de baixa pressão: as chamadas que o wrapper apenas encaminharia
-// seguem diretamente para a API v6. Rotas com contrato/proteção próprios continuam
-// obrigatoriamente no gcmbs-mobile-api-v6-cors.
 if(!window.__gcmbsLowPressureFetch){
   window.__gcmbsLowPressureFetch=true;
   const nativeFetch=window.fetch.bind(window);
@@ -55,8 +52,6 @@ if(!window.__gcmbsLowPressureFetch){
   };
 }
 
-// O badge de sincronização é apenas informativo. Um minuto é suficiente e evita
-// manter uma Edge Function/consulta ativa quatro vezes por minuto em cada dispositivo.
 if(!window.__gcmbsLowPressureInterval){
   window.__gcmbsLowPressureInterval=true;
   const nativeSetInterval=window.setInterval.bind(window);
@@ -69,9 +64,6 @@ if(!window.__gcmbsLowPressureInterval){
   };
 }
 
-// Cadastro de Guardas: o contrato 10.0.62 possui 24 campos funcionais.
-// O editor genérico preserva esses campos; este ajuste apenas os organiza nas
-// mesmas áreas funcionais do Desktop e corrige os padrões de um cadastro NOVO.
 function gcmbsAjustarFormularioGuardas(){
   const dialog=document.getElementById('onlineEditor');
   const titulo=String(document.getElementById('onlineEditorTitulo')?.textContent||'').trim();
@@ -84,17 +76,7 @@ function gcmbsAjustarFormularioGuardas(){
   const pessoais=grid('Dados pessoais');
   const cnh=grid('CNH e autorizações');
 
-  const rotulos={
-    rg:'RG',
-    cnh:'Número da CNH',
-    categoria_cnh_validade:'Validade da CNH',
-    pai:'Pai',
-    mae:'Mãe',
-    naturalidade:'Naturalidade',
-    email:'E-mail',
-    telefone:'Telefone'
-  };
-
+  const rotulos={rg:'RG',cnh:'Número da CNH',categoria_cnh_validade:'Validade da CNH',pai:'Pai',mae:'Mãe',naturalidade:'Naturalidade',email:'E-mail',telefone:'Telefone'};
   const campo=(nome)=>host.querySelector(`[data-online-field="${nome}"]`);
   const label=(nome)=>campo(nome)?.closest('label')||null;
   const renomear=(nome)=>{
@@ -126,17 +108,80 @@ function gcmbsAjustarFormularioGuardas(){
   }
 }
 
-if(!window.__gcmbsGuardaFormParity){
-  window.__gcmbsGuardaFormParity=true;
+function gcmbsAjustarFormularioEquipes(){
+  const dialog=document.getElementById('onlineEditor');
+  const titulo=String(document.getElementById('onlineEditorTitulo')?.textContent||'').trim();
+  const host=document.getElementById('onlineCampos');
+  if(!dialog||!host||!dialog.open||!(/Equipes/i.test(titulo)))return;
+
+  const campo=(nome)=>host.querySelector(`[data-online-field="${nome}"]`);
+  const label=(nome)=>campo(nome)?.closest('label')||null;
+  const trocarRotulo=(nome,texto)=>{
+    const el=label(nome);if(!el)return;
+    const txt=[...el.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.nodeValue||'').trim());
+    if(txt)txt.nodeValue=texto;
+  };
+
+  // modo_distribuicao é configuração interna do Desktop (MESMA_EQUIPE), não campo funcional.
+  label('modo_distribuicao')?.remove();
+
+  trocarRotulo('tipo_escala_id','Tipo de Escala');
+  trocarRotulo('turno_inicio','Turno inicial');
+
+  const turno=campo('turno_inicio');
+  if(turno && turno.tagName!=='SELECT'){
+    const atual=String(turno.value||'A').toUpperCase();
+    const sel=document.createElement('select');
+    sel.dataset.onlineField='turno_inicio';
+    sel.innerHTML=`<option value="A" ${atual!=='B'?'selected':''}>A</option><option value="B" ${atual==='B'?'selected':''}>B</option>`;
+    turno.replaceWith(sel);
+  }
+
+  const ciclo=campo('ciclo');
+  if(ciclo){ciclo.min='1';ciclo.step='1';}
+
+  const participa=campo('participa_gerador');
+  if(participa){
+    const atual=String(participa.value||'1');
+    participa.innerHTML=`<option value="1" ${atual!=='0'?'selected':''}>Não</option><option value="0" ${atual==='0'?'selected':''}>Sim</option>`;
+    trocarRotulo('participa_gerador','Equipe de Comando / Comandantes');
+    const lab=participa.closest('label');
+    if(lab&&!lab.querySelector('.gcmbs-equipe-comando-ajuda')){
+      const small=document.createElement('small');
+      small.className='gcmbs-equipe-comando-ajuda';
+      small.textContent='Quando Sim, a equipe pode permanecer ativa, mas não participa da geração automática de escala.';
+      lab.appendChild(small);
+    }
+  }
+
+  if(/^Novo\s+/i.test(titulo)){
+    const ativa=campo('ativa');if(ativa)ativa.value='1';
+    const c=campo('ciclo');if(c&&!String(c.value||'').trim())c.value='1';
+    const t=host.querySelector('[data-online-field="turno_inicio"]');if(t&&!String(t.value||'').trim())t.value='A';
+    const p=campo('participa_gerador');if(p)p.value='1';
+  }
+
+  for(const sec of [...host.querySelectorAll('.form-section')]){
+    if(!sec.querySelector('[data-online-field]'))sec.remove();
+  }
+}
+
+function gcmbsAjustarFormulariosParidade(){
+  gcmbsAjustarFormularioGuardas();
+  gcmbsAjustarFormularioEquipes();
+}
+
+if(!window.__gcmbsFormParity){
+  window.__gcmbsFormParity=true;
   const proto=window.HTMLDialogElement?.prototype;
   if(proto&&typeof proto.showModal==='function'){
     const nativeShowModal=proto.showModal;
     proto.showModal=function(...args){
       const r=nativeShowModal.apply(this,args);
-      if(this.id==='onlineEditor')queueMicrotask(gcmbsAjustarFormularioGuardas);
+      if(this.id==='onlineEditor')queueMicrotask(gcmbsAjustarFormulariosParidade);
       return r;
     };
   }
 }
 
-console.info('[GCMBS] proteção anti-loop, baixa pressão e paridade do Cadastro de Guardas ativas');
+console.info('[GCMBS] proteção anti-loop, baixa pressão e paridade Guardas/Equipes ativas');
