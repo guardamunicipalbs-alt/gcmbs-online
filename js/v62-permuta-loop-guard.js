@@ -3,7 +3,8 @@
 // 2) Evita salto desnecessário por Edge Functions intermediárias quando a API v6
 //    já possui exatamente a mesma rota, autenticação e CORS.
 // 3) Reduz a atualização do status de sincronização de 15s para 60s.
-// Não altera regras de negócio, dados ou Gerador de Escala.
+// 4) Restaura a apresentação do Cadastro de Guardas ao contrato funcional de 24 campos.
+// Não altera regras de negócio, dados existentes ou Gerador de Escala.
 
 const GCMBS_EDGE_BASE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
 const GCMBS_API_CORS=GCMBS_EDGE_BASE+'gcmbs-mobile-api-v6-cors';
@@ -68,4 +69,74 @@ if(!window.__gcmbsLowPressureInterval){
   };
 }
 
-console.info('[GCMBS] proteção anti-loop e roteamento de baixa pressão ativos');
+// Cadastro de Guardas: o contrato 10.0.62 possui 24 campos funcionais.
+// O editor genérico preserva esses campos; este ajuste apenas os organiza nas
+// mesmas áreas funcionais do Desktop e corrige os padrões de um cadastro NOVO.
+function gcmbsAjustarFormularioGuardas(){
+  const dialog=document.getElementById('onlineEditor');
+  const titulo=String(document.getElementById('onlineEditorTitulo')?.textContent||'').trim();
+  const host=document.getElementById('onlineCampos');
+  if(!dialog||!host||!dialog.open||!/Cadastro de Guardas/i.test(titulo))return;
+
+  const secoes=[...host.querySelectorAll('.form-section')];
+  const grid=(nome)=>secoes.find(s=>String(s.querySelector('h3')?.textContent||'').trim()===nome)?.querySelector('.form-grid')||null;
+  const identificacao=grid('Identificação funcional');
+  const pessoais=grid('Dados pessoais');
+  const cnh=grid('CNH e autorizações');
+
+  const rotulos={
+    rg:'RG',
+    cnh:'Número da CNH',
+    categoria_cnh_validade:'Validade da CNH',
+    pai:'Pai',
+    mae:'Mãe',
+    naturalidade:'Naturalidade',
+    email:'E-mail',
+    telefone:'Telefone'
+  };
+
+  const campo=(nome)=>host.querySelector(`[data-online-field="${nome}"]`);
+  const label=(nome)=>campo(nome)?.closest('label')||null;
+  const renomear=(nome)=>{
+    const el=label(nome);if(!el)return;
+    const txt=[...el.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.nodeValue||'').trim());
+    if(txt)txt.nodeValue=rotulos[nome]||nome;
+  };
+  const mover=(nome,destino)=>{const el=label(nome);if(el&&destino)destino.appendChild(el);renomear(nome);};
+
+  mover('rg',identificacao);
+  for(const nome of ['pai','mae','naturalidade','email','telefone'])mover(nome,pessoais);
+  for(const nome of ['cnh','categoria_cnh_validade'])mover(nome,cnh);
+
+  const validade=campo('categoria_cnh_validade');
+  if(validade){validade.type='date';validade.value=String(validade.value||'').slice(0,10);}
+  const email=campo('email');if(email)email.type='email';
+  const telefone=campo('telefone');if(telefone)telefone.type='tel';
+
+  if(/^Novo\s+/i.test(titulo)){
+    const status=campo('status');
+    if(status&&(!String(status.value||'').trim()||String(status.value).toUpperCase()==='ATIVA'))status.value='ATIVO';
+    for(const nome of ['disponivel_escala','pode_noite','pode_24h']){
+      const el=campo(nome);if(el&&(!String(el.value||'').trim()||String(el.value)==='0'))el.value='1';
+    }
+  }
+
+  for(const sec of [...host.querySelectorAll('.form-section')]){
+    if(String(sec.querySelector('h3')?.textContent||'').trim()==='Outros dados' && !sec.querySelector('[data-online-field]'))sec.remove();
+  }
+}
+
+if(!window.__gcmbsGuardaFormParity){
+  window.__gcmbsGuardaFormParity=true;
+  const proto=window.HTMLDialogElement?.prototype;
+  if(proto&&typeof proto.showModal==='function'){
+    const nativeShowModal=proto.showModal;
+    proto.showModal=function(...args){
+      const r=nativeShowModal.apply(this,args);
+      if(this.id==='onlineEditor')queueMicrotask(gcmbsAjustarFormularioGuardas);
+      return r;
+    };
+  }
+}
+
+console.info('[GCMBS] proteção anti-loop, baixa pressão e paridade do Cadastro de Guardas ativas');
