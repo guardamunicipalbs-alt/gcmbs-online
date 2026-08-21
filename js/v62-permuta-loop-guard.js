@@ -6,15 +6,22 @@ const GCMBS_API_CORS=GCMBS_EDGE_BASE+'gcmbs-mobile-api-v6-cors';
 const GCMBS_API_V6=GCMBS_EDGE_BASE+'gcmbs-mobile-api-v6';
 const GCMBS_QUADRO_V62=GCMBS_EDGE_BASE+'gcmbs-quadro-v62';
 const GCMBS_ACOES_EXCLUSIVAS_CORS=new Set(['entity_catalog','entity_list','entity_mutate','frequency_services']);
-let gcmbsPostoEditKey='';
+let gcmbsPostoEditKey='',gcmbsTipoEscalaEditKey='';
 
 function gcmbsEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 // Guarda a chave do registro antes de o app-core abrir o editor.
 document.addEventListener('click',e=>{
   const edit=e.target?.closest?.('[data-online-edit]');
-  if(edit)gcmbsPostoEditKey=String(edit.dataset.onlineEdit||'');
-  if(e.target?.closest?.('#onlineNovo'))gcmbsPostoEditKey='';
+  if(edit){
+    const key=String(edit.dataset.onlineEdit||'');
+    gcmbsPostoEditKey=key;
+    gcmbsTipoEscalaEditKey=key;
+  }
+  if(e.target?.closest?.('#onlineNovo')){
+    gcmbsPostoEditKey='';
+    gcmbsTipoEscalaEditKey='';
+  }
 },true);
 
 function gcmbsBloquearObserverRecursivoPermutas(){
@@ -50,13 +57,15 @@ if(!window.__gcmbsLowPressureInterval){
   };
 }
 
-async function gcmbsApi(action,payload={}){
+async function gcmbsFetchApi(url,action,payload={}){
   const token=localStorage.getItem('gcmbs.mobile.token');
-  const r=await fetch(GCMBS_API_CORS,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({action,...payload}),cache:'no-store'});
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({action,...payload}),cache:'no-store'});
   let b={};try{b=await r.json()}catch{}
   if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);
   return b;
 }
+async function gcmbsApi(action,payload={}){return gcmbsFetchApi(GCMBS_API_CORS,action,payload);}
+async function gcmbsApiDireto(action,payload={}){return gcmbsFetchApi(GCMBS_API_V6,action,payload);}
 
 function gcmbsFormContext(regex){
   const dialog=document.getElementById('onlineEditor');
@@ -73,6 +82,16 @@ function gcmbsTrocarRotulo(host,nome,texto){
 }
 function gcmbsGrid(host,nome){
   return [...(host?.querySelectorAll('.form-section')||[])].find(s=>String(s.querySelector('h3')?.textContent||'').trim()===nome)?.querySelector('.form-grid')||null;
+}
+function gcmbsSecao(host,nome){
+  let sec=[...(host?.querySelectorAll('.form-section')||[])].find(s=>String(s.querySelector('h3')?.textContent||'').trim()===nome);
+  if(!sec){sec=document.createElement('section');sec.className='form-section module-editor-section';sec.innerHTML=`<h3>${gcmbsEsc(nome)}</h3><div class="form-grid"></div>`;host.appendChild(sec);}
+  return sec;
+}
+function gcmbsMoverCampo(host,nome,grid,rotulo){
+  const lab=gcmbsLabel(host,nome);if(lab&&grid&&lab.parentElement!==grid)grid.appendChild(lab);
+  if(rotulo)gcmbsTrocarRotulo(host,nome,rotulo);
+  return gcmbsCampo(host,nome);
 }
 
 function gcmbsAjustarFormularioGuardas(){
@@ -141,7 +160,7 @@ async function gcmbsPopularViaturasPosto(host,valor=''){
     if(atual&&[...sel.options].some(o=>o.value===atual))sel.value=atual;
   }catch(e){sel.innerHTML=`<option value="${gcmbsEsc(valor)}">${valor?'Viatura vinculada atual':'Não foi possível carregar viaturas'}</option>`;}
 }
-async function gcmbsCarregarValoresPostoEdicao(host){
+async function gcmbsCarregarValoresPostoEdicao(){
   if(!gcmbsPostoEditKey)return null;
   try{
     const b=await gcmbsApi('entity_list',{entity:'postos',limit:500,offset:0});
@@ -173,7 +192,7 @@ async function gcmbsAjustarFormularioPostos(){
   gcmbsTrocarRotulo(host,'exige_motorista','Exige motorista');gcmbsTrocarRotulo(host,'exige_viatura','Exige viatura');gcmbsTrocarRotulo(host,'viatura_id','Viatura vinculada');
 
   let dados=null;
-  if(!novo)dados=await gcmbsCarregarValoresPostoEdicao(host);
+  if(!novo)dados=await gcmbsCarregarValoresPostoEdicao();
   const motor=gcmbsCampo(host,'exige_motorista'),exige=gcmbsCampo(host,'exige_viatura'),viatura=gcmbsCampo(host,'viatura_id');
   if(dados){if(motor)motor.value=Number(dados.exige_motorista||0)?'1':'0';if(exige)exige.value=Number(dados.exige_viatura||0)?'1':'0';if(viatura)viatura.dataset.valorAtual=String(dados.viatura_id??'');}
   if(novo){const ativo=gcmbsCampo(host,'ativo');if(ativo)ativo.value='1';const t=gcmbsCampo(host,'tipo');if(t)t.value='FIXO';if(motor)motor.value='0';if(exige)exige.value='0';if(viatura)viatura.dataset.valorAtual='';}
@@ -185,10 +204,94 @@ async function gcmbsAjustarFormularioPostos(){
   for(const s of [...host.querySelectorAll('.form-section')])if(!s.querySelector('[data-online-field]'))s.remove();
 }
 
+async function gcmbsCarregarValoresTipoEscalaEdicao(){
+  if(!gcmbsTipoEscalaEditKey)return null;
+  try{
+    // A API principal é usada apenas para recuperar fallbacks legados do próprio registro
+    // (descricao / intervalo_inicio / intervalo_fim). Eles não viram campos funcionais.
+    const b=await gcmbsApiDireto('entity_list',{entity:'tipos_escalas',limit:500,offset:0});
+    const r=(b.records||[]).find(x=>String(x.record_key)===String(gcmbsTipoEscalaEditKey));return r?.data||null;
+  }catch{return null;}
+}
+function gcmbsSelectTipoJornada(host,valor=''){
+  const atualEl=gcmbsCampo(host,'tipo_escala');if(!atualEl)return null;
+  const atual=String(valor??atualEl.value??'');
+  let sel=atualEl;
+  if(atualEl.tagName!=='SELECT'){
+    sel=document.createElement('select');sel.dataset.onlineField='tipo_escala';atualEl.replaceWith(sel);
+  }
+  const ops=[
+    ['','Selecione...'],['24x72','24x72'],['12x36','12x36'],['5x2','5x2'],['12h','12 horas'],['24h','24 horas'],['Dias úteis','Dias úteis'],['EXPEDIENTE','Expediente'],['outro','Outro']
+  ];
+  if(atual&&!ops.some(([v])=>v===atual))ops.push([atual,atual]);
+  sel.innerHTML=ops.map(([v,l])=>`<option value="${gcmbsEsc(v)}" ${v===atual?'selected':''}>${gcmbsEsc(l)}</option>`).join('');
+  return sel;
+}
+async function gcmbsAjustarFormularioTiposEscalas(){
+  const {titulo,host,ok}=gcmbsFormContext(/Tipos de Escalas/i);if(!ok)return;
+  const novo=/^Novo\s+/i.test(titulo);if(novo)gcmbsTipoEscalaEditKey='';
+  const dados=novo?null:await gcmbsCarregarValoresTipoEscalaEdicao();
+
+  // Contrato funcional Desktop 10.0.62: 11 campos. "jornada" continua interna e
+  // será derivada no Desktop a partir de tipo_escala durante a sincronização.
+  gcmbsLabel(host,'descricao')?.remove();
+  gcmbsLabel(host,'jornada')?.remove();
+  for(const n of ['intervalo_inicio','intervalo_fim','cor'])gcmbsLabel(host,n)?.remove();
+
+  const secTipo=gcmbsSecao(host,'Tipo de escala'),secHorario=gcmbsSecao(host,'Horários'),secIntervalos=gcmbsSecao(host,'Intervalos'),secObs=gcmbsSecao(host,'Observações');
+  const gTipo=secTipo.querySelector('.form-grid'),gHorario=secHorario.querySelector('.form-grid'),gInt=secIntervalos.querySelector('.form-grid'),gObs=secObs.querySelector('.form-grid');
+
+  const nome=gcmbsMoverCampo(host,'nome',gTipo,'Nome / Sigla');
+  const tipo=gcmbsMoverCampo(host,'tipo_escala',gTipo,'Tipo de Jornada');
+  const categoria=gcmbsMoverCampo(host,'categoria',gTipo,'Categoria');
+  const ativo=gcmbsMoverCampo(host,'ativo',gTipo,'Ativo');
+  for(const n of ['hora_inicio','hora_fim'])gcmbsMoverCampo(host,n,gHorario,n==='hora_inicio'?'Horário inicial':'Horário final');
+  for(const [n,l] of [['intervalo1_inicio','Intervalo 1 · início'],['intervalo1_fim','Intervalo 1 · fim'],['intervalo2_inicio','Intervalo 2 · início'],['intervalo2_fim','Intervalo 2 · fim']])gcmbsMoverCampo(host,n,gInt,l);
+  const observacao=gcmbsMoverCampo(host,'observacao',gObs,'Observações');
+
+  const tipoValor=String(dados?.tipo_escala||dados?.jornada||tipo?.value||'');
+  const tipoSel=gcmbsSelectTipoJornada(host,tipoValor);
+  if(nome)nome.required=true;if(tipoSel)tipoSel.required=true;if(categoria)categoria.required=true;
+  for(const n of ['hora_inicio','hora_fim','intervalo1_inicio','intervalo1_fim','intervalo2_inicio','intervalo2_fim']){
+    const el=gcmbsCampo(host,n);if(el){el.type='time';el.value=String(el.value||'').slice(0,5);}
+  }
+  if(observacao&&observacao.tagName!=='TEXTAREA'){
+    const ta=document.createElement('textarea');ta.dataset.onlineField='observacao';ta.value=String(observacao.value||'');observacao.replaceWith(ta);
+  }
+  const obsLab=gcmbsLabel(host,'observacao');if(obsLab)obsLab.classList.add('full');
+
+  if(dados){
+    const vals={
+      nome:dados.nome??'',tipo_escala:dados.tipo_escala||dados.jornada||'',categoria:dados.categoria??'',
+      ativo:['0','NAO','NÃO','FALSE','INATIVO'].includes(String(dados.ativo??'1').toUpperCase())?'0':'1',
+      hora_inicio:dados.hora_inicio??'',hora_fim:dados.hora_fim??'',
+      intervalo1_inicio:dados.intervalo1_inicio||dados.intervalo_inicio||'',intervalo1_fim:dados.intervalo1_fim||dados.intervalo_fim||'',
+      intervalo2_inicio:dados.intervalo2_inicio||'',intervalo2_fim:dados.intervalo2_fim||'',
+      observacao:dados.observacao||dados.descricao||''
+    };
+    for(const [n,v] of Object.entries(vals)){const el=gcmbsCampo(host,n);if(el)el.value=String(v??'');}
+    gcmbsSelectTipoJornada(host,vals.tipo_escala);
+  }else{
+    if(ativo)ativo.value='1';
+    if(tipoSel)tipoSel.value='';
+  }
+
+  const controlarIntervalo2=()=>{
+    const mostrar=String(gcmbsCampo(host,'tipo_escala')?.value||'').toLowerCase()==='24x72';
+    for(const n of ['intervalo2_inicio','intervalo2_fim']){const lab=gcmbsLabel(host,n);if(lab)lab.style.display=mostrar?'':'none';}
+  };
+  gcmbsCampo(host,'tipo_escala')?.addEventListener('change',controlarIntervalo2);controlarIntervalo2();
+
+  // Reordena seções para seguir o formulário real do Desktop.
+  for(const s of [secTipo,secHorario,secIntervalos,secObs])host.appendChild(s);
+  for(const s of [...host.querySelectorAll('.form-section')])if(!s.querySelector('[data-online-field]'))s.remove();
+}
+
 function gcmbsAjustarFormulariosParidade(){
   gcmbsAjustarFormularioGuardas();
   gcmbsAjustarFormularioEquipes();
   void gcmbsAjustarFormularioPostos();
+  void gcmbsAjustarFormularioTiposEscalas();
 }
 
 if(!window.__gcmbsFormParity){
@@ -200,4 +303,4 @@ if(!window.__gcmbsFormParity){
   }
 }
 
-console.info('[GCMBS] proteção anti-loop, baixa pressão e paridade Guardas/Equipes/Postos 13 campos ativas');
+console.info('[GCMBS] proteção anti-loop, baixa pressão e paridade Guardas/Equipes/Postos/Tipos de Escalas ativas');
