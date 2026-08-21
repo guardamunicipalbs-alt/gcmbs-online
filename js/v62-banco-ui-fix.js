@@ -2,7 +2,7 @@
 // Não altera saldos, regras financeiras ou registros; atua somente na interface.
 const BANCO_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const banco$=id=>document.getElementById(id);
-const bancoEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const bancoEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const bancoFmt=d=>{const s=String(d||'').slice(0,10),m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:s;};
 const bancoHoras=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`;};
 const bancoCompAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'}).slice(0,7);
@@ -39,6 +39,7 @@ function bancoInjetarEstilo(){
     #listaCorrecoes .v62-banco-descricao{display:block;margin-top:2px}
   `;document.head.appendChild(s);
 }
+function bancoAjustarTitulos(){const h=banco$('listaBanco')?.closest('.card')?.querySelector('h2');if(h&&h.textContent!=='Movimentações da competência')h.textContent='Movimentações da competência';}
 function bancoRenderMinhas(ctx){
   const host=banco$('listaCorrecoes');if(!host)return;const comp=banco$('bhCompetenciaFiltro')?.value||bancoCompAtual(),gid=Number(ctx.session?.guarda_id||0);
   const req=ctx.requests.filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'&&bancoCompetenciaRegistro(x)===comp&&Number(x.guarda_id||x.payload?.guarda_id||0)===gid);
@@ -57,8 +58,8 @@ function bancoHumanizarMovimentacoes(){
   for(const el of document.querySelectorAll('#listaBanco .item > strong')){const k=String(el.textContent||'').trim().toUpperCase();if(BANCO_ORIGENS[k]&&el.textContent!==BANCO_ORIGENS[k])el.textContent=BANCO_ORIGENS[k];}
 }
 async function bancoAplicar(force=false){
-  if(!bancoAtivo()||bancoBusy)return;bancoInjetarEstilo();bancoFiltrarAnalise();bancoHumanizarMovimentacoes();bancoBusy=true;
-  try{const ctx=await bancoContexto(force);if(!bancoAtivo())return;bancoRenderMinhas(ctx);bancoFiltrarAnalise();bancoHumanizarMovimentacoes();}
+  if(!bancoAtivo()||bancoBusy)return;bancoInjetarEstilo();bancoAjustarTitulos();bancoFiltrarAnalise();bancoHumanizarMovimentacoes();bancoBusy=true;
+  try{const ctx=await bancoContexto(force);if(!bancoAtivo())return;bancoRenderMinhas(ctx);bancoAjustarTitulos();bancoFiltrarAnalise();bancoHumanizarMovimentacoes();}
   catch(e){console.warn('[GCMBS] Banco de Horas: correção visual não aplicada:',e?.message||e);}
   finally{bancoBusy=false;}
 }
