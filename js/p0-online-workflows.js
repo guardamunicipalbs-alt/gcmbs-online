@@ -3,7 +3,7 @@
 const P0_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const p0$=id=>document.getElementById(id);
 const p0Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let p0Session=null,p0Refs=null,p0EventKey='',p0Busy=false,p0Scheduled=false,p0EventoComandoIds=null;
+let p0Session=null,p0Refs=null,p0EventKey='',p0Busy=false,p0Scheduled=false,p0EventoComandoIds=null,p0EventoAjustando=false;
 
 async function p0Api(action,payload={}){
   const token=localStorage.getItem('gcmbs.mobile.token');
@@ -83,44 +83,86 @@ function p0EventoAjustarOrigem(dlg){
   if(!origem&&oficioLabel){
     const l=document.createElement('label');l.innerHTML='<span>Origem do evento</span><select data-online-field="origem_evento"><option value="EVENTO_NOVO">Criar evento</option><option value="OFICIO">Usar ofício cadastrado</option></select>';oficioLabel.parentElement?.insertBefore(l,oficioLabel);origem=l.querySelector('select');
   }
+  const origemLabel=origem?.closest('label');
+  if(origemLabel){
+    const txt=[...origemLabel.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.textContent||'').trim());
+    if(txt)txt.nodeValue='Origem do evento ';
+    else if(!origemLabel.querySelector(':scope > span'))origemLabel.insertAdjacentHTML('afterbegin','<span>Origem do evento</span>');
+  }
   if(oficioLabel){const t=[...oficioLabel.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.textContent||'').trim());if(t)t.nodeValue='Ofício ';}
   const sync=()=>{const usar=String(origem?.value||'EVENTO_NOVO').toUpperCase()==='OFICIO';if(oficioLabel)oficioLabel.style.display=usar?'':'none';if(!usar&&oficio)oficio.value='';};
   if(origem&&!origem.dataset.p0OrigemBind){origem.dataset.p0OrigemBind='1';origem.addEventListener('change',sync);}sync();
 }
-function p0EventoAtualizarContador(){const n=document.querySelectorAll('[data-p0-evento-gcm]:checked').length,e=p0$('p0EventoSelecionados');if(e)e.textContent=`${n} GCM${n===1?'':'s'} selecionado${n===1?'':'s'}`;}
-async function p0AjustarEvento(){
-  if(!p0IsEvento())return;
-  const host=p0$('onlineRegistros');
-  if(host&&!host.dataset.p0EventoResumo){
-    host.dataset.p0EventoResumo='1';
-    try{
-      const [parts,refs]=await Promise.all([p0Entity('eventos_extras_participantes',5000),p0GetRefs()]);
-      const gs=new Map((refs.guardas||[]).map(g=>[Number(g.id),g.nome_guerra||g.nome_completo||`GCM ${g.id}`])),map=new Map();
-      for(const r of parts.records||[]){const d=r.data||{},id=String(d.evento_id||'');if(!id)continue;if(!map.has(id))map.set(id,new Map());const m=map.get(id),gid=Number(d.guarda_id);if(gid)m.set(gid,gs.get(gid)||`GCM ${gid}`);}
-      host.querySelectorAll('[data-online-key]').forEach(card=>{const key=String(card.dataset.onlineKey||''),names=[...(map.get(key)?.values()||[])];if(names.length&&!card.querySelector('[data-p0-evento-participantes]'))card.querySelector('.online-kv')?.insertAdjacentHTML('beforeend',`<b data-p0-evento-participantes>Participantes</b><span>${p0Esc(names.join(', '))}</span>`);});
-    }catch{}
+function p0EventoReorganizarCampos(dlg){
+  const host=p0$('onlineCampos');if(!host)return;
+  const nome=dlg.querySelector('[data-online-field="nome"]')?.closest('label');
+  const origem=dlg.querySelector('[data-online-field="origem_evento"]')?.closest('label');
+  const oficio=dlg.querySelector('[data-online-field="oficio_id"]')?.closest('label');
+  if(!nome&&!origem&&!oficio)return;
+  let sec=p0$('p0EventoIdentificacao');
+  if(!sec){
+    sec=document.createElement('section');sec.id='p0EventoIdentificacao';sec.className='form-section module-editor-section';
+    sec.innerHTML='<h3>Evento</h3><div class="form-grid"></div>';
+    host.insertBefore(sec,host.firstChild);
   }
-  document.querySelectorAll('#onlineRegistros [data-online-del]').forEach(b=>p0RotularBotao(b,'Cancelar evento','Cancela o evento e estorna os créditos automáticos, preservando o histórico.'));
-  const dlg=p0$('onlineEditor');if(!dlg?.open)return;
-  p0EventoAjustarOrigem(dlg);
-  const status=dlg.querySelector('[data-online-field="status"]');if(status){status.value='ATIVO';status.closest('label')?.classList.add('hidden');}
-  const eq=dlg.querySelector('[data-online-field="equipe_servico_id"]');if(eq)eq.closest('label')?.classList.add('hidden');
-  if(p0$('p0EventoParticipantes'))return;
-  const [refs,selected,comandoIds]=await Promise.all([p0GetRefs(),p0EventoSelecionados(),p0EventoIdsComando()]);
-  const guardas=(refs.guardas||[]).filter(g=>['ATIVO','ATIVA',''].includes(String(g.status||'').toUpperCase())&&!comandoIds.has(Number(g.id))&&!p0EventoCargoComando(g)).sort((a,b)=>String(a.nome_guerra||a.nome_completo).localeCompare(String(b.nome_guerra||b.nome_completo),'pt-BR'));
-  const html=guardas.map(g=>`<label class="check"><input type="checkbox" data-p0-evento-gcm value="${p0Esc(g.id)}" ${selected.has(Number(g.id))?'checked':''}> ${p0Esc(g.nome_guerra||g.nome_completo||`GCM ${g.id}`)}</label>`).join('');
-  p0$('onlineCampos')?.insertAdjacentHTML('beforeend',`<section id="p0EventoParticipantes" class="form-section module-editor-section full"><h3>GCMs participantes</h3><p class="muted">Selecione os participantes. Integrantes da equipe de Comando não são elegíveis. O Desktop descontará escala ordinária, permutas e outras extras e contabilizará somente o trecho realmente livre do evento.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 10px"><button id="p0EventoTodos" type="button" class="secondary">Selecionar todos</button><button id="p0EventoLimpar" type="button" class="secondary">Limpar</button><small id="p0EventoSelecionados" class="muted">0 GCMs selecionados</small></div><div class="choice-grid">${html||'<span class="muted">Nenhum GCM elegível encontrado.</span>'}</div></section>`);
-  document.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.addEventListener('change',p0EventoAtualizarContador));
-  p0$('p0EventoTodos')?.addEventListener('click',()=>{document.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.checked=true);p0EventoAtualizarContador();});
-  p0$('p0EventoLimpar')?.addEventListener('click',()=>{document.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.checked=false);p0EventoAtualizarContador();});
-  p0EventoAtualizarContador();
+  const grid=sec.querySelector('.form-grid');
+  [origem,oficio,nome].filter(Boolean).forEach(el=>grid.appendChild(el));
+  [...host.querySelectorAll('section.form-section.module-editor-section')].forEach(s=>{
+    if(s.id==='p0EventoIdentificacao'||s.id==='p0EventoParticipantes')return;
+    if(!s.querySelector('[data-online-field]'))s.remove();
+  });
+}
+function p0EventoAtualizarContador(){
+  const scope=p0$('p0EventoParticipantes');
+  const n=scope?.querySelectorAll('[data-p0-evento-gcm]:checked').length||0,e=p0$('p0EventoSelecionados');
+  if(e)e.textContent=`${n} GCM${n===1?'':'s'} selecionado${n===1?'':'s'}`;
+}
+function p0EventoDeduplicarParticipantes(dlg){
+  const blocos=[...dlg.querySelectorAll('section#p0EventoParticipantes')];
+  blocos.slice(1).forEach(x=>x.remove());
+  return blocos[0]||null;
+}
+async function p0AjustarEvento(){
+  if(!p0IsEvento()||p0EventoAjustando)return;
+  p0EventoAjustando=true;
+  try{
+    const host=p0$('onlineRegistros');
+    if(host&&!host.dataset.p0EventoResumo){
+      host.dataset.p0EventoResumo='1';
+      try{
+        const [parts,refs]=await Promise.all([p0Entity('eventos_extras_participantes',5000),p0GetRefs()]);
+        const gs=new Map((refs.guardas||[]).map(g=>[Number(g.id),g.nome_guerra||g.nome_completo||`GCM ${g.id}`])),map=new Map();
+        for(const r of parts.records||[]){const d=r.data||{},id=String(d.evento_id||'');if(!id)continue;if(!map.has(id))map.set(id,new Map());const m=map.get(id),gid=Number(d.guarda_id);if(gid)m.set(gid,gs.get(gid)||`GCM ${gid}`);}
+        host.querySelectorAll('[data-online-key]').forEach(card=>{const key=String(card.dataset.onlineKey||''),names=[...(map.get(key)?.values()||[])];if(names.length&&!card.querySelector('[data-p0-evento-participantes]'))card.querySelector('.online-kv')?.insertAdjacentHTML('beforeend',`<b data-p0-evento-participantes>Participantes</b><span>${p0Esc(names.join(', '))}</span>`);});
+      }catch{}
+    }
+    document.querySelectorAll('#onlineRegistros [data-online-del]').forEach(b=>p0RotularBotao(b,'Cancelar evento','Cancela o evento e estorna os créditos automáticos, preservando o histórico.'));
+    const dlg=p0$('onlineEditor');if(!dlg?.open)return;
+    p0EventoAjustarOrigem(dlg);
+    p0EventoReorganizarCampos(dlg);
+    const status=dlg.querySelector('[data-online-field="status"]');if(status){status.value='ATIVO';status.closest('label')?.classList.add('hidden');}
+    const eq=dlg.querySelector('[data-online-field="equipe_servico_id"]');if(eq)eq.closest('label')?.classList.add('hidden');
+    if(p0EventoDeduplicarParticipantes(dlg))return;
+    const [refs,selected,comandoIds]=await Promise.all([p0GetRefs(),p0EventoSelecionados(),p0EventoIdsComando()]);
+    if(!dlg.open||!p0IsEvento())return;
+    if(p0EventoDeduplicarParticipantes(dlg))return;
+    const guardas=(refs.guardas||[]).filter(g=>['ATIVO','ATIVA',''].includes(String(g.status||'').toUpperCase())&&!comandoIds.has(Number(g.id))&&!p0EventoCargoComando(g)).sort((a,b)=>String(a.nome_guerra||a.nome_completo).localeCompare(String(b.nome_guerra||b.nome_completo),'pt-BR'));
+    const html=guardas.map(g=>`<label class="check"><input type="checkbox" data-p0-evento-gcm value="${p0Esc(g.id)}" ${selected.has(Number(g.id))?'checked':''}> ${p0Esc(g.nome_guerra||g.nome_completo||`GCM ${g.id}`)}</label>`).join('');
+    p0$('onlineCampos')?.insertAdjacentHTML('beforeend',`<section id="p0EventoParticipantes" class="form-section module-editor-section full"><h3>GCMs participantes</h3><p class="muted">Selecione os participantes. Integrantes da equipe de Comando não são elegíveis. O Desktop descontará escala ordinária, permutas e outras extras e contabilizará somente o trecho realmente livre do evento.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 10px"><button id="p0EventoTodos" type="button" class="secondary">Selecionar todos</button><button id="p0EventoLimpar" type="button" class="secondary">Limpar</button><small id="p0EventoSelecionados" class="muted">0 GCMs selecionados</small></div><div class="choice-grid">${html||'<span class="muted">Nenhum GCM elegível encontrado.</span>'}</div></section>`);
+    const bloco=p0$('p0EventoParticipantes');
+    bloco?.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.addEventListener('change',p0EventoAtualizarContador));
+    p0$('p0EventoTodos')?.addEventListener('click',()=>{bloco?.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.checked=true);p0EventoAtualizarContador();});
+    p0$('p0EventoLimpar')?.addEventListener('click',()=>{bloco?.querySelectorAll('[data-p0-evento-gcm]').forEach(i=>i.checked=false);p0EventoAtualizarContador();});
+    p0EventoAtualizarContador();
+  }finally{p0EventoAjustando=false;}
 }
 function p0ColetarEvento(){
   const d={};
   p0$('onlineCampos')?.querySelectorAll('[data-online-field]').forEach(i=>{let v=i.value;const n=i.dataset.onlineField;if(n==='oficio_id'&&v!=='')v=Number(v);d[n]=v;});
   d.nome=String(d.nome||'').trim();d.origem_evento=String(d.origem_evento||'EVENTO_NOVO').toUpperCase()==='OFICIO'?'OFICIO':'EVENTO_NOVO';
   if(d.origem_evento==='OFICIO'){d.oficio_id=Number(d.oficio_id||0)||null;if(!d.oficio_id)throw new Error('Selecione o ofício vinculado ao evento.');}else d.oficio_id=null;
-  d.guarda_ids=[...document.querySelectorAll('[data-p0-evento-gcm]:checked')].map(x=>Number(x.value)).filter(Boolean);
+  const bloco=p0$('p0EventoParticipantes');
+  d.guarda_ids=[...(bloco?.querySelectorAll('[data-p0-evento-gcm]:checked')||[])].map(x=>Number(x.value)).filter(Boolean);
   if(!d.nome||!d.data||!d.horario_inicio||!d.horario_fim)throw new Error('Informe evento, data, início e término.');
   if(!d.guarda_ids.length)throw new Error('Selecione ao menos um GCM participante.');
   return d;
