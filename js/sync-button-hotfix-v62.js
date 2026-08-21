@@ -1,13 +1,15 @@
-// GCMBS 10.0.62 — corrige a duplicidade visual do botão de sincronização.
-// O index.html mantém um botão estático sem a rotina v62; o v62-sync-ui.js cria o botão funcional.
-// Removemos somente o botão estático para preservar uma única ação real de sincronização.
-function removerBotaoSyncEstatico(){
+import './dashboard-resilience-v62.js?v=100062s03';
+
+// GCMBS 10.0.62 — compatibilidade para a duplicidade visual do botão de sincronização.
+// A rotina principal de deduplicação e recuperação do Quadro está em dashboard-resilience-v62.js.
+function removerBotaoSyncEstaticoSeDuplicado(){
+  const funcional=document.getElementById('onlineSyncNow');
   const antigo=document.getElementById('syncAgoraOnline');
-  if(antigo) antigo.remove();
+  if(funcional&&antigo&&funcional!==antigo) antigo.remove();
 }
 
 if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',removerBotaoSyncEstatico,{once:true});
+  document.addEventListener('DOMContentLoaded',removerBotaoSyncEstaticoSeDuplicado,{once:true});
 }else{
-  removerBotaoSyncEstatico();
+  removerBotaoSyncEstaticoSeDuplicado();
 }
