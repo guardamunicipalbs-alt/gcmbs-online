@@ -49,11 +49,14 @@ function caut62NormalizarEditor(){
 function caut62SituacaoDoCard(card){
   const labels=[...card.querySelectorAll('.online-kv b')];for(const b of labels){if(String(b.textContent||'').trim().toLowerCase()==='situação')return String(b.nextElementSibling?.textContent||'').trim().toUpperCase();}return'';
 }
+function caut62HumanizarCard(card){
+  card.querySelectorAll('.online-kv b').forEach(b=>{const k=String(b.textContent||'').trim().toLowerCase(),v=b.nextElementSibling;if(!v)return;if(['modalidade de uso','modalidade'].includes(k)){const raw=String(v.textContent||'').trim().toUpperCase();if(raw==='COMUM')v.textContent='USO COMUM';else if(raw==='INDIVIDUAL')v.textContent='INDIVIDUAL';}});
+}
 function caut62AjustarAcoes(){
-  if(!caut62Ativo())return;const host=caut62$('onlineRegistros');if(!host)return;
+  if(!caut62Ativo())return;const host=caut62$('onlineRegistros');if(!host)return;const novo=caut62$('onlineNovo'),canEdit=!!novo&&!novo.classList.contains('hidden');
   host.querySelectorAll('[data-online-key]').forEach(card=>{
-    card.querySelectorAll('[data-online-edit],[data-online-del]').forEach(b=>b.remove());
-    if(caut62SituacaoDoCard(card)==='DEVOLVIDO')return;
+    caut62HumanizarCard(card);card.querySelectorAll('[data-online-edit],[data-online-del]').forEach(b=>b.remove());
+    if(!canEdit||caut62SituacaoDoCard(card)==='DEVOLVIDO')return;
     let actions=card.querySelector('.online-record-actions');if(!actions){actions=document.createElement('div');actions.className='online-record-actions';card.appendChild(actions);}
     if(!actions.querySelector('[data-caut62-return]')){const b=document.createElement('button');b.type='button';b.className='mini';b.dataset.caut62Return=card.dataset.onlineKey;b.textContent='Devolver';actions.appendChild(b);}
   });
