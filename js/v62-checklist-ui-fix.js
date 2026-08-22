@@ -10,6 +10,7 @@ const CHECKLIST_STATUS_BLOQUEADOS=new Set([
 let checklistStatusPorId=new Map();
 let checklistCarregando=false;
 let checklistScheduled=false;
+let checklistValidandoEnvio=false;
 
 function checklistTelaAtiva(){
   const view=document.querySelector('[data-view="checklist"]');
@@ -79,18 +80,26 @@ function checklistAgendar(){
   });
 }
 
-function checklistValidarEnvio(e){
+async function checklistValidarEnvio(e){
   const form=e.target?.closest?.('#chkForm');
-  if(!form)return;
-  const select=document.getElementById('chkViatura');
-  const id=String(select?.value||'');
-  const status=checklistStatusPorId.get(id);
-  if(id && status!==undefined && checklistStatusBloqueado(status)){
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    select.value='';
-    select.dispatchEvent(new Event('change',{bubbles:true}));
-    checklistMensagem('Esta viatura está em manutenção/indisponível e não pode receber check-list operacional.');
+  if(!form||checklistValidandoEnvio)return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  checklistValidandoEnvio=true;
+  try{
+    await checklistCarregarStatus();
+    const select=document.getElementById('chkViatura');
+    const id=String(select?.value||'');
+    const status=checklistStatusPorId.get(id);
+    if(id && status!==undefined && checklistStatusBloqueado(status)){
+      select.value='';
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+      checklistMensagem('Esta viatura está em manutenção/indisponível e não pode receber check-list operacional.');
+      return;
+    }
+    form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+  }finally{
+    checklistValidandoEnvio=false;
   }
 }
 
