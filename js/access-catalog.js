@@ -12,6 +12,7 @@ import './v62-oficios-ui-fix.js?v=100062-oficios01';
 import './v62-frequencia-ui-fix.js?v=100062-frequencia01';
 import './v62-controle-acesso-ui-fix.js?v=100062-acesso01';
 import './v62-imagens-gcm-ui-fix.js?v=100062-imagens01';
+import './v62-avisos-ui-fix.js?v=100062-avisos01';
 
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
@@ -64,7 +65,7 @@ export function normalizarPerfil(session={}){
   const role=String(session.role||session.perfil||'').trim().toLowerCase();
   const cargo=String(session.cargo||'').trim().toUpperCase();
   if(role==='comandante' || (/\bCOMANDANTE\b/.test(cargo) && !/SUBCOMANDANTE/.test(cargo))) return 'comandante';
-  if(role==='subcomandante' || /\bSUBCOMANDANTE\b/.test(cargo)) return 'subcomandante';
+  if(role==='subcomandante'||/\bSUBCOMANDANTE\b/.test(cargo)) return 'subcomandante';
   return role||'gcm';
 }
 
