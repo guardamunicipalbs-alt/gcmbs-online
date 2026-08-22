@@ -14,7 +14,7 @@ function gcmbsFormatarDatasTexto(root=document.body){
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
   for(const node of nodes)node.nodeValue=(node.nodeValue||'').replace(GCMBS_ISO_DATE_RE,'$3/$2/$1');
 }
-const gcmbsEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gcmbsEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function gcmbsDataAtual(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});}
 function gcmbsDataIsoTexto(v){const s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:'';}
 function gcmbsDataBr(v){const iso=gcmbsDataIsoTexto(v);if(!iso)return String(v||'');const [a,m,d]=iso.split('-');return `${d}/${m}/${a}`;}
@@ -40,11 +40,23 @@ function gcmbsAjustarOficios(){
   const input=wrap.querySelector('#gcmbsOficiosCompetencia');if(input&&input.value!==gcmbsOficiosCompetenciaSelecionada)input.value=gcmbsOficiosCompetenciaSelecionada;
   const host=document.getElementById('onlineRegistros');if(!host)return;
   const cards=[...host.querySelectorAll('[data-online-key]')],competencia=gcmbsOficiosCompetenciaSelecionada;
-  const info=cards.map((card,idx)=>{const demanda=gcmbsDataIsoTexto(gcmbsValorCampoCard(card,['data da demanda']));const recebimento=gcmbsDataIsoTexto(gcmbsValorCampoCard(card,['data de recebimento','data do recebimento']));const dataRef=demanda||recebimento;const numero=gcmbsValorCampoCard(card,['número do ofício','numero do ofício']);const dentro=dataRef.slice(0,7)===competencia;card.style.display=dentro?'':'none';return{card,idx,dentro,dataRef,recebimento,numero};});
+  const info=cards.map((card,idx)=>{
+    const demanda=gcmbsDataIsoTexto(gcmbsValorCampoCard(card,['data da demanda']));
+    const recebimento=gcmbsDataIsoTexto(gcmbsValorCampoCard(card,['data de recebimento','data do recebimento']));
+    const dataRef=demanda||recebimento;
+    const numero=gcmbsValorCampoCard(card,['número do ofício','numero do ofício']);
+    const dentro=dataRef.slice(0,7)===competencia;
+    const display=dentro?'':'none';
+    if(card.style.display!==display)card.style.display=display;
+    return{card,idx,dentro,dataRef,recebimento,numero};
+  });
   const visiveis=info.filter(x=>x.dentro).sort((a,b)=>b.dataRef.localeCompare(a.dataRef)||b.recebimento.localeCompare(a.recebimento)||b.numero.localeCompare(a.numero,'pt-BR',{numeric:true})||a.idx-b.idx);
-  for(const x of visiveis)host.appendChild(x.card);
-  const total=document.getElementById('onlineTotal');if(total)total.textContent=String(visiveis.length);
-  const filtrados=document.getElementById('onlineFiltrados');if(filtrados){const q=String(filtro.value||'').trim();filtrados.textContent=`${visiveis.length} ${q?'encontrado(s)':'registro(s)'} · ${gcmbsRotuloCompetencia(competencia)}`;}
+  const ordemAtual=[...host.querySelectorAll('[data-online-key]')].filter(card=>card.style.display!=='none');
+  const ordemDesejada=visiveis.map(x=>x.card);
+  const precisaReordenar=ordemAtual.length!==ordemDesejada.length||ordemDesejada.some((card,i)=>ordemAtual[i]!==card);
+  if(precisaReordenar)for(const x of visiveis)host.appendChild(x.card);
+  const total=document.getElementById('onlineTotal'),totalTexto=String(visiveis.length);if(total&&total.textContent!==totalTexto)total.textContent=totalTexto;
+  const filtrados=document.getElementById('onlineFiltrados');if(filtrados){const q=String(filtro.value||'').trim();const texto=`${visiveis.length} ${q?'encontrado(s)':'registro(s)'} · ${gcmbsRotuloCompetencia(competencia)}`;if(filtrados.textContent!==texto)filtrados.textContent=texto;}
 }
 
 // Frequência do Comando: espelha o controle do Desktop e grava online imediatamente.
