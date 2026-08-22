@@ -8,7 +8,7 @@ const CHECKLIST_STATUS_BLOQUEADOS=new Set([
   'FORA DE SERVICO','FORA DE SERVIÇO'
 ]);
 let checklistStatusPorId=new Map();
-let checklistCarregando=false;
+let checklistStatusPromise=null;
 let checklistScheduled=false;
 let checklistValidandoEnvio=false;
 
@@ -48,27 +48,29 @@ function checklistFiltrarSelect(){
   }
 }
 
-async function checklistCarregarStatus(){
-  if(checklistCarregando)return;
-  checklistCarregando=true;
-  try{
-    const token=localStorage.getItem('gcmbs.mobile.token');
-    if(!token)return;
-    const r=await fetch(CHECKLIST_API,{
-      method:'POST',
-      headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-      body:JSON.stringify({action:'references'}),
-      cache:'no-store'
-    });
-    const body=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(body.message||`Erro ${r.status}`);
-    checklistStatusPorId=new Map((body.viaturas||[]).map(v=>[String(v.id),String(v.status||'ATIVA')]));
-    checklistFiltrarSelect();
-  }catch(e){
-    console.warn('[GCMBS][CHECKLIST] Não foi possível validar disponibilidade das viaturas:',e?.message||e);
-  }finally{
-    checklistCarregando=false;
-  }
+function checklistCarregarStatus(){
+  if(checklistStatusPromise)return checklistStatusPromise;
+  checklistStatusPromise=(async()=>{
+    try{
+      const token=localStorage.getItem('gcmbs.mobile.token');
+      if(!token)return;
+      const r=await fetch(CHECKLIST_API,{
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+        body:JSON.stringify({action:'references'}),
+        cache:'no-store'
+      });
+      const body=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(body.message||`Erro ${r.status}`);
+      checklistStatusPorId=new Map((body.viaturas||[]).map(v=>[String(v.id),String(v.status||'ATIVA')]));
+      checklistFiltrarSelect();
+    }catch(e){
+      console.warn('[GCMBS][CHECKLIST] Não foi possível validar disponibilidade das viaturas:',e?.message||e);
+    }finally{
+      checklistStatusPromise=null;
+    }
+  })();
+  return checklistStatusPromise;
 }
 
 function checklistAgendar(){
