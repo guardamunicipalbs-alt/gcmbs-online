@@ -1,17 +1,20 @@
 {
-  "version": "10.0.62",
-  "versionCode": 62,
-  "apk": "GCMBS-10.0.62.apk",
-  "available": false,
-  "notes": [
-    "Versão consolidada 10.0.62: base Desktop 10.0.60 + correções Online 10.0.61.",
-    "Quadro Operacional: os cards A/B contam somente o efetivo ordinário; serviços extras aparecem no detalhamento identificados como Extra.",
-    "Frota: baixadas/indisponíveis não repetem mais as viaturas disponíveis.",
-    "Ocorrências: cards abrem a visualização completa dos campos efetivamente registrados.",
-    "Permutas extras: assunção depende da autorização do GCM originalmente escalado antes do Comando; candidatos em ordem cronológica.",
-    "Sincronização: ação manual no Desktop e recuperação segura dos históricos importados do Supabase.",
-    "Senha redefinida pelo Comando é temporária e exige alteração no próximo acesso.",
-    "APK 10.0.62 deve ser recompilado e validado antes de marcar esta versão como disponível."
-  ],
-  "publishedAt": null
+    "version":  "10.0.63",
+    "versionCode":  63,
+    "apk":  "GCMBS-10.0.63.apk",
+    "available":  true,
+    "sha256":  "49212786319B13914B8529BA470BC9EC50E226409150F13E37298CAA7B8E3E83",
+    "publishedAt":  "2026-08-22T15:21:50Z",
+    "migrationRequired":  true,
+    "migrationFrom":  "10.0.62",
+    "signingFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
+    "notes":  [
+                  "GCMBS Android 10.0.63.",
+                  "Correcoes constatadas na auditoria do aplicativo incorporadas.",
+                  "Campos booleanos passam a ser apresentados como Sim/Não em vez de 0/1.",
+                  "Identificadores tecnicos deixam de ser exibidos na interface.",
+                  "Versao Android code 63 assinada com a nova chave oficial permanente.",
+                  "ATENCAO: esta versao usa uma nova chave de assinatura. Para quem possui o APK 10.0.62 antigo, sera necessaria uma unica reinstalacao nesta migracao.",
+                  "Depois da instalacao da 10.0.63, as proximas versoes poderao ser instaladas como atualizacao normal pelo proprio celular."
+              ]
 }
