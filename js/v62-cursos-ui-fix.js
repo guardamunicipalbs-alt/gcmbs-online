@@ -2,7 +2,7 @@
 const CUR62_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const cur62$=id=>document.getElementById(id);
 const cur62Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let cur62Busy=false,cur62RenderBusy=false,cur62NeedsFilterClear=false,cur62WasActive=false,cur62Records=new Map(),cur62RecordsLoading=false;
+let cur62Busy=false,cur62RenderBusy=false,cur62NeedsFilterClear=false,cur62WasActive=false,cur62Records=new Map(),cur62RecordsLoading=false,cur62RecordsLoaded=false;
 
 async function cur62Api(action,payload={}){
   const token=localStorage.getItem('gcmbs.mobile.token');
@@ -59,7 +59,7 @@ async function cur62Salvar(e){
     const curso=String(cur62Campo('curso')?.value||'').trim();if(!guardaId)throw new Error('Selecione o GCM.');if(!curso)throw new Error('Informe o curso / habilitação.');
     const d={guarda_id:guardaId,curso,instituicao:String(cur62Campo('instituicao')?.value||'').trim(),data_inicio:String(cur62Campo('data_inicio')?.value||'').trim()||null,data_conclusao:String(cur62Campo('data_conclusao')?.value||'').trim()||null,validade:String(cur62Campo('validade')?.value||'').trim()||null,certificado:String(cur62Campo('certificado')?.value||'').trim(),observacao:String(cur62Campo('observacao')?.value||'').trim(),ativo:1,...await cur62LerArquivo()};
     await cur62Api('entity_mutate',{entity:'cursos_habilitacoes',record_key:'',operation:'UPSERT',data:d});
-    if(msg)msg.textContent='Curso / habilitação registrado e enviado para sincronização.';cur62$('onlineEditor')?.close();cur62Records.clear();setTimeout(()=>document.querySelector('#mainNav [data-module="cursos"]')?.click(),160);
+    if(msg)msg.textContent='Curso / habilitação registrado e enviado para sincronização.';cur62$('onlineEditor')?.close();cur62Records.clear();cur62RecordsLoaded=false;setTimeout(()=>document.querySelector('#mainNav [data-module="cursos"]')?.click(),160);
   }catch(err){if(msg)msg.textContent=err?.message||String(err);}finally{cur62Busy=false;}
 }
 function cur62RemoverCampoCard(card,nome){
@@ -72,26 +72,26 @@ function cur62AbrirComprovante(rec){
   body.innerHTML=String(d.arquivo_tipo||'').toLowerCase()==='application/pdf'?`<iframe src="${cur62Esc(d.arquivo_dados)}" title="Comprovante" style="width:100%;height:min(70vh,720px);border:0"></iframe>`:`<img src="${cur62Esc(d.arquivo_dados)}" alt="Comprovante" style="display:block;max-width:100%;max-height:70vh;margin:auto">`;dlg.showModal();
 }
 async function cur62CarregarRecords(){
-  if(cur62RecordsLoading||!cur62Ativo())return;cur62RecordsLoading=true;
-  try{const b=await cur62Api('entity_list',{entity:'cursos_habilitacoes',limit:5000,offset:0});cur62Records=new Map((b.records||[]).map(r=>[String(r.record_key),r]));cur62AjustarCards();}catch{}finally{cur62RecordsLoading=false;}
+  if(cur62RecordsLoading||cur62RecordsLoaded||!cur62Ativo())return;cur62RecordsLoading=true;
+  try{const b=await cur62Api('entity_list',{entity:'cursos_habilitacoes',limit:5000,offset:0});cur62Records=new Map((b.records||[]).map(r=>[String(r.record_key),r]));cur62AjustarCards();}catch{}finally{cur62RecordsLoading=false;cur62RecordsLoaded=true;}
 }
 function cur62AjustarCards(){
   if(!cur62Ativo())return;const host=cur62$('onlineRegistros');if(!host)return;
   host.querySelectorAll('[data-online-key]').forEach(card=>{
     cur62RemoverCampoCard(card,'Ativo');cur62RemoverCampoCard(card,'Documento');cur62RemoverCampoCard(card,'Tipo do documento');cur62RemoverCampoCard(card,'Arquivo');
     card.querySelectorAll('[data-online-edit]').forEach(b=>b.remove());
-    const key=String(card.dataset.onlineKey||''),rec=cur62Records.get(key),actions=card.querySelector('.online-record-actions');
-    if(rec?.data?.arquivo_dados&&actions&&!actions.querySelector('[data-cur62-doc]')){const b=document.createElement('button');b.type='button';b.className='mini';b.dataset.cur62Doc=key;b.textContent='Visualizar comprovante';actions.insertBefore(b,actions.firstChild);}
+    const key=String(card.dataset.onlineKey||''),rec=cur62Records.get(key);let actions=card.querySelector('.online-record-actions');
+    if(rec?.data?.arquivo_dados){if(!actions){actions=document.createElement('div');actions.className='online-record-actions';card.appendChild(actions);}if(!actions.querySelector('[data-cur62-doc]')){const b=document.createElement('button');b.type='button';b.className='mini';b.dataset.cur62Doc=key;b.textContent='Visualizar comprovante';actions.insertBefore(b,actions.firstChild);}}
   });
 }
-function cur62Run(){if(!cur62Ativo())return;cur62ClearInheritedFilter();cur62AjustarDescricao();cur62NormalizarEditor();cur62AjustarCards();if(!cur62Records.size)cur62CarregarRecords();}
+function cur62Run(){if(!cur62Ativo())return;cur62ClearInheritedFilter();cur62AjustarDescricao();cur62NormalizarEditor();cur62AjustarCards();if(!cur62RecordsLoaded)cur62CarregarRecords();}
 function cur62Install(){
   document.addEventListener('click',e=>{
-    const nav=e.target.closest?.('#mainNav [data-module="cursos"]');if(nav){cur62NeedsFilterClear=true;cur62Records.clear();setTimeout(cur62Run,450);}
+    const nav=e.target.closest?.('#mainNav [data-module="cursos"]');if(nav){cur62NeedsFilterClear=true;cur62Records.clear();cur62RecordsLoaded=false;setTimeout(cur62Run,450);}
     const doc=e.target.closest?.('[data-cur62-doc]');if(doc){e.preventDefault();e.stopImmediatePropagation();cur62AbrirComprovante(cur62Records.get(String(doc.dataset.cur62Doc)));return;}
     cur62Salvar(e);
   },true);
-  const root=cur62$('appTela')||document.body;new MutationObserver(()=>{const ativo=cur62Ativo();if(ativo&&!cur62WasActive){cur62NeedsFilterClear=true;cur62Records.clear();}cur62WasActive=ativo;if(cur62RenderBusy||!ativo)return;cur62RenderBusy=true;requestAnimationFrame(()=>{cur62RenderBusy=false;cur62Run();});}).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['class','open','disabled','required']});
-  cur62WasActive=cur62Ativo();if(cur62WasActive){cur62NeedsFilterClear=true;cur62Run();}
+  const root=cur62$('appTela')||document.body;new MutationObserver(()=>{const ativo=cur62Ativo();if(ativo&&!cur62WasActive){cur62NeedsFilterClear=true;cur62Records.clear();cur62RecordsLoaded=false;}cur62WasActive=ativo;if(cur62RenderBusy||!ativo)return;cur62RenderBusy=true;requestAnimationFrame(()=>{cur62RenderBusy=false;cur62Run();});}).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['class','open','disabled','required']});
+  cur62WasActive=cur62Ativo();if(cur62WasActive){cur62NeedsFilterClear=true;cur62RecordsLoaded=false;cur62Run();}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cur62Install,{once:true});else cur62Install();
