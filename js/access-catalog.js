@@ -1,27 +1,31 @@
+import './v62-dom-observer-stability.js?v=100062-dom01';
 import './stability-hotfix-v62.js?v=100062s01';
 import './sync-button-hotfix-v62.js?v=100062s02';
+import './v62-abastecimento-ui-fix.js?v=100062-abastecimento01';
+import './v62-manutencao-ui-fix.js?v=100062-manutencao01';
+import './v62-checklist-ui-fix.js?v=100062-checklist01';
+import './v62-relatorios-frota-ui-fix.js?v=100062-relatoriosfrota01';
+import './v62-ocorrencias-ui-fix.js?v=100062-ocorrencias01';
+import './v62-cautelas-ui-fix.js?v=100062-cautelas01';
+import './v62-cursos-ui-fix.js?v=100062-cursos01';
+import './v62-oficios-ui-fix.js?v=100062-oficios01';
+import './v62-frequencia-ui-fix.js?v=100062-frequencia01';
+import './v62-controle-acesso-ui-fix.js?v=100062-acesso02';
+import './v62-imagens-gcm-ui-fix.js?v=100062-imagens02';
+import './v62-avisos-ui-fix.js?v=100062-avisos01';
+import './v62-perfil-ui-fix.js?v=100062-perfil01';
 
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
-// P0 usa import opcional; Folha e carregada como script ES module independente.
+// P0 usa import opcional; a Folha dedicada e carregada uma unica vez por login-security.js.
 let extensoesAgendadas=false;
 const importarOpcional=async(caminho,rotulo)=>{
   try{await import(caminho);}catch(e){console.error(`[GCMBS] Falha em extensao opcional ${rotulo}`,e);}
-};
-const carregarModuloIndependente=(caminho,id,rotulo)=>{
-  if(document.getElementById(id))return;
-  const s=document.createElement('script');
-  s.id=id;
-  s.type='module';
-  s.src=new URL(caminho,import.meta.url).href;
-  s.addEventListener('error',e=>console.error(`[GCMBS] Falha ao carregar modulo ${rotulo}`,e));
-  document.head.appendChild(s);
 };
 const carregarExtensoesOpcionais=()=>{
   if(extensoesAgendadas)return;
   extensoesAgendadas=true;
   setTimeout(()=>importarOpcional('./p0-online-workflows.js?v=100062p06','P0'),400);
-  setTimeout(()=>carregarModuloIndependente('./folha-online-v62.js?v=100062p06','gcmbsFolhaV62Module','Folha'),900);
 };
 if(document.readyState==='complete') carregarExtensoesOpcionais();
 else window.addEventListener('load',carregarExtensoesOpcionais,{once:true});
@@ -55,14 +59,14 @@ export const MODULOS_GCMBS = [
   {id:'frequencia',nome:'Frequência',descricao:'Consolidação de escalas, extras e afastamentos'},
   {id:'central_pendencias',nome:'Central de Pendências',descricao:'Alertas administrativos consolidados'},
   {id:'controle_acesso',nome:'Controle de Acesso',descricao:'Permissões por GCM e nível de acesso'},
-  {id:'imagens_gcm',nome:'Imagens da GCM',descricao:'Identidade visual, escudo e ícone do aplicativo'}
+  {id:'imagens_gcm',nome:'Imagens da GCM',descricao:'Identidade visual, escudo e ícone do aplicativo Android'}
 ];
 
 export function normalizarPerfil(session={}){
   const role=String(session.role||session.perfil||'').trim().toLowerCase();
   const cargo=String(session.cargo||'').trim().toUpperCase();
   if(role==='comandante' || (/\bCOMANDANTE\b/.test(cargo) && !/SUBCOMANDANTE/.test(cargo))) return 'comandante';
-  if(role==='subcomandante' || /\bSUBCOMANDANTE\b/.test(cargo)) return 'subcomandante';
+  if(role==='subcomandante'||/\bSUBCOMANDANTE\b/.test(cargo)) return 'subcomandante';
   return role||'gcm';
 }
 
