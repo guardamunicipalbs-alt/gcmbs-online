@@ -4,6 +4,7 @@ import './v62-abastecimento-ui-fix.js?v=100062-abastecimento01';
 import './v62-manutencao-ui-fix.js?v=100062-manutencao01';
 import './v62-checklist-ui-fix.js?v=100062-checklist01';
 import './v62-relatorios-frota-ui-fix.js?v=100062-relatoriosfrota01';
+import './v62-ocorrencias-ui-fix.js?v=100062-ocorrencias01';
 
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
