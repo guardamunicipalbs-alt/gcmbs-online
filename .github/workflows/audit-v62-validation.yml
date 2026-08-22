@@ -1,0 +1,74 @@
+name: Audit V62 Validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-static-online:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check JavaScript syntax as ES modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp --suffix=.mjs)"
+          trap 'rm -f "$tmp"' EXIT
+          while IFS= read -r -d '' file; do
+            cp "$file" "$tmp"
+            echo "Checking $file"
+            node --check "$tmp"
+          done < <(find js -type f -name '*.js' -print0 | sort -z)
+
+      - name: Verify local JavaScript imports
+        shell: python
+        run: |
+          import pathlib
+          import re
+          import sys
+
+          root = pathlib.Path('.').resolve()
+          js_root = root / 'js'
+          missing = []
+          patterns = [
+              re.compile(r"(?:import\s+(?:[^'\"]+?\s+from\s+)?|import\s*\()\s*['\"]([^'\"]+)['\"]"),
+          ]
+
+          for path in sorted(js_root.rglob('*.js')):
+              text = path.read_text(encoding='utf-8')
+              for pattern in patterns:
+                  for spec in pattern.findall(text):
+                      if not spec.startswith('.'):
+                          continue
+                      clean = spec.split('?', 1)[0].split('#', 1)[0]
+                      target = (path.parent / clean).resolve()
+                      try:
+                          target.relative_to(root)
+                      except ValueError:
+                          missing.append((path, spec, 'fora do repositório'))
+                          continue
+                      if target.is_file():
+                          continue
+                      if target.suffix == '' and target.with_suffix('.js').is_file():
+                          continue
+                      missing.append((path, spec, str(target.relative_to(root))))
+
+          if missing:
+              print('Imports locais ausentes:')
+              for path, spec, target in missing:
+                  print(f' - {path.relative_to(root)} -> {spec} ({target})')
+              sys.exit(1)
+
+          print('Todos os imports JavaScript locais apontam para arquivos existentes.')
