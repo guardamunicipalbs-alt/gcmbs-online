@@ -10,8 +10,8 @@ import './v62-cautelas-ui-fix.js?v=100062-cautelas01';
 import './v62-cursos-ui-fix.js?v=100062-cursos01';
 import './v62-oficios-ui-fix.js?v=100062-oficios01';
 import './v62-frequencia-ui-fix.js?v=100062-frequencia01';
-import './v62-controle-acesso-ui-fix.js?v=100062-acesso01';
-import './v62-imagens-gcm-ui-fix.js?v=100062-imagens01';
+import './v62-controle-acesso-ui-fix.js?v=100062-acesso02';
+import './v62-imagens-gcm-ui-fix.js?v=100062-imagens02';
 import './v62-avisos-ui-fix.js?v=100062-avisos01';
 import './v62-perfil-ui-fix.js?v=100062-perfil01';
 
