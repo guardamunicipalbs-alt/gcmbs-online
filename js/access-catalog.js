@@ -10,6 +10,7 @@ import './v62-cautelas-ui-fix.js?v=100062-cautelas01';
 import './v62-cursos-ui-fix.js?v=100062-cursos01';
 import './v62-oficios-ui-fix.js?v=100062-oficios01';
 import './v62-frequencia-ui-fix.js?v=100062-frequencia01';
+import './v62-controle-acesso-ui-fix.js?v=100062-acesso01';
 
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
