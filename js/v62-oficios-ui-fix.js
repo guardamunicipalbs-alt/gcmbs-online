@@ -16,8 +16,9 @@ function ofc62Ativo(){return String(ofc62$('onlineTitulo')?.textContent||'').tri
 function ofc62Campo(nome){return document.querySelector(`[data-online-field="${nome}"]`);}
 function ofc62Label(nome){return ofc62Campo(nome)?.closest('label');}
 function ofc62TextoLabel(label,texto){
-  if(!label)return;const txt=[...label.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.textContent||'').trim());
-  if(txt)txt.nodeValue=texto+' ';else{let s=label.querySelector(':scope > span');if(!s){s=document.createElement('span');label.insertBefore(s,label.firstChild);}s.textContent=texto;}
+  if(!label)return;const desejado=texto+' ';const txt=[...label.childNodes].find(n=>n.nodeType===Node.TEXT_NODE&&String(n.textContent||'').trim());
+  if(txt){if(txt.nodeValue!==desejado)txt.nodeValue=desejado;return;}
+  let s=label.querySelector(':scope > span');if(!s){s=document.createElement('span');label.insertBefore(s,label.firstChild);}if(s.textContent!==texto)s.textContent=texto;
 }
 function ofc62ClearInheritedFilter(){
   if(!ofc62Ativo()||!ofc62NeedsFilterClear)return;ofc62NeedsFilterClear=false;
@@ -32,9 +33,11 @@ function ofc62RemoverCampoArquivoNome(){
 }
 function ofc62NormalizarEditor(){
   if(!ofc62Ativo())return;const dlg=ofc62$('onlineEditor');if(!dlg?.open)return;
-  const titulo=ofc62$('onlineEditorTitulo');if(titulo)titulo.textContent='Novo Ofício';
+  const titulo=ofc62$('onlineEditorTitulo');if(titulo&&titulo.textContent!=='Novo Ofício')titulo.textContent='Novo Ofício';
   const numero=ofc62Campo('numero_oficio'),data=ofc62Campo('data_demanda'),demanda=ofc62Campo('demanda');
-  if(numero)numero.required=true;if(data)data.required=true;if(demanda){demanda.required=true;demanda.placeholder='Apresente uma descrição detalhada da demanda, incluindo informações relevantes e eventuais particularidades do evento.';}
+  if(numero&&!numero.required)numero.required=true;if(data&&!data.required)data.required=true;
+  const ph='Apresente uma descrição detalhada da demanda, incluindo informações relevantes e eventuais particularidades do evento.';
+  if(demanda){if(!demanda.required)demanda.required=true;if(demanda.placeholder!==ph)demanda.placeholder=ph;}
   ofc62TextoLabel(ofc62Label('numero_oficio'),'Número do ofício');
   ofc62TextoLabel(ofc62Label('data_recebimento'),'Data de Recebimento do Ofício');
   ofc62TextoLabel(ofc62Label('instituicao_solicitante'),'Unidade/Instituição Solicitante');
@@ -101,7 +104,7 @@ function ofc62AbrirArquivo(rec){
     dlg.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px"><strong id="ofc62ViewerTitle">Ofício</strong><button type="button" id="ofc62ViewerClose" class="secondary">Fechar</button></div><div id="ofc62ViewerBody" style="min-height:300px"></div>';
     document.body.appendChild(dlg);ofc62$('ofc62ViewerClose').onclick=()=>dlg.close();
   }
-  ofc62$('ofc62ViewerTitle').textContent=d.arquivo_nome||`Ofício ${d.numero_oficio||''}`.trim();const body=ofc62$('ofc62ViewerBody');
+  const titulo=d.arquivo_nome||`Ofício ${d.numero_oficio||''}`.trim();if(ofc62$('ofc62ViewerTitle').textContent!==titulo)ofc62$('ofc62ViewerTitle').textContent=titulo;const body=ofc62$('ofc62ViewerBody');
   body.innerHTML=String(d.arquivo_tipo||'').toLowerCase()==='application/pdf'?`<iframe src="${ofc62Esc(src)}" title="Ofício" style="width:100%;height:min(72vh,760px);border:0"></iframe>`:`<img src="${ofc62Esc(src)}" alt="Ofício" style="display:block;max-width:100%;max-height:72vh;margin:auto">`;
   dlg.showModal();
 }
