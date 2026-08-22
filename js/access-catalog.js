@@ -1,3 +1,4 @@
+import './v62-dom-observer-stability.js?v=100062-dom01';
 import './stability-hotfix-v62.js?v=100062s01';
 import './sync-button-hotfix-v62.js?v=100062s02';
 import './v62-abastecimento-ui-fix.js?v=100062-abastecimento01';
