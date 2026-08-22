@@ -53,6 +53,7 @@ function fReadyText(canEdit){
 }
 function renderFolha(data,canEdit){
   const root=f$('folhaV62Root');if(!root)return;folhaData=data;const cfg=data.config||{},serv=data.servidores||[],t=fTotals(serv),dias=Array.from({length:Number(data.diasMes||31)},(_,i)=>i+1),editCfg=!!canEdit&&!!folhaWrite?.config,editAj=!!canEdit&&!!folhaWrite?.ajustes;
+  const linhas=serv.map(g=>`<tr><td><strong>${fEsc(g.nome_guerra||g.nome_completo||'GCM')}</strong>${g.comando?'<br><small>Grupo Comandantes</small>':''}</td><td>${fEsc(g.status||'ATIVO')}</td>${dias.map(d=>{const v=g.dias?.[d]||'';return `<td class="${fDiaClass(v)}">${fEsc(v)}</td>`}).join('')}<td>${fHoras(g.horas50)}</td><td>${fHoras(g.horas100)}</td><td>${fHoras(g.horasRealizadas)}</td><td>${fHoras(g.horasPagaveis)}</td><td>${fHoras(g.excedente)}</td><td>${fMoney(g.valorTotal)}</td><td><select class="folha-adic" data-folha-adic="${fEsc(g.id)}" ${editAj&&!g.adicionalBloqueado?'':'disabled'}><option value="SIM" ${String(g.adicionalNoturno).toUpperCase()==='SIM'?'selected':''}>SIM</option><option value="NAO" ${String(g.adicionalNoturno).toUpperCase()!=='SIM'?'selected':''}>NÃO</option></select>${g.adicionalBloqueado?'<br><small>bloqueado</small>':''}</td></tr>`).join('')||'<tr><td colspan="40">Nenhum servidor encontrado.</td></tr>';
   root.innerHTML=`
     <div class="folha-notice ${editCfg&&editAj?'':'warn'}"><strong>Folha de Pagamento · ${fEsc(fMesRotulo(cfg.competencia||fCompAtual()))}</strong><br>${fEsc(fReadyText(canEdit))}</div>
     <div class="folha-config">
@@ -66,7 +67,7 @@ function renderFolha(data,canEdit){
     </div>
     <div class="folha-save-row"><button id="folhaSalvarAjustes" class="folha-btn" type="button" ${editAj?'':'disabled'}>Salvar adicional noturno</button><span id="folhaStatus" class="folha-status">Relatório calculado pela réplica sincronizada do Desktop.</span></div>
     <div class="folha-table-wrap"><table class="folha-table"><thead><tr><th>GCM</th><th>Status</th>${dias.map(d=>`<th class="folha-dia">${d}</th>`).join('')}<th>50%</th><th>100%</th><th>Realizadas</th><th>Pagáveis</th><th>Excedente</th><th>Valor</th><th>Adic. noturno</th></tr></thead><tbody>
-    ${serv.map(g=>`<tr><td><strong>${fEsc(g.nome_guerra||g.nome_completo||'GCM')}</strong>${g.comando?'<br><small>Grupo Comandantes</small>':''}</td><td>${fEsc(g.status||'ATIVO')}</td>${dias.map(d=>{const v=g.dias?.[d]||'';return `<td class="${fDiaClass(v)}">${fEsc(v)}</td>`}).join('')}<td>${fHoras(g.horas50)}</td><td>${fHoras(g.horas100)}</td><td>${fHoras(g.horasRealizadas)}</td><td>${fHoras(g.horasPagaveis)}</td><td>${fHoras(g.excedente)}</td><td>${fMoney(g.valorTotal)}</td><td><select class="folha-adic" data-folha-adic="${fEsc(g.id)}" ${editAj&&!g.adicionalBloqueado?'':'disabled'}><option value="SIM" ${String(g.adicionalNoturno).toUpperCase()==='SIM'?'selected':''}>SIM</option><option value="NAO" ${String(g.adicionalNoturno).toUpperCase()!=='SIM'?'selected':''}>NÃO</option></select>${g.adicionalBloqueado?'<br><small>bloqueado</small>':''}</td></tr>`}).join('')||'<tr><td colspan="40">Nenhum servidor encontrado.</td></tr>'}
+    ${linhas}
     </tbody></table></div>
     <div class="folha-section"><h3>Observações da competência</h3><div class="folha-list">${fObsHtml(data.observacoes||{})}</div></div>
   `;
