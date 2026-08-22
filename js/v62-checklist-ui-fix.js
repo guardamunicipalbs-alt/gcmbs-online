@@ -40,6 +40,8 @@ function checklistFiltrarSelect(){
     select.value='';
     select.dispatchEvent(new Event('change',{bubbles:true}));
     checklistMensagem('A viatura selecionada não está disponível para check-list operacional.');
+  }else if(atual && [...select.options].some(opt=>String(opt.value)===atual)){
+    select.value=atual;
   }
 }
 
