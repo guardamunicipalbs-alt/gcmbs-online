@@ -14,7 +14,7 @@ function gcmbsFormatarDatasTexto(root=document.body){
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
   for(const node of nodes)node.nodeValue=(node.nodeValue||'').replace(GCMBS_ISO_DATE_RE,'$3/$2/$1');
 }
-const gcmbsEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gcmbsEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function gcmbsDataAtual(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});}
 function gcmbsDataIsoTexto(v){const s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:'';}
 function gcmbsDataBr(v){const iso=gcmbsDataIsoTexto(v);if(!iso)return String(v||'');const [a,m,d]=iso.split('-');return `${d}/${m}/${a}`;}
@@ -139,3 +139,80 @@ let gcmbsUiScheduled=false;
 function gcmbsAgendarAjustesVisuais(){if(gcmbsUiScheduled)return;gcmbsUiScheduled=true;queueMicrotask(()=>{gcmbsUiScheduled=false;gcmbsFormatarDatasTexto(document.body);gcmbsAjustarOficios();gcmbsAjustarFrequenciaComando();});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',gcmbsAgendarAjustesVisuais,{once:true});else gcmbsAgendarAjustesVisuais();
 new MutationObserver(gcmbsAgendarAjustesVisuais).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+
+// Auditoria visual 22/08/2026: impede exposição de valores e rótulos técnicos do banco na UI.
+// Atua apenas na camada de apresentação; não altera payloads, inputs, selects ou dados persistidos.
+const GCMBS_ROTULOS_UI=new Map([
+  ['rg','RG'],['cnh','CNH'],['autorizado viatura','Autorizado a dirigir viatura'],['autorizado motocicleta','Autorizado a conduzir motocicleta'],
+  ['disponivel escala','Disponível para escala'],['pode noite','Pode trabalhar à noite'],['pode 24h','Pode cumprir serviço de 24h'],
+  ['tipo escala id','Tipo de Escala'],['turno inicio','Turno inicial'],['funcionamento 24h','Funcionamento 24h'],
+  ['valor 50','Valor da hora 50%'],['valor 100','Valor da hora 100%'],['max horas','Máximo de horas'],
+  ['participa gerador','Participa do gerador'],['exige viatura','Exige viatura'],['exige motorista','Exige motorista']
+]);
+const GCMBS_BOOLEANOS_UI=new Set([
+  'autorizado a dirigir viatura','autorizado a conduzir motocicleta','disponível para escala','pode trabalhar à noite','pode cumprir serviço de 24h',
+  'ativo','ativa','participa do gerador','funcionamento 24h','exige viatura','exige motorista'
+]);
+const GCMBS_MODULOS_UI=new Map([
+  ['dashboard','Quadro Operacional'],['guardas','Cadastro de Guardas'],['equipes','Equipes'],['postos','Postos Operacionais'],['tipos_escalas','Tipos de Escalas'],
+  ['escala_extra','Escala Extra'],['escalas_extras_manuais','Escala Extra Manual'],['feriados','Feriados'],['justificativas_faltas','Justificativa de Faltas'],
+  ['eventos','Eventos / Serviço Extra por Evento'],['eventos_extras','Eventos / Serviço Extra por Evento'],['folha','Folha de Pagamento'],['folha_pagamento','Folha de Pagamento'],
+  ['banco_horas','Banco de Horas'],['relatorios','Relatórios'],['viaturas','Cadastro de Viaturas'],['permutas','Permutas'],['abastecimento','Abastecimento'],
+  ['manutencao_viaturas','Manutenção de Viaturas'],['checklist','Check-list de Viaturas'],['relatorios_frota','Relatórios da Frota'],['ocorrencias','Ocorrências / Produção'],
+  ['ocorrencias_operacionais','Ocorrências / Produção'],['equipamentos','Equipamentos e Cautelas'],['cursos','Cursos e Habilitações'],['oficios','Ofícios'],
+  ['frequencia','Frequência'],['central_pendencias','Central de Pendências'],['controle_acesso','Controle de Acesso'],['imagens','Imagens da GCM'],['avisos','Quadro de Avisos']
+]);
+const GCMBS_CODIGOS_TEXTO=new Map([
+  ['ESCALA_EXTRA_MANUAL','Escala extra manual'],['MESMA_EQUIPE','Mesma equipe'],['ORDINARIO','Ordinário'],['EDICAO','Edição'],['CONSULTA','Consulta']
+]);
+function gcmbsNormalizarRotuloTexto(v){
+  const s=String(v||'').trim();const k=s.toLocaleLowerCase('pt-BR');return GCMBS_ROTULOS_UI.get(k)||s;
+}
+function gcmbsValorBooleanoUi(v){
+  const s=String(v??'').trim().toUpperCase();
+  if(['1','SIM','TRUE','ATIVO','ATIVA'].includes(s))return 'Sim';
+  if(['0','NAO','NÃO','FALSE','INATIVO','INATIVA'].includes(s))return 'Não';
+  return null;
+}
+function gcmbsAjustarCardsTecnicos(){
+  document.querySelectorAll('.online-kv').forEach(kv=>{
+    const filhos=[...kv.children];
+    for(let i=0;i<filhos.length-1;i++){
+      const b=filhos[i];if(b.tagName!=='B')continue;const valor=b.nextElementSibling;if(!valor)continue;
+      const original=String(b.textContent||'').trim();
+      if(/(?:^|\s)(?:id|uuid|record key|dedupe key|payload|hash)$/i.test(original)){b.style.display='none';valor.style.display='none';continue;}
+      const rotulo=gcmbsNormalizarRotuloTexto(original);if(rotulo!==original)b.textContent=rotulo;
+      const chave=rotulo.toLocaleLowerCase('pt-BR');
+      if(GCMBS_BOOLEANOS_UI.has(chave)){const x=gcmbsValorBooleanoUi(valor.textContent);if(x)valor.textContent=x;}
+      if(chave==='módulo'||chave==='modulo'){
+        const atual=String(valor.textContent||'').trim();const amigavel=GCMBS_MODULOS_UI.get(atual.toLowerCase());if(amigavel)valor.textContent=amigavel;
+      }
+      if(chave==='nível'||chave==='nivel'){
+        const atual=String(valor.textContent||'').trim().toUpperCase();if(atual==='EDICAO'||atual==='EDIÇÃO')valor.textContent='Edição';else if(atual==='CONSULTA')valor.textContent='Consulta';
+      }
+    }
+  });
+}
+function gcmbsAjustarRotulosFormulario(){
+  const host=document.getElementById('onlineEditor');if(!host)return;
+  host.querySelectorAll('label').forEach(label=>{
+    const n=[...label.childNodes].find(x=>x.nodeType===Node.TEXT_NODE&&String(x.nodeValue||'').trim());if(!n)return;
+    const atual=String(n.nodeValue||'').trim(),novo=gcmbsNormalizarRotuloTexto(atual);if(novo!==atual)n.nodeValue=novo;
+  });
+}
+function gcmbsAjustarCodigosVisiveis(root=document.body){
+  if(!root)return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+    const p=node.parentElement;if(!p||['SCRIPT','STYLE','TEXTAREA','CODE','PRE','INPUT','SELECT','OPTION'].includes(p.tagName))return NodeFilter.FILTER_REJECT;
+    const s=String(node.nodeValue||'');return [...GCMBS_CODIGOS_TEXTO.keys()].some(k=>s.includes(k))?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+  }});
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const node of nodes){let s=String(node.nodeValue||'');for(const [cod,rot] of GCMBS_CODIGOS_TEXTO)s=s.replaceAll(cod,rot);if(s!==node.nodeValue)node.nodeValue=s;}
+}
+let gcmbsAuditoriaUiAgendada=false;
+function gcmbsAplicarAuditoriaUi(){
+  if(gcmbsAuditoriaUiAgendada)return;gcmbsAuditoriaUiAgendada=true;
+  queueMicrotask(()=>{gcmbsAuditoriaUiAgendada=false;gcmbsAjustarCardsTecnicos();gcmbsAjustarRotulosFormulario();gcmbsAjustarCodigosVisiveis(document.body);});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',gcmbsAplicarAuditoriaUi,{once:true});else gcmbsAplicarAuditoriaUi();
+new MutationObserver(gcmbsAplicarAuditoriaUi).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
