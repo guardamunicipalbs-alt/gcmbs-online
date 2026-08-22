@@ -4,10 +4,12 @@ Este documento registra as alterações preparadas sobre uma cópia íntegra do 
 
 ## Frota / manutenção
 
-Arquivos: `src/repositories/ViaturaRepository.js`, `src/repositories/ManutencaoViaturaRepository.js`, `src/repositories/DashboardRepository.js`, `src/services/PostoService.js` e `src/services/MobileFullMirrorService.js`.
+Arquivos: `src/repositories/ViaturaRepository.js`, `src/repositories/ManutencaoViaturaRepository.js`, `src/repositories/DashboardRepository.js`, `src/services/PostoService.js`, `src/services/MobileFullMirrorService.js` e `src/ipc/escalas.ipc.js`.
 
 - Manutenção aberta passa a ser um estado operacional derivado; ela não sobrescreve mais `viaturas.status`.
 - Concluir uma manutenção não força `ATIVA`, preservando indisponibilidade cadastral por outro motivo.
+- Registros históricos com `status=ATIVA` e `consertado=0` também são reconhecidos como manutenção aberta.
+- Novas alterações de manutenção recebidas do Online/App são normalizadas para `ABERTA` ou `CONCLUIDA` antes da escrita no SQLite.
 - Ao existir manutenção aberta sem plano de substituição, o Desktop monta uma lista de substitutas somente entre viaturas com o mesmo tipo canônico e cujo posto de origem tenha exatamente o mesmo mínimo/máximo do posto da principal.
 - Plano previamente configurado continua sendo respeitado; não é substituído automaticamente.
 - O Quadro Operacional utiliza somente o plano configurado/gerado e não escolhe veículo aleatório.
@@ -48,7 +50,8 @@ A Edge Function `gcmbs-desktop-actions` v7 remove `arquivo_dados`/`base64` do pa
 
 ## Validações executadas
 
-- Os sete arquivos Desktop modificados passaram em `node --check`.
+- Os oito arquivos Desktop modificados passaram em `node --check`.
+- Teste SQLite isolado confirmou o grupo de substituição 3/4 e que manutenção aberta preserva `viaturas.status` enquanto a situação operacional é `MANUTENCAO`.
 - O ZIP do patch passa no teste de integridade e não contém `.db`, `.sqlite` ou `.sqlite3`.
 - O instalador do patch calcula SHA-256 dos bancos antes/depois e restaura os arquivos-fonte se houver alteração inesperada ou falha de sintaxe.
 - A fila Supabase permaneceu sem ações pendentes após o deploy das rotas, confirmando que nenhuma operação de negócio foi criada automaticamente.
