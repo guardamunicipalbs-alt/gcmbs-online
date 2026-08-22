@@ -7,6 +7,7 @@ import './v62-relatorios-frota-ui-fix.js?v=100062-relatoriosfrota01';
 import './v62-ocorrencias-ui-fix.js?v=100062-ocorrencias01';
 import './v62-cautelas-ui-fix.js?v=100062-cautelas01';
 import './v62-cursos-ui-fix.js?v=100062-cursos01';
+import './v62-oficios-ui-fix.js?v=100062-oficios01';
 
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
@@ -52,7 +53,7 @@ export const MODULOS_GCMBS = [
   {id:'frequencia',nome:'Frequência',descricao:'Consolidação de escalas, extras e afastamentos'},
   {id:'central_pendencias',nome:'Central de Pendências',descricao:'Alertas administrativos consolidados'},
   {id:'controle_acesso',nome:'Controle de Acesso',descricao:'Permissões por GCM e nível de acesso'},
-  {id:'imagens_gcm',nome:'Imagens da GCM',descricao:'Identidade visual, escudo e ícone do aplicativo'}
+  {id:'imagens_gcm',nome:'Imagens da GCM',descricao:'Identidade visual, escudo e ícone do aplicativo Android'}
 ];
 
 export function normalizarPerfil(session={}){
