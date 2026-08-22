@@ -3,7 +3,9 @@
 
 const CHECKLIST_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const CHECKLIST_STATUS_BLOQUEADOS=new Set([
-  'MANUTENCAO','MANUTENÇÃO','INDISPONIVEL','INDISPONÍVEL','BAIXADA','INATIVA'
+  'MANUTENCAO','MANUTENÇÃO','EM MANUTENCAO','EM MANUTENÇÃO',
+  'INDISPONIVEL','INDISPONÍVEL','BAIXADA','INATIVA',
+  'FORA DE SERVICO','FORA DE SERVIÇO'
 ]);
 let checklistStatusPorId=new Map();
 let checklistCarregando=false;
