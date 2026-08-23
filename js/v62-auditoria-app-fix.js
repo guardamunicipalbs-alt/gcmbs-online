@@ -1,3 +1,5 @@
+import './hf7-paridade.js?v=20260823hf7';
+
 // Correções de apresentação constatadas na auditoria do app 10.0.62.
 // Atua somente na camada visual: não altera banco, payloads ou valores persistidos.
 const BOOL_LABELS=new Set([
