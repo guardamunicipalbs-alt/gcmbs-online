@@ -1,4 +1,4 @@
-const CACHE='gcmbs-mobile-100064-hf8r3-utf8';
+const CACHE='gcmbs-mobile-100065-hf8r3-utf8';
 const AUDIT_FIX='<script type="module" src="./js/v62-auditoria-app-fix.js?v=20260823hf8r3"></script>';
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);await self.clients.claim();})()));
