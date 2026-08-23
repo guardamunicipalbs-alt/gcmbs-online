@@ -1,3 +1,4 @@
+import './hf8-utf8.js?v=20260823hf8';
 import './hf7-paridade.js?v=20260823hf7';
 
 // Correções de apresentação constatadas na auditoria do app 10.0.62.
