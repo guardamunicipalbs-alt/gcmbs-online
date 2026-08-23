@@ -1,21 +1,61 @@
-// GCMBS HF8 — correção visual de mojibake/UTF-8 no Online e no App.
+// GCMBS HF8 R2 — correção visual robusta de mojibake/UTF-8 no Online e no App.
 // Corrige somente apresentação; não altera banco, payload persistido nem identificadores.
 
 const HF8_REPLACEMENTS=new Map([
   ['Ã¡','á'],['Ã¢','â'],['Ã£','ã'],['Ã¤','ä'],['Ã©','é'],['Ãª','ê'],['Ã­','í'],['Ã³','ó'],['Ã´','ô'],['Ãµ','õ'],['Ã¶','ö'],['Ãº','ú'],['Ã¼','ü'],['Ã§','ç'],
   ['Ã','Á'],['Ã‚','Â'],['Ãƒ','Ã'],['Ã„','Ä'],['Ã‰','É'],['ÃŠ','Ê'],['Ã','Í'],['Ã“','Ó'],['Ã”','Ô'],['Ã•','Õ'],['Ã–','Ö'],['Ãš','Ú'],['Ãœ','Ü'],['Ã‡','Ç'],
   ['Âº','º'],['Âª','ª'],['Â°','°'],['Â·','·'],['Â ',' '],
-  ['â€“','–'],['â€”','—'],['â€˜','‘'],['â€™','’'],['â€œ','“'],['â€','”'],['â€¦','…'],['â€¢','•'],
-  ['ï¿½','�']
+  ['â€“','–'],['â€”','—'],['â€˜','‘'],['â€™','’'],['â€œ','“'],['â€','”'],['â€¦','…'],['â€¢','•']
 ]);
 
-const HF8_SUSPEITO=/(?:Ã.|Â(?:º|ª|°|·| )|â(?:€“|€”|€˜|€™|€œ|€|€¦|€¢)|ï¿½)/;
+const HF8_SUSPEITO=/(?:Ã.|Â.|â.|ð.|ï¿½|�)/;
+const HF8_CP1252=new Map([
+  ['€',0x80],['‚',0x82],['ƒ',0x83],['„',0x84],['…',0x85],['†',0x86],['‡',0x87],['ˆ',0x88],['‰',0x89],['Š',0x8A],['‹',0x8B],['Œ',0x8C],['Ž',0x8E],
+  ['‘',0x91],['’',0x92],['“',0x93],['”',0x94],['•',0x95],['–',0x96],['—',0x97],['˜',0x98],['™',0x99],['š',0x9A],['›',0x9B],['œ',0x9C],['ž',0x9E],['Ÿ',0x9F]
+]);
+const HF8_DECODER=new TextDecoder('utf-8',{fatal:true});
+
+function hf8PontuacaoRuim(s){
+  const m=String(s||'').match(/(?:Ã.|Â.|â.|ð.|ï¿½|�)/g);
+  return m?m.length:0;
+}
+
+function hf8Cp1252ParaBytes(s){
+  const bytes=[];
+  for(const ch of s){
+    const cp=ch.codePointAt(0);
+    if(cp<=0xFF){bytes.push(cp);continue;}
+    const b=HF8_CP1252.get(ch);
+    if(b===undefined)return null;
+    bytes.push(b);
+  }
+  return new Uint8Array(bytes);
+}
+
+function hf8TentarDecodificar(s){
+  const bytes=hf8Cp1252ParaBytes(s);
+  if(!bytes)return s;
+  try{return HF8_DECODER.decode(bytes);}catch{return s;}
+}
 
 function hf8CorrigirTexto(valor){
   let s=String(valor??'');
-  if(!HF8_SUSPEITO.test(s))return s;
+  if(!HF8_SUSPEITO.test(s))return s.normalize?.('NFC')||s;
+
+  // Primeiro corrige os pares mais comuns e seguros.
   for(const [ruim,bom] of HF8_REPLACEMENTS)s=s.split(ruim).join(bom);
-  return s;
+
+  // Depois tenta desfazer até três camadas de UTF-8 interpretado como Windows-1252.
+  // Só aceita a conversão quando a quantidade de marcadores de mojibake diminui.
+  for(let i=0;i<3;i++){
+    if(!HF8_SUSPEITO.test(s))break;
+    const candidato=hf8TentarDecodificar(s);
+    if(candidato===s)break;
+    if(hf8PontuacaoRuim(candidato)>=hf8PontuacaoRuim(s))break;
+    s=candidato;
+    for(const [ruim,bom] of HF8_REPLACEMENTS)s=s.split(ruim).join(bom);
+  }
+  return s.normalize?.('NFC')||s;
 }
 
 function hf8CorrigirNo(no){
@@ -27,7 +67,7 @@ function hf8CorrigirNo(no){
   }
   if(no.nodeType!==Node.ELEMENT_NODE)return;
   const el=no;
-  for(const attr of ['title','placeholder','aria-label','data-title']){
+  for(const attr of ['title','placeholder','aria-label','data-title','alt']){
     if(!el.hasAttribute?.(attr))continue;
     const atual=el.getAttribute(attr)||'',corrigido=hf8CorrigirTexto(atual);
     if(corrigido!==atual)el.setAttribute(attr,corrigido);
