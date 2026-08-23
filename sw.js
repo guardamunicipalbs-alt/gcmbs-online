@@ -11,7 +11,8 @@ self.addEventListener('fetch',e=>{
       if((e.request.mode==='navigate'||type.includes('text/html'))&&r.ok){
         const html=await r.text();
         if(!html.includes('v62-auditoria-app-fix.js')){
-          const body=html.includes('</body>')?html.replace('</body>',AUDIT_FIX+'</body>'):html+AUDIT_FIX;
+          const appTag=html.match(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/app\.js[^"']*["'][^>]*><\/script>/i)?.[0]||'';
+          const body=appTag?html.replace(appTag,AUDIT_FIX+appTag):(html.includes('</body>')?html.replace('</body>',AUDIT_FIX+'</body>'):html+AUDIT_FIX);
           return new Response(body,{status:r.status,statusText:r.statusText,headers:r.headers});
         }
         return new Response(html,{status:r.status,statusText:r.statusText,headers:r.headers});
