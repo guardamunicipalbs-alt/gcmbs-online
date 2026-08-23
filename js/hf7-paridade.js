@@ -4,7 +4,7 @@
 
 const HF7_EDGE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
 const HF7_QUADRO=HF7_EDGE+'gcmbs-quadro-hf7';
-const HF7_FOLHA=HF7_EDGE+'gcmbs-folha-hf7';
+const HF7_FOLHA=HF7_EDGE+'gcmbs-folha-hf7-r3';
 let hf7UltimoQuadro=null;
 const hf7Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hf7DataBr=v=>{const m=String(v||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(v||'');};
