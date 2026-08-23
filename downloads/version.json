@@ -1,19 +1,20 @@
 {
-    "version":  "10.0.64",
-    "versionCode":  64,
-    "apk":  "GCMBS-10.0.64.apk",
-    "available":  true,
-    "sha256":  "B3E0F0AA77FEB8C81EC28507D9761AFC49C92313D522224B087C04E27428B9A8",
-    "publishedAt":  "2026-08-23T20:56:45Z",
-    "migrationRequired":  false,
-    "migrationFrom":  "10.0.63",
-    "signingFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
-    "notes":  [
-                  "GCMBS Android 10.0.64 HF7.",
-                  "Atualizacao normal sobre a 10.0.63: nao desinstale o aplicativo.",
-                  "Quadro Operacional: Extra por Evento separado de Servico A/B e sem dupla contabilizacao.",
-                  "Folha de Pagamento: limite fixo de 84h, prioridade das horas 100% e memoria decimal alinhada ao Desktop.",
-                  "Online e App utilizam as mesmas rotinas HF7 publicadas no Supabase.",
-                  "Depois desta publicacao, a atualizacao pode ser baixada diretamente pelo celular na pagina oficial do GCMBS."
-              ]
+  "version": "10.0.64",
+  "versionCode": 64,
+  "apk": "GCMBS-10.0.64.apk",
+  "available": true,
+  "sizeBytes": 5236825,
+  "sha256": "B3E0F0AA77FEB8C81EC28507D9761AFC49C92313D522224B087C04E27428B9A8",
+  "publishedAt": "2026-08-23T20:56:45Z",
+  "migrationRequired": false,
+  "migrationFrom": "10.0.63",
+  "signingFingerprint": "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
+  "notes": [
+    "GCMBS Android 10.0.64 HF7.",
+    "Atualizacao normal sobre a 10.0.63: nao desinstale o aplicativo.",
+    "Quadro Operacional: Extra por Evento separado de Servico A/B e sem dupla contabilizacao.",
+    "Folha de Pagamento: limite fixo de 84h, prioridade das horas 100% e memoria decimal alinhada ao Desktop.",
+    "Online e App utilizam as mesmas rotinas HF7 publicadas no Supabase.",
+    "Depois desta publicacao, a atualizacao pode ser baixada diretamente pelo celular na pagina oficial do GCMBS."
+  ]
 }
