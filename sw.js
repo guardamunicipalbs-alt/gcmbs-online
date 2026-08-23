@@ -1,4 +1,4 @@
-const CACHE='gcmbs-mobile-100062-hf7-paridade';
+const CACHE='gcmbs-mobile-100064-hf7-paridade';
 const AUDIT_FIX='<script type="module" src="./js/v62-auditoria-app-fix.js?v=20260823hf7"></script>';
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);await self.clients.claim();})()));

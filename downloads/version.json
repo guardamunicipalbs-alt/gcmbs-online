@@ -1,20 +1,19 @@
 {
-    "version":  "10.0.63",
-    "versionCode":  63,
-    "apk":  "GCMBS-10.0.63.apk",
+    "version":  "10.0.64",
+    "versionCode":  64,
+    "apk":  "GCMBS-10.0.64.apk",
     "available":  true,
-    "sha256":  "49212786319B13914B8529BA470BC9EC50E226409150F13E37298CAA7B8E3E83",
-    "publishedAt":  "2026-08-22T15:21:50Z",
-    "migrationRequired":  true,
-    "migrationFrom":  "10.0.62",
+    "sha256":  "B3E0F0AA77FEB8C81EC28507D9761AFC49C92313D522224B087C04E27428B9A8",
+    "publishedAt":  "2026-08-23T20:56:45Z",
+    "migrationRequired":  false,
+    "migrationFrom":  "10.0.63",
     "signingFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
     "notes":  [
-                  "GCMBS Android 10.0.63.",
-                  "Correcoes constatadas na auditoria do aplicativo incorporadas.",
-                  "Campos booleanos passam a ser apresentados como Sim/Não em vez de 0/1.",
-                  "Identificadores tecnicos deixam de ser exibidos na interface.",
-                  "Versao Android code 63 assinada com a nova chave oficial permanente.",
-                  "ATENCAO: esta versao usa uma nova chave de assinatura. Para quem possui o APK 10.0.62 antigo, sera necessaria uma unica reinstalacao nesta migracao.",
-                  "Depois da instalacao da 10.0.63, as proximas versoes poderao ser instaladas como atualizacao normal pelo proprio celular."
+                  "GCMBS Android 10.0.64 HF7.",
+                  "Atualizacao normal sobre a 10.0.63: nao desinstale o aplicativo.",
+                  "Quadro Operacional: Extra por Evento separado de Servico A/B e sem dupla contabilizacao.",
+                  "Folha de Pagamento: limite fixo de 84h, prioridade das horas 100% e memoria decimal alinhada ao Desktop.",
+                  "Online e App utilizam as mesmas rotinas HF7 publicadas no Supabase.",
+                  "Depois desta publicacao, a atualizacao pode ser baixada diretamente pelo celular na pagina oficial do GCMBS."
               ]
 }
