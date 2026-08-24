@@ -45,7 +45,7 @@ function p0AjustarExtra(){
 function p0ValidarExtra(){
   const data=document.querySelector('[data-online-field="data"]')?.value||'',ini=document.querySelector('[data-online-field="horario_inicio"]')?.value||'',fim=document.querySelector('[data-online-field="horario_fim"]')?.value||'',g=Number(document.querySelector('[data-online-field="guarda_id"]')?.value||0);
   if(!data||!g)throw new Error('Informe data e GCM.');
-  if(!new Set(['07:00|19:00','19:00|07:00','07:00|07:00']).has(`${ini}|${fim}`))throw new Error('Use uma jornada válida: 07:00–19:00, 19:00–07:00 ou 07:00–07:00 (24h).');
+  if(!new Set(['07:00|13:00','13:00|19:00','19:00|01:00','01:00|07:00','07:00|19:00','19:00|07:00','07:00|07:00']).has(`${ini}|${fim}`))throw new Error('Use um dos períodos de 6h: 07:00–13:00, 13:00–19:00, 19:00–01:00 ou 01:00–07:00.');
 }
 
 // Justificativa: o próprio GCM não pode escolher outro servidor.
