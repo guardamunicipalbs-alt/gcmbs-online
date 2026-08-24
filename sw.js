@@ -1,5 +1,6 @@
-const CACHE='gcmbs-mobile-100067-hf10r11-menu-loader';
+const CACHE='gcmbs-mobile-100067-hf10r12-guardas-rescue';
 const AUDIT_FIX='<script type="module" src="./js/v62-auditoria-app-fix.js?v=20260824hf10r11"></script>';
+const GUARDAS_FIX='<script type="module" src="./js/hf10-r12-guardas-rescue.js?v=20260824hf10r12"></script>';
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);await self.clients.claim();})()));
 self.addEventListener('fetch',e=>{
@@ -15,6 +16,12 @@ self.addEventListener('fetch',e=>{
         }else{
           const appTag=html.match(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/app\.js[^"']*["'][^>]*><\/script>/i)?.[0]||'';
           html=appTag?html.replace(appTag,AUDIT_FIX+appTag):(html.includes('</body>')?html.replace('</body>',AUDIT_FIX+'</body>'):html+AUDIT_FIX);
+        }
+        if(!html.includes('hf10-r12-guardas-rescue.js')){
+          const appTag=html.match(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/app\.js[^"']*["'][^>]*><\/script>/i)?.[0]||'';
+          html=appTag?html.replace(appTag,GUARDAS_FIX+appTag):(html.includes('</body>')?html.replace('</body>',GUARDAS_FIX+'</body>'):html+GUARDAS_FIX);
+        }else{
+          html=html.replace(/js\/hf10-r12-guardas-rescue\.js\?v=[^"']+/g,'js/hf10-r12-guardas-rescue.js?v=20260824hf10r12');
         }
         return new Response(html,{status:r.status,statusText:r.statusText,headers:r.headers});
       }
