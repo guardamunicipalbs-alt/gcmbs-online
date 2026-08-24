@@ -1,6 +1,6 @@
-import './login-security.js?v=100062';
-import './v62-sync-ui.js?v=100062';
-import './v58-ui.js?v=100062';
+import './login-security.js?v=100066';
+import './v62-sync-ui.js?v=100066';
+import './v58-ui.js?v=100066';
 import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js';
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';

@@ -46,20 +46,20 @@ function p0ValidarExtra(){
   const data=document.querySelector('[data-online-field="data"]')?.value||'',ini=document.querySelector('[data-online-field="horario_inicio"]')?.value||'',fim=document.querySelector('[data-online-field="horario_fim"]')?.value||'',g=Number(document.querySelector('[data-online-field="guarda_id"]')?.value||0);
   if(!data||!g)throw new Error('Informe data e GCM.');
   if(!new Set([
-    '07:00|13:00',
-    '13:00|19:00',
-    '19:00|01:00',
-    '01:00|07:00',
-    '07:00|19:00',
-    '13:00|01:00',
-    '19:00|07:00',
-    '01:00|13:00',
-    '07:00|01:00',
-    '13:00|07:00',
-    '19:00|13:00',
-    '01:00|19:00',
-    '07:00|07:00'
-  ]).has(`${ini}|${fim}`))throw new Error('Jornada inválida. Utilize 07:00, 13:00, 19:00 ou 01:00 em blocos contínuos de 6 horas.');
+'07:00|13:00',
+'13:00|19:00',
+'19:00|01:00',
+'01:00|07:00',
+'07:00|19:00',
+'13:00|01:00',
+'19:00|07:00',
+'01:00|13:00',
+'07:00|01:00',
+'13:00|07:00',
+'19:00|13:00',
+'01:00|19:00',
+'07:00|07:00'
+]).has(`${ini}|${fim}`))throw new Error('Jornada invalida. Utilize 07:00, 13:00, 19:00 ou 01:00 em blocos continuos de 6 horas.');
 }
 
 // Justificativa: o próprio GCM não pode escolher outro servidor.

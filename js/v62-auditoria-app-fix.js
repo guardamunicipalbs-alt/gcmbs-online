@@ -1,4 +1,4 @@
-import './hf8-utf8.js?v=20260823hf8r4';
+import './hf8-utf8.js?v=20260823hf8r3';
 import './hf7-paridade.js?v=20260823hf7r3fj';
 
 // Correções de apresentação constatadas na auditoria do app 10.0.62.
@@ -42,11 +42,7 @@ function corrigirCampos(root=document){
     }
   });
 }
-function aplicar(){
-  corrigirPares(document);
-  corrigirCampos(document);
-  window.hf8AplicarMojibake?.(document.body||document.documentElement);
-}
+function aplicar(){corrigirPares(document);corrigirCampos(document);window.hf8CorrigirMojibake&&document.body&&window.hf8CorrigirMojibake(document.body.textContent);}
 let pendente=false;
 const obs=new MutationObserver(()=>{
   if(pendente)return;pendente=true;
