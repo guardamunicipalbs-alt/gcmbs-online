@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a"><link rel="icon" type="image/png" href="favicon.png?v=100067"><link rel="manifest" href="manifest.webmanifest?v=100067"><link rel="stylesheet" href="css/app.css?v=100067"><title>GCMBS</title></head>
+<meta name="theme-color" content="#0f172a"><link rel="icon" type="image/png" href="favicon.png?v=100062"><link rel="manifest" href="manifest.webmanifest?v=100062"><link rel="stylesheet" href="css/app.css?v=100062"><title>GCMBS</title></head>
 <body>
 <section id="loginTela" class="login-screen">
   <div class="login-card">
@@ -22,7 +22,7 @@
 <main>
 <section data-view="inicio">
   <div class="desktop-page-head"><div><h1>Quadro Operacional</h1><p>Resumo diário da operação, disponível a todos os usuários autenticados.</p></div><div class="toolbar"><label>Data <input id="quadroData" type="date"></label><button id="syncAgoraOnline" class="secondary" type="button">↻ Sincronizar agora</button></div></div>
-
+  
   <div class="card hero"><div><small class="muted">Usuário autenticado</small><h2 id="perfilNome"></h2><span id="perfilCargo" class="badge"></span></div></div>
   <section class="dashboard-sector"><h2>Efetivo</h2><div class="dashboard-cards">
     <button class="dashboard-card" data-quadro-detail="efetivo.ativos" data-title="GCM ativos"><span>GCM ativos</span><b id="qAtivos">0</b><small>Ver relação</small></button>
@@ -179,7 +179,7 @@
 </section>
 <section data-view="perfil" class="hidden">
   <div class="card"><h2>Meu perfil</h2><p><b>Usuário:</b> <span id="perfilUsuario"></span></p><p><b>Perfil:</b> <span id="perfilRole"></span></p></div>
-  <div class="card" id="appAtualizacaoCard"><h2>Aplicativo Android</h2><p class="muted">Versão deste pacote: <b>10.0.67</b>. Use a página oficial para instalar ou atualizar sem cabo USB.</p><div class="toolbar"><a class="primary" href="https://guardamunicipalbs-alt.github.io/gcmbs-online/instalar.html" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Baixar / atualizar app</a><button id="verificarAtualizacaoApp" class="secondary" type="button">Verificar atualização</button></div><div id="statusAtualizacaoApp" class="notice">Consulte a versão publicada antes de instalar.</div></div>
+  <div class="card" id="appAtualizacaoCard"><h2>Aplicativo Android</h2><p class="muted">Versão deste pacote: <b>10.0.62</b>. Use a página oficial para instalar ou atualizar sem cabo USB.</p><div class="toolbar"><a class="primary" href="https://guardamunicipalbs-alt.github.io/gcmbs-online/instalar.html" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Baixar / atualizar app</a><button id="verificarAtualizacaoApp" class="secondary" type="button">Verificar atualização</button></div><div id="statusAtualizacaoApp" class="notice">Consulte a versão publicada antes de instalar.</div></div>
   <div class="card"><h2>Permissões recebidas do Desktop</h2><div id="listaPermissoes" class="permission-list"></div></div>
   <div class="card"><h2>Solicitações enviadas pelo aplicativo</h2><div id="listaSolicitacoes" class="list"></div></div><div class="notice">As solicitações são enviadas ao GCMBS Desktop para validação e processamento. O gerador de escala não é alterado pelo aplicativo.</div>
 </section>
@@ -187,6 +187,5 @@
 <div id="quadroModal" class="quadro-modal hidden" role="dialog" aria-modal="true"><div class="quadro-modal-card"><div class="quadro-modal-head"><h2 id="quadroModalTitulo">Detalhes</h2><button id="quadroModalFechar" type="button">×</button></div><div id="quadroModalMeta" class="muted"></div><div id="quadroModalLista" class="list"></div></div></div>
 <nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="avisos" data-fixed="true">📢 <span>Quadro de Avisos</span> <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
 </div>
-<script type="module" src="js/v62-auditoria-app-fix.js?v=20260824hf10r11"></script>
-<script type="module" src="js/app.js?v=10006710"></script>
+<script type="module" src="js/app.js?v=100062"></script>
 </body></html>

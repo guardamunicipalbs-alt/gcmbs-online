@@ -1,5 +1,5 @@
 
-import {AuthenticatedProvider} from './data-provider.js';
+import {AuthenticatedProvider} from './data-provider.js?v=20260824hf10r11';
 import {MODULOS_GCMBS} from './access-catalog.js';
 import {configurarPushNativo} from './native-push.js';
 
