@@ -1,20 +1,15 @@
-{
+﻿{
     "version":  "10.0.66",
     "versionCode":  66,
     "apk":  "GCMBS-10.0.66.apk",
     "available":  true,
     "sha256":  "FAA0F202AFA4E69512AA8C9602829C0329E6CE671EA04F03C9F4094AED5018BB",
-    "publishedAt":  "2026-08-24T12:05:10Z",
+    "sizeBytes":  5240995,
+    "publishedAt":  "2026-08-24T14:36:43Z",
     "migrationRequired":  false,
     "migrationFrom":  "10.0.65",
     "signingFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
     "notes":  [
-                  "GCMBS Android 10.0.66 HF9 R9.",
-                  "Atualizacao normal sobre a 10.0.65: nao desinstale o aplicativo.",
-                  "Escala Extra Manual: jornadas continuas de 6h, 12h, 18h e 24h.",
-                  "Marcos de horario: 07:00, 13:00, 19:00 e 01:00.",
-                  "Permutas, sincronizacao e Frequencia alinhadas ao Desktop.",
-                  "Online e App utilizam o mesmo validador HF9 de 13 jornadas.",
-                  "Bancos SQLite nao sao modificados pela atualizacao."
+                  "GCMBS Android 10.0.66 HF10 R4 - APK restaurado apos publicacao estrutural Online."
               ]
 }
