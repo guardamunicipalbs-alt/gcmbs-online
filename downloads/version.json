@@ -1,15 +1,19 @@
-﻿{
-    "version":  "10.0.66",
-    "versionCode":  66,
-    "apk":  "GCMBS-10.0.66.apk",
+{
+    "version":  "10.0.67",
+    "versionCode":  67,
+    "apk":  "GCMBS-10.0.67.apk",
     "available":  true,
-    "sha256":  "FAA0F202AFA4E69512AA8C9602829C0329E6CE671EA04F03C9F4094AED5018BB",
+    "sha256":  "C475E7A63ABC9D1A57349E9F42AF0AA3FB9BAEFE3B516B17F123CB7D95D00252",
     "sizeBytes":  5240995,
-    "publishedAt":  "2026-08-24T14:36:43Z",
+    "publishedAt":  "2026-08-24T15:02:17Z",
     "migrationRequired":  false,
-    "migrationFrom":  "10.0.65",
+    "migrationFrom":  "10.0.66",
     "signingFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
     "notes":  [
-                  "GCMBS Android 10.0.66 HF10 R4 - APK restaurado apos publicacao estrutural Online."
+                  "GCMBS 10.0.67 HF10 R7 FINAL.",
+                  "Atualizacao normal sobre a 10.0.66; nao desinstale o aplicativo.",
+                  "Online, Mobile e Android alinhados estruturalmente.",
+                  "Versao interna, visual, manifest e cache alinhados em 10.0.67.",
+                  "Gerador de Escala e bancos SQLite preservados."
               ]
 }

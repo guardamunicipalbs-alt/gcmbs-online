@@ -1,5 +1,5 @@
-import './stability-hotfix-v62.js?v=100066';
-import './sync-button-hotfix-v62.js?v=100066';
+import './stability-hotfix-v62.js?v=100067';
+import './sync-button-hotfix-v62.js?v=100067';
 
 // Extensoes funcionais sao carregadas depois do nucleo para nunca bloquear o login.
 // Auditoria automatica fica suspensa temporariamente para evitar rajadas de consultas ao banco.
@@ -20,8 +20,8 @@ const carregarModuloIndependente=(caminho,id,rotulo)=>{
 const carregarExtensoesOpcionais=()=>{
   if(extensoesAgendadas)return;
   extensoesAgendadas=true;
-  setTimeout(()=>importarOpcional('./p0-online-workflows.js?v=100066','P0'),400);
-  setTimeout(()=>carregarModuloIndependente('./folha-online-v62.js?v=100066','gcmbsFolhaV62Module','Folha'),900);
+  setTimeout(()=>importarOpcional('./p0-online-workflows.js?v=100067','P0'),400);
+  setTimeout(()=>carregarModuloIndependente('./folha-online-v62.js?v=100067','gcmbsFolhaV62Module','Folha'),900);
 };
 if(document.readyState==='complete') carregarExtensoesOpcionais();
 else window.addEventListener('load',carregarExtensoesOpcionais,{once:true});

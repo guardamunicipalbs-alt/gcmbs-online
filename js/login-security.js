@@ -1,10 +1,10 @@
-import './v62-permuta-loop-guard.js?v=100066';
-import './v62-extra-multi.js?v=100066';
+import './v62-permuta-loop-guard.js?v=100067';
+import './v62-extra-multi.js?v=100067';
 import './central-pendencias-fix.js';
 import './relatorios-route-fix.js';
-import './audit-pending-fixes.js?v=100066';
-import './v62-folha-ui.js?v=100066';
-import './v62-folha-legenda.js?v=100066';
+import './audit-pending-fixes.js?v=100067';
+import './v62-folha-ui.js?v=100067';
+import './v62-folha-legenda.js?v=100067';
 
 // Politica de seguranca do login GCMBS.
 // Quando "Lembrar meu acesso" estiver desmarcado, nenhum dado de login

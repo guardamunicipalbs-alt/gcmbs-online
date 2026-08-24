@@ -1,4 +1,4 @@
-import './v62-permuta-loop-guard.js?v=100066';
+import './v62-permuta-loop-guard.js?v=100067';
 import './app-core.js';
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
