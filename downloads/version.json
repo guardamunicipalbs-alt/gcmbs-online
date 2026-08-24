@@ -10,8 +10,8 @@
   "migrationFrom": "10.0.66",
   "signingFingerprint": "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
   "notes": [
-    "Publicacao 10.0.67 temporariamente suspensa enquanto o APK HF10 R11 e validado para atualizacao segura.",
-    "Nao instalar o APK publicado anteriormente durante esta validacao.",
-    "Online HF10 R11 permanece publicado."
+    "HF10 R12 publicado no Online/PWA com recuperação específica do menu Guardas e invalidação de cache.",
+    "O APK 10.0.67 anterior permanece bloqueado porque não contém a correção HF10 R12.",
+    "Use a opção Abrir versão corrigida agora na página de instalação até existir um novo APK assinado e validado."
   ]
 }
