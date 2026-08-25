@@ -12,7 +12,9 @@ function hf10r13GuardasAtivo(){
   return !!botao && !!view && !view.classList.contains('hidden') && /cadastro de guardas/i.test(titulo);
 }
 function hf10r13NormalizarTexto(v){
-  return String(v??'').normalize?.('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()||String(v??'').toLowerCase();
+  let s=String(v??'');
+  try{s=s.normalize('NFD')}catch{}
+  return s.replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
 function hf10r13Digitos(v){return String(v??'').replace(/\D/g,'');}
 function hf10r13Combina(card,consulta){
