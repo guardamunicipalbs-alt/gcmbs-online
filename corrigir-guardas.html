@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f172a"><title>Correção Cadastro Guardas</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f1f5f9;color:#0f172a;margin:0}.wrap{max-width:620px;margin:0 auto;padding:24px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;box-shadow:0 10px 30px #0f172a12}.status{margin-top:16px;padding:14px;border-radius:12px;background:#eff6ff;color:#1e3a8a;line-height:1.5}.ok{background:#ecfdf5;color:#166534}.err{background:#fff7ed;color:#9a3412}.btn{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#0f172a;color:#fff;font-weight:800;font-size:16px;cursor:pointer}.muted{color:#64748b;font-size:14px}</style></head><body><main class="wrap"><section class="card"><h1>Correção Cadastro de Guardas</h1><p>Este reparo força a substituição do cache antigo do GCMBS Online e ativa a correção da pesquisa de Guardas.</p><div id="status" class="status">Preparando reparo...</div><button id="retry" class="btn" hidden>Tentar novamente</button><p class="muted">Não fecha nem altera cadastros. Apenas renova arquivos do site no navegador.</p></section></main><script>
+const st=document.getElementById('status'),retry=document.getElementById('retry');
+const say=(t,c='status')=>{st.className=c;st.textContent=t};
+async function reparar(){retry.hidden=true;try{
+  say('1/4 · Encerrando versões antigas do cache...');
+  if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();for(const r of regs)await r.unregister();}
+  if('caches' in window){for(const k of await caches.keys())await caches.delete(k);}
+  say('2/4 · Instalando a correção HF10 R14...');
+  if(!('serviceWorker' in navigator))throw new Error('Este navegador não permite Service Worker.');
+  const reg=await navigator.serviceWorker.register('./sw.js?v=20260825hf10r14',{updateViaCache:'none'});
+  await reg.update();
+  await navigator.serviceWorker.ready;
+  say('3/4 · Ativando a nova versão...');
+  const active=reg.active||reg.waiting||reg.installing;
+  if(active?.state!=='activated')await new Promise(resolve=>{const t=setTimeout(resolve,2500);active?.addEventListener('statechange',()=>{if(active.state==='activated'){clearTimeout(t);resolve();}});});
+  say('4/4 · Correção aplicada. Abrindo o GCMBS...', 'status ok');
+  setTimeout(()=>location.replace('./?hf10r14='+Date.now()),700);
+}catch(e){say('Falha ao renovar os arquivos: '+(e?.message||e),'status err');retry.hidden=false;}}
+retry.addEventListener('click',reparar);reparar();
+</script></body></html>
