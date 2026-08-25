@@ -1,4 +1,4 @@
-const CACHE='gcmbs-mobile-100067-hf10r13-guardas-search-stability';
+const CACHE='gcmbs-mobile-100067-hf10r14-force-refresh';
 const AUDIT_FIX='<script type="module" src="./js/v62-auditoria-app-fix.js?v=20260824hf10r11"></script>';
 const GUARDAS_FIX='<script type="module" src="./js/hf10-r12-guardas-rescue.js?v=20260824hf10r12"></script>';
 const GUARDAS_SEARCH_FIX='<script type="module" src="./js/hf10-r13-guardas-search-stability.js?v=20260825hf10r13"></script>';
