@@ -10,8 +10,10 @@
   "migrationFrom": "10.0.66",
   "signingFingerprint": "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
   "notes": [
-    "HF10 R12 publicado no Online/PWA com recuperação específica do menu Guardas e invalidação de cache.",
-    "O APK 10.0.67 anterior permanece bloqueado porque não contém a correção HF10 R12.",
+    "HF10 R13 publicado no Online/PWA: pesquisa do Cadastro de Guardas estabilizada sem reconstrução integral da lista a cada tecla.",
+    "Busca de CPF no menu Guardas aceita números com ou sem pontuação e a versão exibida é corrigida para 10.0.67/HF10 R13 quando o hotfix carrega.",
+    "Cache do Service Worker invalidado novamente para substituir a tela antiga que podia ficar sem resposta.",
+    "O APK 10.0.67 anterior permanece bloqueado porque não contém as correções HF10 R12/R13.",
     "Use a opção Abrir versão corrigida agora na página de instalação até existir um novo APK assinado e validado."
   ]
 }
