@@ -10,10 +10,12 @@
   "migrationFrom": "10.0.66",
   "signingFingerprint": "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
   "notes": [
-    "HF10 R13 publicado no Online/PWA: pesquisa do Cadastro de Guardas estabilizada sem reconstrução integral da lista a cada tecla.",
-    "Busca de CPF no menu Guardas aceita números com ou sem pontuação e a versão exibida é corrigida para 10.0.67/HF10 R13 quando o hotfix carrega.",
-    "Cache do Service Worker invalidado novamente para substituir a tela antiga que podia ficar sem resposta.",
-    "O APK 10.0.67 anterior permanece bloqueado porque não contém as correções HF10 R12/R13.",
-    "Use a opção Abrir versão corrigida agora na página de instalação até existir um novo APK assinado e validado."
+    "HF10 R15 publicado no Online/PWA com estabilização geral contra travamentos de abas.",
+    "MutationObservers globais passaram a ser coalescidos por frame para impedir cascatas síncronas de DOM.",
+    "Corrigido o ciclo de Ofícios em que cards já presentes eram reapendados e reativavam o observer continuamente.",
+    "Pesquisa dos módulos genéricos passa por filtro leve em memória, sem serializar e reconstruir toda a lista a cada tecla.",
+    "Chamadas caras idênticas em voo são deduplicadas e os gatilhos de atualização automática são protegidos contra sobreposição.",
+    "Service Worker R15 remove caches antigos e só injeta hotfixes na página principal do GCMBS, deixando páginas de reparo/instalação fora da cadeia.",
+    "O APK 10.0.67 anterior permanece bloqueado porque não contém HF10 R15; use o Online/PWA corrigido até existir APK assinado e validado."
   ]
 }
