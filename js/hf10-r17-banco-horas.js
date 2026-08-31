@@ -1,15 +1,32 @@
-// GCMBS 10.0.68 - HF10 R17
+// GCMBS 10.0.68 - HF10 R17.1
 // Banco de Horas do Comando: filtro por GCM + competencia e visao integral.
+// Comando usa somente gestao; formulario/solicitacoes pessoais ficam restritos ao GCM comum.
 // Somente leitura/apresentacao: nao cria, altera ou exclui movimentacoes.
 const R17_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const r17Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r17Fmt=v=>{const m=String(v||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(v||'');};
 const r17Horas=min=>{const n=Math.round(Number(min)||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`;};
-let r17Cache=null,r17Busy=false,r17Timer=0,r17SectionObserver=null;
+let r17Cache=null,r17Busy=false,r17Timer=0,r17SectionObserver=null,r17TitleObserver=null;
 
 function r17Section(){return document.querySelector('[data-view="banco"]');}
 function r17Visivel(){const s=r17Section();return !!s&&!s.classList.contains('hidden');}
 function r17Gestor(){return /banco de horas autorizado/i.test(String(document.getElementById('tituloBanco')?.textContent||''));}
+function r17RoleLayout(){
+  const gestor=r17Gestor();
+  const cards=[
+    document.getElementById('formBancoCorrecao')?.closest('.card'),
+    document.getElementById('listaCorrecoes')?.closest('.card')
+  ].filter(Boolean);
+  for(const card of cards){
+    if(gestor){
+      card.dataset.hf10R17ManagerHidden='1';
+      card.classList.add('hidden');
+    }else if(card.dataset.hf10R17ManagerHidden==='1'){
+      card.classList.remove('hidden');
+      delete card.dataset.hf10R17ManagerHidden;
+    }
+  }
+}
 function r17Comp(x){return String(x?.competencia||x?.competencia_origem||x?.data_fato||x?.data_evento||x?.created_at||'').slice(0,7);}
 function r17Ativo(x){return String(x?.status||'ATIVO').toUpperCase()==='ATIVO';}
 function r17Nome(x,data){
@@ -53,7 +70,9 @@ function r17EnsureFilter(data){
   return select;
 }
 function r17Render(data){
-  if(!r17Visivel()||!r17Gestor())return;
+  if(!r17Visivel())return;
+  r17RoleLayout();
+  if(!r17Gestor())return;
   const comp=document.getElementById('bhCompetenciaFiltro')?.value||new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'}).slice(0,7);
   const select=r17EnsureFilter(data);
   const gid=Number(select?.value||0);
@@ -86,7 +105,9 @@ function r17Render(data){
   if(resumo)resumo.textContent=`${rows.length} movimentacao(oes) · ${nomeSel}`;
 }
 async function r17Refresh(force=false){
-  if(r17Busy||!r17Visivel()||!r17Gestor())return;
+  if(r17Busy||!r17Visivel())return;
+  r17RoleLayout();
+  if(!r17Gestor())return;
   r17Busy=true;
   try{r17Render(await r17Load(force));}
   catch(e){console.warn('[GCMBS] HF10 R17 Banco de Horas:',e?.message||e);}
@@ -97,11 +118,17 @@ function r17Schedule(force=false,delay=120){
 }
 function r17Attach(){
   const s=r17Section();if(!s)return;
+  r17RoleLayout();
   if(!r17SectionObserver){
-    r17SectionObserver=new MutationObserver(()=>{if(r17Visivel())r17Schedule(true,80);});
+    r17SectionObserver=new MutationObserver(()=>{r17RoleLayout();if(r17Visivel()&&r17Gestor())r17Schedule(true,80);});
     r17SectionObserver.observe(s,{attributes:true,attributeFilter:['class']});
   }
-  if(r17Visivel())r17Schedule(true,80);
+  const title=document.getElementById('tituloBanco');
+  if(title&&!r17TitleObserver){
+    r17TitleObserver=new MutationObserver(()=>{r17RoleLayout();if(r17Visivel()&&r17Gestor())r17Schedule(true,80);});
+    r17TitleObserver.observe(title,{childList:true,subtree:true,characterData:true});
+  }
+  if(r17Visivel()&&r17Gestor())r17Schedule(true,80);
 }
 document.addEventListener('change',e=>{
   if(e.target?.id==='bhGcmFiltro'){if(r17Cache)r17Render(r17Cache.data);return;}
@@ -109,9 +136,9 @@ document.addEventListener('change',e=>{
 },true);
 document.addEventListener('click',e=>{
   if(e.target.closest?.('#mainNav'))setTimeout(r17Attach,120);
-  if(e.target.closest?.('#formBancoCorrecao button,[data-cmd-bh-ok],[data-cmd-bh-no]'))r17Schedule(true,1400);
+  if(e.target.closest?.('[data-cmd-bh-ok],[data-cmd-bh-no]'))r17Schedule(true,1400);
 },true);
 window.addEventListener('pageshow',()=>setTimeout(r17Attach,100));
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r17Attach,{once:true});else r17Attach();
-setInterval(()=>{if(r17Visivel())r17Refresh(true);},60000);
-console.info('[GCMBS] HF10 R17 Banco de Horas por GCM + competencia ativo');
+setInterval(()=>{if(r17Visivel()&&r17Gestor())r17Refresh(true);},60000);
+console.info('[GCMBS] HF10 R17.1 Banco de Horas: gestao do Comando separada da area pessoal');
