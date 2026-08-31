@@ -2,7 +2,7 @@ GCMBS - RETORNO AO COMPUTADOR DO DESKTOP - 31/08/2026
 =========================================================
 
 OBJETIVO
-Aplicar com seguranca as correcoes que ficaram consolidadas enquanto o computador do Desktop nao estava disponivel, sem alterar o Gerador de Escala nem os bancos SQLite.
+Aplicar com seguranca as correcoes consolidadas enquanto o computador do Desktop nao estava disponivel, sem alterar o Gerador de Escala nem os bancos SQLite.
 
 ORDEM RECOMENDADA
 
@@ -11,19 +11,18 @@ ORDEM RECOMENDADA
 2. Etapa de Permutas / Extra por Evento (HF10 R12):
    - Se o pacote GCMBS_10.0.68_HF10_R12_PERMUTAS_EXTRA_EVENTO_FINAL.zip ainda nao foi aplicado nesse projeto, aplique-o primeiro.
    - Se ja foi aplicado, nao repita.
-   - O instalador R15 detecta os marcadores TROCA_EXTRA, CESSAO_EXTRA e financeiro_neutro; se eles nao existirem, ele interrompe sem aplicar a etapa R15 e informa que o R12 precisa ser executado primeiro.
+   - O instalador R15 detecta os marcadores TROCA_EXTRA, CESSAO_EXTRA e financeiro_neutro. Se eles nao existirem, ele interrompe antes de alterar as arvores web e informa que o R12 precisa ser executado primeiro.
 
-3. Coloque estes dois arquivos na MESMA pasta:
-   - INSTALAR_GCMBS_RETORNO_DESKTOP_HF10_R15.bat
-   - ATUALIZAR_GCMBS_RETORNO_DESKTOP_HF10_R15.ps1
+3. Baixe apenas:
+   INSTALAR_GCMBS_RETORNO_DESKTOP_HF10_R15.bat
 
-4. Execute INSTALAR_GCMBS_RETORNO_DESKTOP_HF10_R15.bat.
+4. Execute o BAT. Se o PowerShell auxiliar nao estiver na mesma pasta, o proprio BAT baixa automaticamente a copia validada e fixada no commit do pacote.
 
 O QUE O INSTALADOR R15 FAZ
 - Localiza o projeto em G:\GCMBS ou G:\GCMBS\GCMBS.
 - Confirma que o HF10 R12 de Permutas/Extra por Evento ja esta presente.
 - Registra SHA-256 do Gerador de Escala e dos dois bancos SQLite antes da atualizacao.
-- Cria backup integral das arvores:
+- Cria backup das arvores:
   cloud\public
   mobile\www
   mobile\android\app\src\main\assets\public
@@ -48,8 +47,8 @@ DEPOIS DA INSTALACAO
 1. Abra o GCMBS Desktop.
 2. Entre normalmente.
 3. Execute SINCRONIZAR AGORA.
-4. Confira o Quadro Operacional, Guardas, Permutas, Banco de Horas, Ocorrencias, Manutencao e Extra por Evento.
-5. Para o Online/PWA, se houver cache antigo no navegador, use a pagina corrigir-online.html publicada com o HF10 R15.
+4. Confira Quadro Operacional, Guardas, Permutas, Banco de Horas, Ocorrencias, Manutencao e Extra por Evento.
+5. Para o Online/PWA, se houver cache antigo no navegador, use corrigir-online.html do HF10 R15.
 
 OBSERVACAO SOBRE O APK
-O APK 10.0.67 anterior permanece bloqueado para distribuicao porque nao contem o HF10 R15. Este pacote atualiza as fontes Android locais, mas nao forca uma recompilacao; a geracao de um novo APK deve ser feita como etapa separada para evitar novo erro de memoria do Gradle.
+O APK 10.0.67 anterior permanece bloqueado para distribuicao porque nao contem HF10 R15. Este pacote atualiza as fontes Android locais, mas nao forca uma recompilacao; a geracao de um novo APK deve ser feita como etapa separada para evitar novo erro de memoria do Gradle.
