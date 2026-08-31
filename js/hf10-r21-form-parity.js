@@ -61,6 +61,8 @@ function r21CleanupEmpty(){
 }
 
 function r21PatchVersion(){
+  const onlineVersao=document.getElementById('onlineVersao');
+  if(onlineVersao)onlineVersao.textContent='Online 10.0.68';
   const card=document.getElementById('appAtualizacaoCard');
   if(card&&/10\.0\.62/.test(card.innerHTML))card.innerHTML=card.innerHTML.replaceAll('10.0.62','10.0.68');
   document.querySelectorAll('[data-app-version],.app-version,.online-version').forEach(el=>{
