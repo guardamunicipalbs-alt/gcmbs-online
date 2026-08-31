@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100067-hf10r15-stability';
+const VERSION='gcmbs-online-100068-hf10r15-stability';
 const R15_TAG='<script type="module" src="./js/hf10-r15-online-stability.js?v=20260826hf10r15"></script>';
 const R12_TAG='<script type="module" src="./js/hf10-r12-guardas-rescue.js?v=20260824hf10r12"></script>';
 

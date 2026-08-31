@@ -1,11 +1,11 @@
 
-import {AuthenticatedProvider} from './data-provider.js?v=20260824hf10r11';
+import {AuthenticatedProvider} from './data-provider.js?v=100068';
 import {MODULOS_GCMBS} from './access-catalog.js';
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.67';
-const GCMBS_APP_VERSION_CODE=67;
+const GCMBS_APP_VERSION='10.0.68';
+const GCMBS_APP_VERSION_CODE=68;
 const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
 const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
 async function verificarAtualizacaoApp(){
@@ -28,7 +28,7 @@ const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Amer
 const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia||p.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.67';
+const APP_VERSION='10.0.68';
 let provider=new AuthenticatedProvider();
 let permutasEspelho=[];
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
@@ -337,9 +337,39 @@ async function atualizarSubstituidosPermuta(){
     if(!lista.length)sel.innerHTML='<option value="">Nenhum GCM escalado neste período</option>';else{sel.disabled=false;if(btn)btn.disabled=false;}
   }catch(e){sel.innerHTML='<option value="">Não foi possível consultar</option>';if(msg){msg.textContent=e.message;msg.classList.add('error');}}
 }
-async function carregarTrocaExtraOpcoes(){const a=$('pmExtraMeu'),b=$('pmExtraOutro');if(!a||!b)return;try{const r=await provider.extraSwapCandidates(),ord=(x,y)=>String(x.data||'').localeCompare(String(y.data||''))||String(x.horario_inicio||'').localeCompare(String(y.horario_inicio||''));r.mine=(r.mine||[]).sort(ord);r.others=(r.others||[]).sort(ord);const opt=x=>`${fmt(x.data)} · ${esc(x.horario_inicio||'')}–${esc(x.horario_fim||'')} · ${Math.round(Number(x.minutos||0))/60}h · ${esc(x.classe||'50')}%`;a.innerHTML='<option value="">Selecione seu extra...</option>'+(r.mine||[]).map(x=>`<option value="${x.id}" data-classe="${esc(x.classe||'')}" data-minutos="${Number(x.minutos||0)}">${opt(x)}</option>`).join('');b.innerHTML='<option value="">Selecione o extra do outro GCM...</option>'+(r.others||[]).map(x=>`<option value="${x.id}" data-classe="${esc(x.classe||'')}" data-minutos="${Number(x.minutos||0)}">${esc(x.nome_guerra||'GCM')} · ${opt(x)}</option>`).join('');const aviso=()=>{const oa=a.selectedOptions[0],ob=b.selectedOptions[0],host=$('pmTrocaAviso');if(!host)return;if(!oa?.value||!ob?.value){host.textContent='A troca bilateral é financeiramente neutra. Diferenças de duração ou classificação 50%/100% são permitidas, mas serão destacadas antes do aceite e da aprovação.';return}const ca=oa.dataset.classe||'',cb=ob.dataset.classe||'',ma=Number(oa.dataset.minutos||0),mb=Number(ob.dataset.minutos||0),dif=ca!==cb||ma!==mb;host.textContent=dif?`ATENÇÃO: os serviços não são equivalentes (${ma/60}h · ${ca}% ↔ ${mb/60}h · ${cb}%). A troca é permitida e permanecerá financeiramente neutra, mas exige ciência expressa dos dois GCMs e do Comando.`:`Serviços equivalentes (${ma/60}h · ${ca}%). A troca permanecerá financeiramente neutra e seguirá para aceite do outro GCM e aprovação do Comando.`;host.classList.toggle('warning',dif)};a.onchange=aviso;b.onchange=aviso;aviso()}catch(e){a.innerHTML='<option>Falha ao consultar extras</option>';b.innerHTML='<option>Falha ao consultar extras</option>';if($('pmMsg'))$('pmMsg').textContent=e.message}}
-async function atualizarModoPermuta(){const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',extraMode=swap||cessao;document.querySelectorAll('.pm-normal').forEach(x=>x.classList.toggle('hidden',extraMode));document.querySelectorAll('.pm-swap').forEach(x=>x.classList.toggle('hidden',!extraMode));$('pmExtraMeuLabel')?.classList.toggle('hidden',cessao);if($('pmTrocaAviso'))$('pmTrocaAviso').textContent=cessao?'Selecione o serviço extra de outro GCM que deseja assumir. O GCM originalmente escalado deverá autorizar primeiro; somente depois a solicitação seguirá ao Comando.':'A troca bilateral é financeiramente neutra. Diferenças de duração ou classificação 50%/100% são permitidas, mas serão destacadas antes do aceite e da aprovação.';if(extraMode)await carregarTrocaExtraOpcoes();else await atualizarSubstituidosPermuta();}
-function descricaoTrocaExtra(q){const o=q.extra_origem||{},c=q.extra_contrapartida||{};const a=`${fmt(o.data||q.data)} · ${esc(o.horario_inicio||'')}–${esc(o.horario_fim||'')} · ${Number(o.minutos||q.minutos_extra_origem||0)/60}h · ${esc(o.classe||q.classe_extra_origem||'50')}%`;const b=`${fmt(c.data||'')} · ${esc(c.horario_inicio||'')}–${esc(c.horario_fim||'')} · ${Number(c.minutos||q.minutos_extra_contrapartida||0)/60}h · ${esc(c.classe||q.classe_extra_contrapartida||'50')}%`;const dif=String(o.classe||q.classe_extra_origem||'50')!==String(c.classe||q.classe_extra_contrapartida||'50')||Number(o.minutos||q.minutos_extra_origem||0)!==Number(c.minutos||q.minutos_extra_contrapartida||0);return {a,b,dif};}
+async function carregarTrocaExtraOpcoes(){
+  const a=$('pmExtraMeu'),b=$('pmExtraOutro');if(!a||!b)return;
+  a.disabled=true;b.disabled=true;
+  try{
+    const r=await provider.extraSwapCandidates(),ord=(x,y)=>String(x.data||'').localeCompare(String(y.data||''))||String(x.horario_inicio||'').localeCompare(String(y.horario_inicio||''))||String(x.extra_tipo||'MANUAL').localeCompare(String(y.extra_tipo||'MANUAL'));
+    r.mine=(r.mine||[]).sort(ord);r.others=(r.others||[]).sort(ord);
+    const tipo=x=>String(x.extra_tipo||x.tipo||'MANUAL').toUpperCase()==='EVENTO'?'EVENTO':'MANUAL';
+    const rot=x=>tipo(x)==='EVENTO'?'Extra por Evento':'Extra Manual';
+    const opt=x=>`[${rot(x)}] ${esc(x.descricao||x.evento_nome||'')} · ${fmt(x.data)} · ${esc(x.horario_inicio||'')}–${esc(x.horario_fim||'')} · ${Math.round(Number(x.minutos||x.minutos_extra||0))/60}h · ${esc(x.classe||'50')}%`;
+    a.innerHTML=r.mine.length?'<option value="">Selecione seu serviço extra...</option>'+r.mine.map(x=>`<option value="${Number(x.id||x.servico_id)}" data-tipo="${tipo(x)}" data-g="${Number(x.guarda_id||0)}" data-classe="${esc(x.classe||'')}" data-minutos="${Number(x.minutos||x.minutos_extra||0)}">${opt(x)}</option>`).join(''):'<option value="">Nenhum serviço extra seu disponível para troca</option>';
+    b.innerHTML=r.others.length?'<option value="">Selecione o serviço extra do outro GCM...</option>'+r.others.map(x=>`<option value="${Number(x.id||x.servico_id)}" data-tipo="${tipo(x)}" data-g="${Number(x.guarda_id||0)}" data-classe="${esc(x.classe||'')}" data-minutos="${Number(x.minutos||x.minutos_extra||0)}">${esc(x.nome_guerra||'GCM')} · ${opt(x)}</option>`).join(''):'<option value="">Nenhum serviço extra de outro GCM disponível</option>';
+    a.disabled=!r.mine.length;b.disabled=!r.others.length;
+    const aviso=()=>{
+      const oa=a.selectedOptions[0],ob=b.selectedOptions[0],host=$('pmTrocaAviso');if(!host)return;
+      const evento=oa?.dataset.tipo==='EVENTO'||ob?.dataset.tipo==='EVENTO';
+      if(!oa?.value||!ob?.value){
+        host.textContent='Podem ser usados Extra Manual e Extra por Evento. Em Extra por Evento, os minutos serão recalculados para quem efetivamente assumir, considerando escala ordinária, permutas e outros serviços.';
+        host.classList.toggle('warning',evento);return;
+      }
+      const ca=oa.dataset.classe||'',cb=ob.dataset.classe||'',ma=Number(oa.dataset.minutos||0),mb=Number(ob.dataset.minutos||0),dif=ca!==cb||ma!==mb||evento;
+      host.textContent=evento
+        ?`ATENÇÃO: a troca envolve Extra por Evento. Os valores exibidos são os atuais (${ma/60}h · ${ca}% ↔ ${mb/60}h · ${cb}%). Após aprovação, o período do evento será recalculado para o novo GCM conforme sua disponibilidade real.`
+        :dif?`ATENÇÃO: os serviços não são equivalentes (${ma/60}h · ${ca}% ↔ ${mb/60}h · ${cb}%). A troca é permitida e permanecerá financeiramente neutra, mas exige ciência expressa dos dois GCMs e do Comando.`:`Serviços equivalentes (${ma/60}h · ${ca}%). A troca permanecerá financeiramente neutra e seguirá para aceite do outro GCM e aprovação do Comando.`;
+      host.classList.toggle('warning',dif);
+    };
+    a.onchange=aviso;b.onchange=aviso;aviso();
+  }catch(e){
+    a.innerHTML='<option>Falha ao consultar serviços extras</option>';b.innerHTML='<option>Falha ao consultar serviços extras</option>';a.disabled=true;b.disabled=true;
+    if($('pmMsg'))$('pmMsg').textContent=e.message;
+  }
+}
+async function atualizarModoPermuta(){const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',extraMode=swap||cessao;document.querySelectorAll('.pm-normal').forEach(x=>x.classList.toggle('hidden',extraMode));document.querySelectorAll('.pm-swap').forEach(x=>x.classList.toggle('hidden',!extraMode));$('pmExtraMeuLabel')?.classList.toggle('hidden',cessao);if($('pmTrocaAviso'))$('pmTrocaAviso').textContent=cessao?'Selecione um Extra Manual ou Extra por Evento de outro GCM que deseja assumir. O titular atual deverá autorizar primeiro. Se for evento, os minutos serão recalculados para você após a aprovação do Comando.':'A troca pode combinar Extra Manual e Extra por Evento. Eventos serão recalculados para o novo participante após a aprovação.';if(extraMode)await carregarTrocaExtraOpcoes();else await atualizarSubstituidosPermuta();}
+function descricaoTrocaExtra(q){const o=q.extra_origem||{},c=q.extra_contrapartida||{},to=String(o.tipo||q.extra_tipo_origem||q.extra_tipo||'MANUAL').toUpperCase(),tc=String(c.tipo||q.extra_tipo_contrapartida||q.extra_contrapartida_tipo||'MANUAL').toUpperCase(),ro=to==='EVENTO'?'Extra por Evento':'Extra Manual',rc=tc==='EVENTO'?'Extra por Evento':'Extra Manual';const a=`[${ro}] ${esc(o.descricao||'')} · ${fmt(o.data||q.data)} · ${esc(o.horario_inicio||'')}–${esc(o.horario_fim||'')} · ${Number(o.minutos||q.minutos_extra_origem||0)/60}h · ${esc(o.classe||q.classe_extra_origem||'50')}%`;const b=`[${rc}] ${esc(c.descricao||'')} · ${fmt(c.data||'')} · ${esc(c.horario_inicio||'')}–${esc(c.horario_fim||'')} · ${Number(c.minutos||q.minutos_extra_contrapartida||0)/60}h · ${esc(c.classe||q.classe_extra_contrapartida||'50')}%`;const evento=to==='EVENTO'||tc==='EVENTO',dif=evento||String(o.classe||q.classe_extra_origem||'50')!==String(c.classe||q.classe_extra_contrapartida||'50')||Number(o.minutos||q.minutos_extra_origem||0)!==Number(c.minutos||q.minutos_extra_contrapartida||0);return {a,b,dif,evento};}
 function renderPermutas(){
   const el=$('listaPermutasSolicitadas');if(!el)return;
   const gestor=provider.gestor();
@@ -425,11 +455,86 @@ function configurarCabecalhoModulo(modulo){
   if($('onlineVersao'))$('onlineVersao').textContent='Android '+APP_VERSION;
 }
 async function abrirModuloOnline(modulo){
-  if(!onlineCatalog.length){try{onlineCatalog=await provider.entityCatalog()}catch(e){onlineCatalog=[]}}
-  onlineModuleFilter=modulo;setView('online');configurarCabecalhoModulo(modulo);$('onlineRegistrosCard').classList.add('hidden');$('onlineEntidades').closest('.card').classList.remove('hidden');
-  document.querySelectorAll('#mainNav [data-module]').forEach(x=>x.classList.toggle('active',x.dataset.module===modulo));
-  const primary=PRIMARY_ENTITY[modulo],available=onlineCatalog.find(c=>c.entity===primary&&c.modulo===modulo);
-  if(available){await abrirEntidadeOnline(primary);return;}
+  // HF10 R13:
+  // A tela e o cabecalho precisam abrir ANTES da consulta ao catalogo.
+  // O modulo primario pode ser consultado diretamente porque entity_list
+  // ja devolve catalog + registros.
+  onlineModuleFilter=modulo;
+
+  setView('online');
+  configurarCabecalhoModulo(modulo);
+
+  $('onlineRegistrosCard').classList.add('hidden');
+  $('onlineEntidades').closest('.card').classList.remove('hidden');
+
+  document.querySelectorAll('#mainNav [data-module]').forEach(
+    x=>x.classList.toggle('active',x.dataset.module===modulo)
+  );
+
+  const primary=PRIMARY_ENTITY[modulo];
+
+  if(primary){
+    const host=$('onlineEntidades');
+
+    if(host){
+      host.innerHTML='<div class="empty" data-hf10-loading="1">Carregando módulo...</div>';
+      host.dataset.hf10LoadingSince=String(Date.now());
+    }
+
+    try{
+      // Nao aguardar entityCatalog antes do registro principal.
+      await abrirEntidadeOnline(primary);
+
+      // O catalogo completo e complementar. Carrega depois, sem bloquear a tela.
+      if(!onlineCatalog.length){
+        provider.entityCatalog()
+          .then(lista=>{
+            onlineCatalog=Array.isArray(lista)?lista:[];
+            try{renderEntityTabs();}catch(e){
+              console.warn('[GCMBS] abas do catalogo:',e?.message||e);
+            }
+          })
+          .catch(e=>{
+            console.warn('[GCMBS] catalogo complementar:',e?.message||e);
+          });
+      }
+
+      return;
+    }
+    catch(e){
+      console.error('[GCMBS] falha ao abrir modulo',modulo,e);
+
+      const msg=esc(
+        e?.message ||
+        'Nao foi possivel carregar este modulo.'
+      );
+
+      if(host){
+        host.innerHTML=
+          '<div class="notice" data-hf10-load-error="1">' +
+          '<strong>Falha ao carregar</strong><br>' +
+          msg +
+          '<br><button type="button" class="mini" data-hf10-retry="1" ' +
+          'style="margin-top:10px">Tentar novamente</button></div>';
+
+        delete host.dataset.hf10LoadingSince;
+      }
+
+      return;
+    }
+  }
+
+  // Somente modulos sem entidade primaria precisam aguardar o catalogo.
+  if(!onlineCatalog.length){
+    try{
+      onlineCatalog=await provider.entityCatalog();
+    }
+    catch(e){
+      onlineCatalog=[];
+      console.error('[GCMBS] falha ao carregar catalogo',e);
+    }
+  }
+
   renderCatalogoOnline();
 }
 function renderEntityTabs(){
@@ -886,7 +991,22 @@ async function enviarBancoCorrecao(ev){
 }
 async function enviarPermuta(ev){
   ev.preventDefault();const msg=$('pmMsg');msg.className='full request-message';msg.textContent='Enviando...';
-  try{const modalidade=$('pmModalidade')?.value||'ASSUNCAO';const req=modalidade==='TROCA_EXTRA'?{modalidade,extra_id:Number($('pmExtraMeu').value),extra_contrapartida_id:Number($('pmExtraOutro').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked}:modalidade==='CESSAO_EXTRA'?{modalidade,extra_id:Number($('pmExtraOutro').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked}:{modalidade,data:$('pmData').value,turno:$('pmTurno').value,servico_extra:0,substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked};if(modalidade==='TROCA_EXTRA'&&permutaEditingId)throw new Error('Trocas bilaterais de extras devem ser canceladas e refeitas, preservando a auditoria.');const r=permutaEditingId?await provider.updatePermutaRequest(permutaEditingId,req):await provider.requestPermuta(req);msg.textContent=r.warning|| (permutaEditingId?'Solicitação atualizada. Aguardando decisão do Comando.':'Solicitação enviada. Acompanhe o histórico nesta tela.');msg.classList.add('success');resetPermutaForm();renderTudo(false);setView('permutas')}catch(e){msg.textContent=e.message;msg.classList.add('error')}
+  try{
+    const modalidade=$('pmModalidade')?.value||'ASSUNCAO',meu=$('pmExtraMeu')?.selectedOptions?.[0],outro=$('pmExtraOutro')?.selectedOptions?.[0];
+    const req=modalidade==='TROCA_EXTRA'?{
+      modalidade,extra_id:Number(meu?.value||0),extra_tipo:meu?.dataset.tipo||'MANUAL',extra_guarda_id:Number(meu?.dataset.g||0),
+      extra_contrapartida_id:Number(outro?.value||0),extra_contrapartida_tipo:outro?.dataset.tipo||'MANUAL',extra_contrapartida_guarda_id:Number(outro?.dataset.g||0),
+      observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked
+    }:modalidade==='CESSAO_EXTRA'?{
+      modalidade,extra_id:Number(outro?.value||0),extra_tipo:outro?.dataset.tipo||'MANUAL',extra_guarda_id:Number(outro?.dataset.g||0),
+      substituido_id:Number(outro?.dataset.g||0),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked
+    }:{modalidade,data:$('pmData').value,turno:$('pmTurno').value,servico_extra:0,substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked};
+    if(modalidade==='TROCA_EXTRA'&&permutaEditingId)throw new Error('Trocas bilaterais de extras devem ser canceladas e refeitas, preservando a auditoria.');
+    if(modalidade==='TROCA_EXTRA'&&(!req.extra_id||!req.extra_contrapartida_id))throw new Error('Selecione os dois serviços extras.');
+    if(modalidade==='CESSAO_EXTRA'&&!req.extra_id)throw new Error('Selecione o serviço extra que deseja assumir.');
+    const r=permutaEditingId?await provider.updatePermutaRequest(permutaEditingId,req):await provider.requestPermuta(req);
+    msg.textContent=r.warning|| (permutaEditingId?'Solicitação atualizada. Aguardando decisão do Comando.':'Solicitação enviada. Acompanhe o histórico nesta tela.');msg.classList.add('success');resetPermutaForm();renderTudo(false);setView('permutas');
+  }catch(e){msg.textContent=e.message;msg.classList.add('error')}
 }
 
 async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,nivel:$('msgNivel')?.value||'NORMAL',fim_em:$('msgFim')?.value||null,destino,data_servico:$('msgDataServico')?.value||null,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';if($('msgFim'))$('msgFim').value='';if($('msgNivel'))$('msgNivel').value='NORMAL';await provider.load();renderAvisosInstitucionais();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
@@ -1011,6 +1131,6 @@ async function boot(){
 }
 boot();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100067',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100068',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

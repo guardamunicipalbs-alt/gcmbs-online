@@ -1,4 +1,4 @@
-// GCMBS 10.0.67 - HF10 R15
+// GCMBS 10.0.68 - HF10 R15
 // Estabilidade consolidada do Online/PWA/App.
 // Foco: evitar travamentos de abas sem alterar banco, payloads, permissões ou regras do Desktop.
 const HF10_R15='20260826hf10r15';
@@ -179,7 +179,7 @@ if(!window.__gcmbsR15RefreshTriggerGuard){
 function r15Stamp(){
   r15EnsureListObserver();
   const v=document.getElementById('onlineVersao');
-  if(v)v.textContent='Online 10.0.67 · HF10 R15';
+  if(v)v.textContent='Online 10.0.68 · HF10 R15';
 }
 function r15Init(){r15Stamp();r15ScheduleSearch();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r15Init,{once:true});else r15Init();
