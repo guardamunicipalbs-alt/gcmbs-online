@@ -14,6 +14,11 @@ const R21_LABELS={
   exige_motorista:'Exige motorista',
   exige_viatura:'Exige viatura',
   tipo_escala:'Tipo de escala',
+  ordem_ciclo:'Ordem do ciclo',
+  dia_inicio_servico:'Dia inicial do serviço',
+  ciclo:'Ciclo',
+  turno_inicio:'Turno inicial',
+  modo_distribuicao:'Modo de distribuição',
   hora_inicio:'Hora inicial',
   hora_fim:'Hora final',
   intervalo1_inicio:'Intervalo 1 · início',
@@ -80,6 +85,10 @@ function r21PatchForm(){
     r21Move('mes_ferias','Lotação e configuração operacional');
     ['cnh','categoria_cnh_validade'].forEach(f=>r21Move(f,'CNH e autorizações'));
     r21Move('observacao','Observações');
+  }
+  if(/Equipes/i.test(title)){
+    ['tipo_escala_id','ordem_ciclo','ciclo','dia_inicio_servico','turno_inicio','modo_distribuicao'].forEach(f=>r21Move(f,'Jornada e ciclo'));
+    r21Move('participa_gerador','Operação');
   }
   if(/Postos Operacionais/i.test(title)){
     r21Move('descricao','Localização e descrição');
