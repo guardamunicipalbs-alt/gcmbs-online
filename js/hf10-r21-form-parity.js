@@ -6,7 +6,9 @@ const R21_LABELS={
   data_nascimento:'Data de nascimento',
   mes_ferias:'Mês de férias',
   endereco:'Endereço',
-  resultado:'Resultado'
+  resultado:'Resultado',
+  renavam:'RENAVAM',
+  potencia:'Potência'
 };
 
 function r21SetLabel(field,text){
@@ -68,6 +70,10 @@ function r21PatchForm(){
   if(/Postos Operacionais/i.test(title)){
     r21Move('descricao','Localização e descrição');
     r21Move('endereco','Localização e descrição');
+  }
+  if(/Cadastro de Viaturas/i.test(title)){
+    ['renavam','chassi','motor'].forEach(f=>r21Move(f,'Documentação e identificação'));
+    ['cor','potencia','cilindrada','categoria'].forEach(f=>r21Move(f,'Características'));
   }
   r21CleanupEmpty();
 }
