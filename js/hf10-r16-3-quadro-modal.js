@@ -77,6 +77,10 @@ document.addEventListener('click',e=>{
 import('./hf10-r17-banco-horas.js?v=20260831hf10r17r3')
   .catch(err=>console.warn('[GCMBS] HF10 R17.3 falha ao carregar Banco de Horas',err));
 
+// HF10 R17.4: garante ocultacao visual dos cards da Analise que nao pertencem ao GCM selecionado.
+import('./hf10-r17-4-banco-gestao-filter.js?v=20260831hf10r17r4')
+  .catch(err=>console.warn('[GCMBS] HF10 R17.4 falha ao carregar filtro visual da Analise',err));
+
 // HF10 R18: estado operacional da Frota e sincronizacao manual consolidada.
 import('./hf10-r18-frota-sync.js?v=20260831hf10r18')
   .catch(err=>console.warn('[GCMBS] HF10 R18 falha ao carregar Frota/Sync',err));
