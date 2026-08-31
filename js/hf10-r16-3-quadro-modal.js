@@ -4,7 +4,7 @@
 const R163_QUADRO_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v62';
 const R163_EXTRAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-extras-v68';
 
-const r163Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r163Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const r163Fmt=v=>{const m=String(v||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(v||'');};
 let r163Busy=false;
 
@@ -85,8 +85,8 @@ import('./hf10-r18-frota-sync.js?v=20260831hf10r18')
 import('./hf10-r19-session-security.js?v=20260831hf10r19')
   .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
-// HF10 R21B: paridade visual e novos campos de Equipes; query nova evita cache legado.
-import('./hf10-r21-form-parity.js?v=20260831hf10r21b')
+// HF10 R21C: paridade visual, Equipes/Postos e versao; query nova evita cache legado.
+import('./hf10-r21-form-parity.js?v=20260831hf10r21c')
   .catch(err=>console.warn('[GCMBS] HF10 R21 falha ao carregar paridade visual',err));
 
 console.info('[GCMBS] HF10 R20 Quadro com extras dedicados ativo');
