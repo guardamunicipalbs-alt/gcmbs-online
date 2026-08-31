@@ -1,4 +1,4 @@
-// GCMBS 10.0.68 - HF10 R22
+// GCMBS 10.0.68 - HF10 R22A
 // Escala Extra Manual: criacao multipla, edicao e cancelamento por fluxo protegido.
 // O Desktop continua sendo a autoridade final de aplicacao e sincronizacao.
 const GCMBS_EXTRA_READ_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
@@ -7,7 +7,7 @@ const GCMBS_EXTRA_WRITE_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/
 const extraEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const extraTitulo=()=>String(document.getElementById('onlineEditorTitulo')?.textContent||'').trim();
 const extraModuloAtivo=()=>/^Escala Extra Manual$/i.test(String(document.getElementById('onlineTitulo')?.textContent||'').trim());
-const extraNovo=()=>/^Novo\s+Escala Extra Manual$/i.test(extraTitulo());
+const extraNovo=()=>/^Nov[oa]\s+Escala Extra Manual$/i.test(extraTitulo());
 const extraEditar=()=>/^Editar\s+Escala Extra Manual$/i.test(extraTitulo());
 const extraHost=()=>document.getElementById('onlineCampos');
 const extraCampo=n=>extraHost()?.querySelector(`[data-online-field="${n}"]`)||null;
@@ -87,6 +87,10 @@ function extraBloquearStatusEdicao(){
 }
 
 async function extraAjustarFormulario(){
+  if(/^Novo\s+Escala Extra Manual$/i.test(extraTitulo())){
+    const titulo=document.getElementById('onlineEditorTitulo');
+    if(titulo)titulo.textContent='Nova Escala Extra Manual';
+  }
   if(!extraNovo()&&!extraEditar())return;
   const host=extraHost();if(!host)return;
   if(extraEditar()){
@@ -215,4 +219,4 @@ function extraInstalar(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',extraInstalar,{once:true});
 else extraInstalar();
 
-console.info('[GCMBS] HF10 R22 Escala Extra Manual protegida ativa');
+console.info('[GCMBS] HF10 R22A Escala Extra Manual protegida ativa');
