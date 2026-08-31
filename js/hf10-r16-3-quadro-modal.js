@@ -1,25 +1,30 @@
-// GCMBS 10.0.68 - HF10 R16.3
-// Quadro Operacional: ao abrir Serviço A/B, recarrega o detalhe canônico
-// para exibir ordinários + extras do turno, sem alterar o contador dos cards.
+// GCMBS 10.0.68 - HF10 R16.3 + R20
+// Quadro Operacional: detalhe A/B com ordinarios + extras do turno,
+// mantendo os contadores principais exclusivamente ordinarios.
 const R163_QUADRO_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v62';
+const R163_EXTRAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-extras-v68';
 
 const r163Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r163Fmt=v=>{const m=String(v||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(v||'');};
 let r163Busy=false;
 
-async function r163Quadro(data){
+async function r163Call(url,payload){
   const token=localStorage.getItem('gcmbs.mobile.token');
   if(!token)throw new Error('Sessão online não autenticada.');
-  const r=await fetch(R163_QUADRO_API,{
+  const r=await fetch(url,{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-    body:JSON.stringify({action:'quadro_operacional',data}),
+    body:JSON.stringify(payload),
     cache:'no-store'
   });
   let b={};try{b=await r.json()}catch{}
   if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);
   return b;
 }
+
+const r163Quadro=data=>r163Call(R163_QUADRO_API,{action:'quadro_operacional',data});
+const r163Extras=data=>r163Call(R163_EXTRAS_API,{action:'extras_evento',data});
+const r163EhEvento=x=>String(x?.origem||'').toUpperCase()==='EVENTO_EXTRA'||/extra\s+por\s+evento/i.test(String(x?.complemento||''));
 
 function r163Render(titulo,data,itens,ord,extras){
   const modal=document.getElementById('quadroModal');
@@ -43,14 +48,22 @@ async function r163Abrir(btn){
   const data=document.getElementById('quadroData')?.value||new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
   r163Busy=true;
   try{
-    const d=await r163Quadro(data);
+    const [d,x]=await Promise.all([
+      r163Quadro(data),
+      r163Extras(data).catch(e=>{console.warn('[GCMBS] HF10 R20 extras dedicados indisponiveis:',e?.message||e);return null;})
+    ]);
     const key=turno==='A'?'servicoA':'servicoB';
-    const itens=Array.isArray(d?.efetivo?.detalhes?.[key])?d.efetivo.detalhes[key]:[];
+    const atual=Array.isArray(d?.efetivo?.detalhes?.[key])?d.efetivo.detalhes[key]:[];
     const ord=Number(d?.efetivo?.[key]||0);
-    const extras=Number(turno==='A'?d?.efetivo?.extrasEventoA:d?.efetivo?.extrasEventoB)||0;
+    let itens=atual;
+    if(x){
+      const diretos=Array.isArray(turno==='A'?x.extrasA:x.extrasB)?(turno==='A'?x.extrasA:x.extrasB):[];
+      itens=[...atual.filter(y=>!r163EhEvento(y)),...diretos];
+    }
+    const extras=Math.max(0,itens.length-ord);
     r163Render(btn.dataset.title||`Serviço ${turno}`,d?.data||data,itens,ord,extras);
   }catch(e){
-    console.warn('[GCMBS] HF10 R16.3 detalhe do Quadro:',e?.message||e);
+    console.warn('[GCMBS] HF10 R20 detalhe do Quadro:',e?.message||e);
   }finally{r163Busy=false;}
 }
 
@@ -72,4 +85,4 @@ import('./hf10-r18-frota-sync.js?v=20260831hf10r18')
 import('./hf10-r19-session-security.js?v=20260831hf10r19')
   .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
-console.info('[GCMBS] HF10 R16.3 modal do Quadro ativo');
+console.info('[GCMBS] HF10 R20 Quadro com extras dedicados ativo');
