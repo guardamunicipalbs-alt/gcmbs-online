@@ -1,5 +1,6 @@
-const VERSION='gcmbs-online-100068-hf10r15-stability';
+const VERSION='gcmbs-online-100068-hf10r16-3-quadro';
 const R15_TAG='<script type="module" src="./js/hf10-r15-online-stability.js?v=20260826hf10r15"></script>';
+const R16_TAG='<script type="module" src="./js/hf10-r16-3-quadro-modal.js?v=20260831hf10r16r3"></script>';
 const R12_TAG='<script type="module" src="./js/hf10-r12-guardas-rescue.js?v=20260824hf10r12"></script>';
 
 self.addEventListener('install',()=>self.skipWaiting());
@@ -16,16 +17,18 @@ function cleanOldHotfixes(html){
   return html
     .replace(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/hf10-r13-guardas-search-stability\.js[^"']*["'][^>]*><\/script>/ig,'')
     .replace(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/hf10-r14-guardas-search-stability\.js[^"']*["'][^>]*><\/script>/ig,'')
-    .replace(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/hf10-r15-online-stability\.js[^"']*["'][^>]*><\/script>/ig,'');
+    .replace(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/hf10-r15-online-stability\.js[^"']*["'][^>]*><\/script>/ig,'')
+    .replace(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/hf10-r16-3-quadro-modal\.js[^"']*["'][^>]*><\/script>/ig,'');
 }
 function injectStability(html){
   html=cleanOldHotfixes(html);
   const audit=html.match(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/v62-auditoria-app-fix\.js[^"']*["'][^>]*><\/script>/i)?.[0]||'';
   const app=html.match(/<script\b[^>]*\bsrc=["'](?:\.\/)?js\/app\.js[^"']*["'][^>]*><\/script>/i)?.[0]||'';
   const first=audit||app;
-  if(first)html=html.replace(first,R15_TAG+first);
-  else if(html.includes('</body>'))html=html.replace('</body>',R15_TAG+'</body>');
-  else html+=R15_TAG;
+  const stability=R15_TAG+R16_TAG;
+  if(first)html=html.replace(first,stability+first);
+  else if(html.includes('</body>'))html=html.replace('</body>',stability+'</body>');
+  else html+=stability;
 
   if(html.includes('hf10-r12-guardas-rescue.js')){
     html=html.replace(/js\/hf10-r12-guardas-rescue\.js\?v=[^"']+/g,'js/hf10-r12-guardas-rescue.js?v=20260824hf10r12');
@@ -49,9 +52,9 @@ self.addEventListener('fetch',event=>{
     headers.delete('content-length');
     headers.delete('content-encoding');
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-hotfix','HF10-R15');
+    headers.set('x-gcmbs-hotfix','HF10-R16.3');
     return new Response(html,{status:response.status,statusText:response.statusText,headers});
   })());
 });
 
-console.info('[GCMBS SW] HF10 R15 ativo',VERSION);
+console.info('[GCMBS SW] HF10 R16.3 ativo',VERSION);
