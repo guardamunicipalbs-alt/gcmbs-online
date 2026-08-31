@@ -1,4 +1,4 @@
-// GCMBS 10.0.68 - HF10 R21C
+// GCMBS 10.0.68 - HF10 R21D
 // Paridade visual dos formularios Online/App. Nao altera dados nem regras de gravacao.
 let r21Frame=0;
 
@@ -56,6 +56,10 @@ function r21Move(field,title){
   if(!label)return;
   const target=r21EnsureSection(title)?.querySelector('.form-grid');
   if(target&&label.parentElement!==target)target.appendChild(label);
+}
+
+function r21Hide(field){
+  document.querySelector(`#onlineCampos [data-online-field="${field}"]`)?.closest('label')?.remove();
 }
 
 function r21OrderSections(titles){
@@ -127,10 +131,12 @@ function r21PatchForm(){
     r21OrderSections(['Identificação','Prioridade e efetivo','Funcionamento','Localização e descrição','Requisitos operacionais','Observações']);
   }
   if(/Tipos de Escalas/i.test(title)){
+    ['jornada','intervalo_inicio','intervalo_fim'].forEach(r21Hide);
     ['tipo_escala','categoria'].forEach(f=>r21Move(f,'Tipo de escala'));
     ['hora_inicio','hora_fim'].forEach(f=>r21Move(f,'Horário'));
     ['intervalo1_inicio','intervalo1_fim','intervalo2_inicio','intervalo2_fim'].forEach(f=>r21Move(f,'Intervalos'));
     r21Move('observacao','Observações');
+    r21OrderSections(['Tipo de escala','Horário','Intervalos','Descrição','Observações']);
   }
   if(/Cadastro de Viaturas/i.test(title)){
     ['renavam','chassi','motor'].forEach(f=>r21Move(f,'Documentação e identificação'));
@@ -145,4 +151,4 @@ function r21Schedule(){if(r21Frame)return;r21Frame=requestAnimationFrame(()=>{r2
 const r21Obs=new MutationObserver(r21Schedule);
 function r21Init(){r21Obs.observe(document.body,{childList:true,subtree:true,characterData:true});r21Apply();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r21Init,{once:true});else r21Init();
-console.info('[GCMBS] HF10 R21C paridade visual 10.0.68 ativa');
+console.info('[GCMBS] HF10 R21D paridade visual 10.0.68 ativa');
