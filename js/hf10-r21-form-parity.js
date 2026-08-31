@@ -1,4 +1,4 @@
-// GCMBS 10.0.68 - HF10 R21
+// GCMBS 10.0.68 - HF10 R21C
 // Paridade visual dos formularios Online/App. Nao altera dados nem regras de gravacao.
 let r21Frame=0;
 
@@ -58,6 +58,32 @@ function r21Move(field,title){
   if(target&&label.parentElement!==target)target.appendChild(label);
 }
 
+function r21OrderSections(titles){
+  const host=document.getElementById('onlineCampos');
+  if(!host)return;
+  for(const title of titles){
+    const sec=r21Section(title);
+    if(sec)host.appendChild(sec);
+  }
+}
+
+function r21Bool(v){
+  return ['1','SIM','TRUE'].includes(String(v??'').toUpperCase());
+}
+
+function r21BooleanSelect(field){
+  const current=document.querySelector(`#onlineCampos [data-online-field="${field}"]`);
+  if(!current||current.tagName==='SELECT')return current;
+  const select=document.createElement('select');
+  select.setAttribute('data-online-field',field);
+  select.disabled=!!current.disabled;
+  select.required=!!current.required;
+  const sim=r21Bool(current.value);
+  select.innerHTML=`<option value="1"${sim?' selected':''}>Sim</option><option value="0"${sim?'':' selected'}>Não</option>`;
+  current.replaceWith(select);
+  return select;
+}
+
 function r21CleanupEmpty(){
   document.querySelectorAll('#onlineCampos .module-editor-section').forEach(sec=>{
     const grid=sec.querySelector('.form-grid');
@@ -67,11 +93,14 @@ function r21CleanupEmpty(){
 
 function r21PatchVersion(){
   const onlineVersao=document.getElementById('onlineVersao');
-  if(onlineVersao)onlineVersao.textContent='Online 10.0.68';
+  if(onlineVersao&&onlineVersao.textContent!=='Online 10.0.68')onlineVersao.textContent='Online 10.0.68';
   const card=document.getElementById('appAtualizacaoCard');
   if(card&&/10\.0\.62/.test(card.innerHTML))card.innerHTML=card.innerHTML.replaceAll('10.0.62','10.0.68');
   document.querySelectorAll('[data-app-version],.app-version,.online-version').forEach(el=>{
     if(/10\.0\.62/.test(el.textContent||''))el.textContent=(el.textContent||'').replaceAll('10.0.62','10.0.68');
+  });
+  document.querySelectorAll('main *').forEach(el=>{
+    if(el.children.length===0&&/^Online\s+10\.0\.62$/i.test(String(el.textContent||'').trim()))el.textContent='Online 10.0.68';
   });
 }
 
@@ -91,9 +120,11 @@ function r21PatchForm(){
     r21Move('participa_gerador','Operação');
   }
   if(/Postos Operacionais/i.test(title)){
-    r21Move('descricao','Localização e descrição');
-    r21Move('endereco','Localização e descrição');
+    r21BooleanSelect('exige_viatura');
+    ['descricao','endereco'].forEach(f=>r21Move(f,'Localização e descrição'));
     ['exige_motorista','exige_viatura','viatura_id'].forEach(f=>r21Move(f,'Requisitos operacionais'));
+    r21Move('observacao','Observações');
+    r21OrderSections(['Identificação','Prioridade e efetivo','Funcionamento','Localização e descrição','Requisitos operacionais','Observações']);
   }
   if(/Tipos de Escalas/i.test(title)){
     ['tipo_escala','categoria'].forEach(f=>r21Move(f,'Tipo de escala'));
@@ -112,6 +143,6 @@ function r21Apply(){r21PatchVersion();r21PatchForm();}
 function r21Schedule(){if(r21Frame)return;r21Frame=requestAnimationFrame(()=>{r21Frame=0;r21Apply();});}
 
 const r21Obs=new MutationObserver(r21Schedule);
-function r21Init(){r21Obs.observe(document.body,{childList:true,subtree:true});r21Apply();}
+function r21Init(){r21Obs.observe(document.body,{childList:true,subtree:true,characterData:true});r21Apply();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r21Init,{once:true});else r21Init();
-console.info('[GCMBS] HF10 R21 paridade visual 10.0.68 ativa');
+console.info('[GCMBS] HF10 R21C paridade visual 10.0.68 ativa');
