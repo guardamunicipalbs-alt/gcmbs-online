@@ -62,4 +62,8 @@ document.addEventListener('click',e=>{
   queueMicrotask(()=>r163Abrir(btn));
 },false);
 
+// HF10 R17: Banco de Horas do Comando por GCM + competencia.
+import('./hf10-r17-banco-horas.js?v=20260831hf10r17')
+  .catch(err=>console.warn('[GCMBS] HF10 R17 falha ao carregar Banco de Horas',err));
+
 console.info('[GCMBS] HF10 R16.3 modal do Quadro ativo');
