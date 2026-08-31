@@ -1,5 +1,5 @@
 import './hf8-utf8.js?v=20260823hf8r3';
-import './hf7-paridade.js?v=20260823hf7r3fj';
+import './hf7-paridade.js?v=20260831hf10r16r2';
 
 // HF10 R10 — proteção contra carregamento infinito Online/App.
 // Não altera banco, payloads, regras funcionais ou o Gerador de Escala.
