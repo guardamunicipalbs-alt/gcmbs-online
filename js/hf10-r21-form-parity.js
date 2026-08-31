@@ -8,7 +8,18 @@ const R21_LABELS={
   endereco:'Endereço',
   resultado:'Resultado',
   renavam:'RENAVAM',
-  potencia:'Potência'
+  potencia:'Potência',
+  cnh:'Número da CNH',
+  categoria_cnh_validade:'Validade da CNH',
+  exige_motorista:'Exige motorista',
+  exige_viatura:'Exige viatura',
+  tipo_escala:'Tipo de escala',
+  hora_inicio:'Hora inicial',
+  hora_fim:'Hora final',
+  intervalo1_inicio:'Intervalo 1 · início',
+  intervalo1_fim:'Intervalo 1 · fim',
+  intervalo2_inicio:'Intervalo 2 · início',
+  intervalo2_fim:'Intervalo 2 · fim'
 };
 
 function r21SetLabel(field,text){
@@ -63,13 +74,21 @@ function r21PatchForm(){
   for(const [f,t] of Object.entries(R21_LABELS))r21SetLabel(f,t);
 
   if(/Cadastro de Guardas/i.test(title)){
-    r21Move('data_nascimento','Dados pessoais');
+    ['rg','data_nascimento','pai','mae','naturalidade','email','telefone'].forEach(f=>r21Move(f,'Dados pessoais'));
     r21Move('mes_ferias','Lotação e configuração operacional');
+    ['cnh','categoria_cnh_validade'].forEach(f=>r21Move(f,'CNH e autorizações'));
     r21Move('observacao','Observações');
   }
   if(/Postos Operacionais/i.test(title)){
     r21Move('descricao','Localização e descrição');
     r21Move('endereco','Localização e descrição');
+    ['exige_motorista','exige_viatura','viatura_id'].forEach(f=>r21Move(f,'Requisitos operacionais'));
+  }
+  if(/Tipos de Escalas/i.test(title)){
+    ['tipo_escala','categoria'].forEach(f=>r21Move(f,'Tipo de escala'));
+    ['hora_inicio','hora_fim'].forEach(f=>r21Move(f,'Horário'));
+    ['intervalo1_inicio','intervalo1_fim','intervalo2_inicio','intervalo2_fim'].forEach(f=>r21Move(f,'Intervalos'));
+    r21Move('observacao','Observações');
   }
   if(/Cadastro de Viaturas/i.test(title)){
     ['renavam','chassi','motor'].forEach(f=>r21Move(f,'Documentação e identificação'));
