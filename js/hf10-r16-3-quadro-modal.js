@@ -73,9 +73,9 @@ document.addEventListener('click',e=>{
   queueMicrotask(()=>r163Abrir(btn));
 },false);
 
-// HF10 R17: Banco de Horas do Comando por GCM + competencia.
-import('./hf10-r17-banco-horas.js?v=20260831hf10r17')
-  .catch(err=>console.warn('[GCMBS] HF10 R17 falha ao carregar Banco de Horas',err));
+// HF10 R17.2: Banco de Horas do Comando por GCM + competencia, com protecao da lista filtrada.
+import('./hf10-r17-banco-horas.js?v=20260831hf10r17r2')
+  .catch(err=>console.warn('[GCMBS] HF10 R17.2 falha ao carregar Banco de Horas',err));
 
 // HF10 R18: estado operacional da Frota e sincronizacao manual consolidada.
 import('./hf10-r18-frota-sync.js?v=20260831hf10r18')
