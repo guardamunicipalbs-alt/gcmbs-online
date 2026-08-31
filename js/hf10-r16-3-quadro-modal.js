@@ -57,8 +57,6 @@ async function r163Abrir(btn){
 document.addEventListener('click',e=>{
   const btn=e.target.closest?.('[data-quadro-detail="efetivo.servicoA"],[data-quadro-detail="efetivo.servicoB"]');
   if(!btn)return;
-  // O listener original abre imediatamente. Esta camada substitui o conteúdo
-  // em seguida pela resposta canônica R16.3, sem impedir o comportamento padrão.
   queueMicrotask(()=>r163Abrir(btn));
 },false);
 
@@ -69,5 +67,9 @@ import('./hf10-r17-banco-horas.js?v=20260831hf10r17')
 // HF10 R18: estado operacional da Frota e sincronizacao manual consolidada.
 import('./hf10-r18-frota-sync.js?v=20260831hf10r18')
   .catch(err=>console.warn('[GCMBS] HF10 R18 falha ao carregar Frota/Sync',err));
+
+// HF10 R19: logout explicito revoga inclusive sessao lembrada.
+import('./hf10-r19-session-security.js?v=20260831hf10r19')
+  .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
 console.info('[GCMBS] HF10 R16.3 modal do Quadro ativo');
