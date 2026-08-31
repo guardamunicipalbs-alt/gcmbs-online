@@ -85,8 +85,8 @@ import('./hf10-r18-frota-sync.js?v=20260831hf10r18')
 import('./hf10-r19-session-security.js?v=20260831hf10r19')
   .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
-// HF10 R21C: paridade visual, Equipes/Postos e versao; query nova evita cache legado.
-import('./hf10-r21-form-parity.js?v=20260831hf10r21c')
+// HF10 R21D: paridade visual, Equipes/Postos/Tipos e versao; query nova evita cache legado.
+import('./hf10-r21-form-parity.js?v=20260831hf10r21d')
   .catch(err=>console.warn('[GCMBS] HF10 R21 falha ao carregar paridade visual',err));
 
 console.info('[GCMBS] HF10 R20 Quadro com extras dedicados ativo');
