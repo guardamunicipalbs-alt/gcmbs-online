@@ -85,4 +85,8 @@ import('./hf10-r18-frota-sync.js?v=20260831hf10r18')
 import('./hf10-r19-session-security.js?v=20260831hf10r19')
   .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
+// HF10 R21: paridade visual de formularios e identificacao 10.0.68.
+import('./hf10-r21-form-parity.js?v=20260831hf10r21')
+  .catch(err=>console.warn('[GCMBS] HF10 R21 falha ao carregar paridade visual',err));
+
 console.info('[GCMBS] HF10 R20 Quadro com extras dedicados ativo');
