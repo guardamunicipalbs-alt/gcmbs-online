@@ -35,13 +35,14 @@ function configureBrowserAutocomplete(){
   user.setAttribute('autocomplete',remember?'username':'off');
   pass.setAttribute('autocomplete',remember?'current-password':'new-password');
   if(!remember){
+    // Ajuda a impedir preenchimento por gerenciadores de senha de terceiros.
     user.setAttribute('data-lpignore','true');
     pass.setAttribute('data-lpignore','true');
     user.setAttribute('data-1p-ignore','true');
     pass.setAttribute('data-1p-ignore','true');
   }else{
-    user.removeAttribute('data-lpignore');pass.removeAttribute('data-1p-ignore');
-    user.removeAttribute('data-1p-ignore');pass.removeAttribute('data-lpignore');
+    user.removeAttribute('data-lpignore');pass.removeAttribute('data-lpignore');
+    user.removeAttribute('data-1p-ignore');pass.removeAttribute('data-1p-ignore');
   }
 }
 
@@ -55,6 +56,7 @@ function clearVisibleCredentials(force=false){
 }
 
 function schedulePostAutofillClear(){
+  // Chrome/gerenciadores podem preencher alguns ms depois do carregamento.
   for(const ms of [0,60,250,700,1400])setTimeout(()=>clearVisibleCredentials(false),ms);
 }
 
