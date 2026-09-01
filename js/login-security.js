@@ -5,8 +5,8 @@ import './central-pendencias-fix.js';
 import './relatorios-route-fix.js';
 import './hf10-r21d-version-guard.js?v=20260831hf10r21d';
 import './audit-pending-fixes.js?v=100067';
-// HF10 R24: uma unica interface da Folha. A antiga v62-folha-ui.js foi retirada
-// para evitar duas MutationObservers disputando o mesmo onlineRegistros.
+// HF10 R24/R24.1: uma unica interface da Folha e escrita pela rota dedicada.
+import './hf10-r24-1-folha-write.js?v=20260831hf10r24_1';
 import './folha-online-v62.js?v=20260831hf10r24';
 
 // Politica de seguranca do login GCMBS.
