@@ -5,8 +5,9 @@ import './central-pendencias-fix.js';
 import './relatorios-route-fix.js';
 import './hf10-r21d-version-guard.js?v=20260831hf10r21d';
 import './audit-pending-fixes.js?v=100067';
-import './v62-folha-ui.js?v=100067';
-import './v62-folha-legenda.js?v=100067';
+// HF10 R24: uma unica interface da Folha. A antiga v62-folha-ui.js foi retirada
+// para evitar duas MutationObservers disputando o mesmo onlineRegistros.
+import './folha-online-v62.js?v=20260831hf10r24';
 
 // Politica de seguranca do login GCMBS.
 // Quando "Lembrar meu acesso" estiver desmarcado, nenhum dado de login
@@ -34,14 +35,13 @@ function configureBrowserAutocomplete(){
   user.setAttribute('autocomplete',remember?'username':'off');
   pass.setAttribute('autocomplete',remember?'current-password':'new-password');
   if(!remember){
-    // Ajuda a impedir preenchimento por gerenciadores de senha de terceiros.
     user.setAttribute('data-lpignore','true');
     pass.setAttribute('data-lpignore','true');
     user.setAttribute('data-1p-ignore','true');
     pass.setAttribute('data-1p-ignore','true');
   }else{
-    user.removeAttribute('data-lpignore');pass.removeAttribute('data-lpignore');
-    user.removeAttribute('data-1p-ignore');pass.removeAttribute('data-1p-ignore');
+    user.removeAttribute('data-lpignore');pass.removeAttribute('data-1p-ignore');
+    user.removeAttribute('data-1p-ignore');pass.removeAttribute('data-lpignore');
   }
 }
 
@@ -55,7 +55,6 @@ function clearVisibleCredentials(force=false){
 }
 
 function schedulePostAutofillClear(){
-  // Chrome/gerenciadores podem preencher alguns ms depois do carregamento.
   for(const ms of [0,60,250,700,1400])setTimeout(()=>clearVisibleCredentials(false),ms);
 }
 
