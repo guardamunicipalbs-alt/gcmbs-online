@@ -1,21 +1,19 @@
 {
-  "version": "10.0.67",
-  "versionCode": 67,
-  "apk": "GCMBS-10.0.67.apk",
-  "available": false,
-  "sha256": "C475E7A63ABC9D1A57349E9F42AF0AA3FB9BAEFE3B516B17F123CB7D95D00252",
-  "sizeBytes": 5240995,
-  "publishedAt": "2026-08-24T15:02:17Z",
-  "migrationRequired": false,
-  "migrationFrom": "10.0.66",
-  "signingFingerprint": "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
-  "notes": [
-    "HF10 R15 publicado no Online/PWA com estabilização geral contra travamentos de abas.",
-    "MutationObservers globais passaram a ser coalescidos por frame para impedir cascatas síncronas de DOM.",
-    "Corrigido o ciclo de Ofícios em que cards já presentes eram reapendados e reativavam o observer continuamente.",
-    "Pesquisa dos módulos genéricos passa por filtro leve em memória, sem serializar e reconstruir toda a lista a cada tecla.",
-    "Chamadas caras idênticas em voo são deduplicadas e os gatilhos de atualização automática são protegidos contra sobreposição.",
-    "Service Worker R15 remove caches antigos e só injeta hotfixes na página principal do GCMBS, deixando páginas de reparo/instalação fora da cadeia.",
-    "O APK 10.0.67 anterior permanece bloqueado porque não contém HF10 R15; use o Online/PWA corrigido até existir APK assinado e validado."
-  ]
+    "version":  "10.0.68",
+    "versionCode":  68,
+    "apk":  "GCMBS-10.0.68.apk",
+    "available":  true,
+    "sha256":  "78E852F2F2E46EC8DD7A45F672BDBC07B1CCFA69F2BACB7E8854C1C38DCC9A6E",
+    "sizeBytes":  5274940,
+    "publishedAt":  "2026-09-01T01:57:40Z",
+    "migrationRequired":  false,
+    "migrationFrom":  "10.0.67",
+    "signingFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
+    "notes":  [
+                  "GCMBS 10.0.68 consolidado com a paridade atual do Online e App.",
+                  "Inclui as 13 camadas HF10 atuais presentes no main R25.",
+                  "Extra Manual parcial preserva o horario real: 19:00-01:00 aparece em linha propria e nao e absorvido por 19:00-07:00.",
+                  "APK recompilado com os assets Android atuais e assinado com a mesma chave institucional.",
+                  "Atualizacao validada no aparelho Android com versionCode 68, sem desinstalacao e sem limpeza dos dados."
+              ]
 }
