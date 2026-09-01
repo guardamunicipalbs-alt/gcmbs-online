@@ -213,11 +213,67 @@ async function aplicarIdentidadeVisualRemota(){
 
 function hoje(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'})}
 function normalizar(v){return String(v??'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function ehExtraEscala(item){
+  // HF10_R25_EXTRA_HORARIO_PARIDADE
+  // Mesma regra do Desktop: Extra parcial conserva o intervalo efetivo.
+  const origem=normalizar(item?.origem);
+  const tipo=normalizar(item?.tipo_servico);
+  return Boolean(
+    origem.includes('EXTRA') ||
+    tipo==='EXTRA' ||
+    item?.extra===true ||
+    Number(item?.extra||0)===1 ||
+    Number(
+      item?.extra_manual_id ??
+      item?.hist_extra_manual_id ??
+      item?.extra_id ??
+      0
+    )>0
+  );
+}
 function horarioRelatorio(item){
   const turno=String(item.turno||'').toUpperCase();
-  const hi=String(item.horario_inicio||item.hist_horario_inicio||'').slice(0,5),hf=String(item.horario_fim||item.hist_horario_fim||'').slice(0,5);
-  // Postos 24h podem vir do histórico como 07:00–07:00; na visão por turno
-  // exibimos o intervalo efetivamente representado pela linha da escala.
+
+  const hi=String(
+    item.horario_inicio ??
+    item.hist_horario_inicio ??
+    item.extra_horario_inicio ??
+    item.hora_inicio ??
+    ''
+  ).slice(0,5);
+
+  const hf=String(
+    item.horario_fim ??
+    item.hist_horario_fim ??
+    item.extra_horario_fim ??
+    item.hora_fim ??
+    ''
+  ).slice(0,5);
+
+  const horarioTexto=String(
+    item.horario ??
+    item.hist_horario ??
+    item.extra_horario ??
+    item._extraManualHorario ??
+    ''
+  ).trim();
+
+  const matchHorario=horarioTexto.match(/(\d{2}:\d{2}).*?(\d{2}:\d{2})/);
+
+  // Extra parcial: o horario produzido pelo Desktop e a fonte de verdade.
+  // Primeiro preservamos o campo textual "horario" (ex.: 19:00 às 01:00).
+  // Depois usamos horario_inicio/fim ou os respectivos campos historicos.
+  if(ehExtraEscala(item)){
+    if(matchHorario && matchHorario[1]!==matchHorario[2]){
+      return `${matchHorario[1]} às ${matchHorario[2]}`;
+    }
+    if(hi&&hf&&hi!==hf){
+      return `${hi} às ${hf}`;
+    }
+  }
+
+  // Registros ordinarios ou extras de 24h continuam respeitando a
+  // materializacao canonica existente do projeto.
   if(hi&&hf&&hi!==hf)return `${hi} às ${hf}`;
   if(turno==='B')return '19:00 às 07:00';
   if(turno==='A')return '07:00 às 19:00';
@@ -232,7 +288,7 @@ function montarGruposEscala(registros){
     const posto=postoEscala(item);if(!posto)continue;
     const turno=String(item.turno||'A').toUpperCase(),horario=horarioRelatorio(item),prioridade=Number(item.posto_prioridade??item.hist_posto_prioridade??9999),chave=`${posto}\0${turno}\0${horario}`;
     if(!grupos.has(chave))grupos.set(chave,{posto,turno,horario,prioridade,itens:new Map()});
-    const dia=String(item.data||'').slice(0,10),g=grupos.get(chave),arr=g.itens.get(dia)||[],nome=nomeEscala(item),ex=arr.find(x=>normalizar(x.nome)===normalizar(nome)),motorista=motoristaEscala(item,nome),veiculo=String(item.viatura||item.hist_viatura_prefixo||'').trim(),extra=normalizar(item.origem).includes('EXTRA');
+    const dia=String(item.data||'').slice(0,10),g=grupos.get(chave),arr=g.itens.get(dia)||[],nome=nomeEscala(item),ex=arr.find(x=>normalizar(x.nome)===normalizar(nome)),motorista=motoristaEscala(item,nome),veiculo=String(item.viatura||item.hist_viatura_prefixo||'').trim(),extra=ehExtraEscala(item);
     if(ex){ex.motorista=ex.motorista||motorista;ex.veiculo=ex.veiculo||veiculo;ex.extra=ex.extra||extra}else arr.push({nome,motorista,veiculo,extra,raw:item,id:Number(item.id||0),guarda_id:Number(item.guarda_id||0),posto_id:Number(item.posto_id||0),data:dia});
     g.itens.set(dia,arr);g.prioridade=Math.min(g.prioridade,prioridade);
   }
@@ -244,7 +300,29 @@ function preencherFiltrosEscala(){
   const dados=dadosEscalaVisao();
   const nomes=[...new Set(dados.map(nomeEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
   const postos=[...new Set(dados.map(postoEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
-  const g=$('escalaGcm'),p=$('escalaPosto');if(g){const v=g.value;g.innerHTML='<option value="">Todos os GCMs</option>'+nomes.map(x=>`<option>${esc(x)}</option>`).join('');g.value=v}if(p){const v=p.value;p.innerHTML='<option value="">Todos os postos</option>'+postos.map(x=>`<option>${esc(x)}</option>`).join('');p.value=v}
+  const horarios=[...new Set(dados.map(horarioRelatorio).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+
+  const g=$('escalaGcm'),p=$('escalaPosto'),h=$('escalaHorario');
+
+  if(g){
+    const v=g.value;
+    g.innerHTML='<option value="">Todos os GCMs</option>'+nomes.map(x=>`<option>${esc(x)}</option>`).join('');
+    g.value=v;
+  }
+
+  if(p){
+    const v=p.value;
+    p.innerHTML='<option value="">Todos os postos</option>'+postos.map(x=>`<option>${esc(x)}</option>`).join('');
+    p.value=v;
+  }
+
+  // HF10 R25: o filtro tambem passa a oferecer horarios de Extras parciais,
+  // por exemplo 19:00 às 01:00, sem remover os horarios ordinarios.
+  if(h){
+    const v=h.value;
+    h.innerHTML='<option value="">Todos os horários</option>'+horarios.map(x=>`<option>${esc(x)}</option>`).join('');
+    h.value=horarios.includes(v)?v:'';
+  }
 }
 function renderEscalas(){
   preencherFiltrosEscala();
