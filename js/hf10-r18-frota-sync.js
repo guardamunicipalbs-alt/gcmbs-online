@@ -68,14 +68,14 @@ function r18PatchCards(){
 }
 function r18PatchSyncVersion(){
   const e=document.getElementById('syncStatus');
-  if(e&&/10\.0\.62/.test(String(e.title||'')))e.title=String(e.title).replaceAll('10.0.62','10.0.68');
+  if(e&&/10\.0\.(?:62|68)/.test(String(e.title||'')))e.title=String(e.title).replace(/10\.0\.(?:62|68)/g,'10.0.69');
 }
 async function r18AtualizarBadge(){
   const e=document.getElementById('syncStatus');if(!e||!r18Token())return;
   try{
     const b=await r18Post(R18_QUADRO,{action:'sync_status'}),s=b.sincronizacao||{};
     const text=`Última sincronização Desktop ↔ Online/App: ${s.ultima_sincronizacao?new Date(s.ultima_sincronizacao).toLocaleString('pt-BR',{timeZone:'America/Fortaleza'}):'não registrada'}${s.desktop_version?' · Desktop '+s.desktop_version:''}`;
-    const title=`Pendentes: ${Number(s.pendentes||0)} · Erros recentes: ${Number(s.erros_recentes||0)} · GCMBS Online/App 10.0.68`;
+    const title=`Pendentes: ${Number(s.pendentes||0)} · Erros recentes: ${Number(s.erros_recentes||0)} · GCMBS Online/App 10.0.69`;
     if(e.textContent!==text)e.textContent=text;if(e.title!==title)e.title=title;
     e.style.color=Number(s.erros_recentes||0)?'#fecaca':Number(s.pendentes||0)?'#fde68a':'#bbf7d0';
   }catch{}

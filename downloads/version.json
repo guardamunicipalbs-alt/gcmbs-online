@@ -1,19 +1,22 @@
 {
-    "version":  "10.0.68",
-    "versionCode":  68,
-    "apk":  "GCMBS-10.0.68.apk",
+    "version":  "10.0.69",
+    "versionCode":  69,
+    "apk":  "GCMBS-10.0.69.apk",
     "available":  true,
-    "sha256":  "78E852F2F2E46EC8DD7A45F672BDBC07B1CCFA69F2BACB7E8854C1C38DCC9A6E",
-    "sizeBytes":  5274940,
-    "publishedAt":  "2026-09-01T01:57:40Z",
-    "migrationRequired":  false,
-    "migrationFrom":  "10.0.67",
-    "signingFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
+    "publishedAt":  "2026-09-04T18:33:07.7156649Z",
+    "sha256":  "ADB3F93257CCBAE1DFE18436C5652D60AF9C7EB5C69D67F891C83028B40493E7",
+    "sizeBytes":  5279119,
+    "migrationRequired":  true,
+    "migrationFrom":  "10.0.68",
+    "migrationProcedure":  "sync-uninstall-install",
+    "signingFingerprint":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
+    "previousSigningFingerprint":  "EB73949B4489B9ABAA105B482E67458530735018273B4E02F866AFBE7D8920F6",
     "notes":  [
-                  "GCMBS 10.0.68 consolidado com a paridade atual do Online e App.",
-                  "Inclui as 13 camadas HF10 atuais presentes no main R25.",
-                  "Extra Manual parcial preserva o horario real: 19:00-01:00 aparece em linha propria e nao e absorvido por 19:00-07:00.",
-                  "APK recompilado com os assets Android atuais e assinado com a mesma chave institucional.",
-                  "Atualizacao validada no aparelho Android com versionCode 68, sem desinstalacao e sem limpeza dos dados."
+                  "Paridade Desktop, Online e App",
+                  "Impressao compacta sem folha em branco",
+                  "Vinculo seguro de permutas e Banco de Horas",
+                  "Nova identidade de assinatura institucional",
+                  "Sincronize e confira os dados antes de desinstalar a versao anterior",
+                  "Reinstalacao obrigatoria na migracao da versao 10.0.68"
               ]
 }

@@ -1,8 +1,8 @@
-// GCMBS 10.0.68 - HF10 R21D
+// GCMBS 10.0.69 - compatibilidade com camadas legadas
 // Protege apenas o indicador visual de versao contra camadas legadas 10.0.62.
 // Nao altera dados, permissoes, payloads ou regras operacionais.
 (function(){
-  const corrigir=v=>String(v??'').replaceAll('10.0.62','10.0.68');
+  const corrigir=v=>String(v??'').replace(/10\.0\.(?:62|68)/g,'10.0.69');
 
   function instalar(){
     const el=document.getElementById('onlineVersao');
@@ -35,5 +35,5 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',instalar,{once:true});
   else instalar();
-  console.info('[GCMBS] HF10 R21D protecao de versao 10.0.68 ativa');
+  console.info('[GCMBS] Proteção de versão 10.0.69 ativa');
 })();

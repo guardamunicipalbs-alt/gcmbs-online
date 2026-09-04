@@ -284,7 +284,7 @@ async function atualizarBadge(){
         s.pendentes||0
       )} · Erros recentes: ${Number(
         s.erros_recentes||0
-      )} · GCMBS Online/App 10.0.62`;
+      )} · GCMBS Online/App 10.0.69`;
 
     e.style.color=
       Number(s.erros_recentes||0)
@@ -1125,5 +1125,5 @@ window.addEventListener(
 );
 
 console.info(
-  '[GCMBS] consolidação Online 10.0.62 ativa'
+  '[GCMBS] consolidação Online/App 10.0.69 ativa'
 );

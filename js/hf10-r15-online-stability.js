@@ -179,7 +179,7 @@ if(!window.__gcmbsR15RefreshTriggerGuard){
 function r15Stamp(){
   r15EnsureListObserver();
   const v=document.getElementById('onlineVersao');
-  if(v)v.textContent='Online 10.0.68 · HF10 R15';
+  if(v)v.textContent='Online/App 10.0.69';
 }
 function r15Init(){r15Stamp();r15ScheduleSearch();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r15Init,{once:true});else r15Init();
@@ -192,7 +192,7 @@ window.addEventListener('pageshow',()=>setTimeout(r15Init,0));
 
 // HF10 R16.4: carregar o detalhe canônico do Quadro também a partir da camada R15.
 // Usa a mesma URL do Service Worker para que o módulo seja avaliado uma única vez.
-import('./hf10-r16-3-quadro-modal.js?v=20260831hf10r16r3')
+import('./hf10-r16-3-quadro-modal.js?v=100069')
   .catch(err=>console.warn('[GCMBS] HF10 R16.4 falha ao carregar detalhe do Quadro',err));
 
 console.info('[GCMBS] HF10 R15 estabilidade consolidada carregada',HF10_R15);
