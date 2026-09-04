@@ -1,4 +1,4 @@
-import './dashboard-resilience-v62.js?v=100069';
+import './dashboard-resilience-v62.js?v=100070';
 
 // GCMBS 10.0.62 — compatibilidade para a duplicidade visual do botão de sincronização.
 // A rotina principal de deduplicação e recuperação do Quadro está em dashboard-resilience-v62.js.

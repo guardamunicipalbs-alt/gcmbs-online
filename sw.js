@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100069-hf11-paridade';
+const VERSION='gcmbs-online-100070-hf11-paridade';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -16,9 +16,9 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.69');
+    headers.set('x-gcmbs-version','10.0.70');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] 10.0.69 HF11 ativo',VERSION);
+console.info('[GCMBS SW] 10.0.70 HF11 ativo',VERSION);

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a"><link rel="icon" type="image/png" href="favicon.png?v=100069"><link rel="manifest" href="manifest.webmanifest?v=100069"><link rel="stylesheet" href="css/app.css?v=100069"><title>GCMBS</title></head>
+<meta name="theme-color" content="#0f172a"><link rel="icon" type="image/png" href="favicon.png?v=100070"><link rel="manifest" href="manifest.webmanifest?v=100070"><link rel="stylesheet" href="css/app.css?v=100070"><title>GCMBS</title></head>
 <body>
 <section id="loginTela" class="login-screen">
   <div class="login-card">
@@ -29,8 +29,8 @@
     <button class="dashboard-card" data-quadro-detail="efetivo.afastados" data-title="GCM afastados"><span>GCM afastados</span><b id="qAfastados">0</b><small>Ver relação</small></button>
     <button class="dashboard-card" data-quadro-detail="efetivo.feristas" data-title="GCM em férias"><span>GCM em férias</span><b id="qFerias">0</b><small>Ver relação</small></button>
     <button class="dashboard-card" data-quadro-detail="faltas.registros" data-title="Faltas do dia"><span>Faltas</span><b id="qFaltas">0</b><small>Ver relatório</small></button>
-    <button class="dashboard-card" data-quadro-detail="efetivo.servicoA" data-title="Serviço A · 07:00–19:00"><span>Serviço A · 07:00–19:00</span><b id="qServicoA">0</b><small>GCMs e postos</small></button>
-    <button class="dashboard-card" data-quadro-detail="efetivo.servicoB" data-title="Serviço B · 19:00–07:00"><span>Serviço B · 19:00–07:00</span><b id="qServicoB">0</b><small>GCMs e postos</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoA" data-title="Serviço A · 07:00–19:00"><span>Serviço A · 07:00–19:00</span><b id="qServicoA">0</b><small>Ordinários + extras</small></button>
+    <button class="dashboard-card" data-quadro-detail="efetivo.servicoB" data-title="Serviço B · 19:00–07:00"><span>Serviço B · 19:00–07:00</span><b id="qServicoB">0</b><small>Ordinários + extras</small></button>
   </div></section>
   <section class="dashboard-sector"><h2>Viaturas</h2><div class="dashboard-cards">
     <button class="dashboard-card" data-quadro-detail="viaturas.total" data-title="Frota cadastrada"><span>Totais</span><b id="qViaturasTotal">0</b><small>Ver relação</small></button>
@@ -141,7 +141,7 @@
   <div class="card"><div class="toolbar"><div><h2>Pendências consolidadas</h2><small class="muted">Atualizadas junto com a sincronização online.</small></div></div><div id="pendenciasLista" class="pending-list"></div></div>
 </section>
 <section data-view="online" class="hidden">
-  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Online/App 10.0.69</small></div></div>
+  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Online/App 10.0.70</small></div></div>
   <div class="card module-landing">
     <div class="notice module-sync-note"><strong>Dados únicos e sincronizados</strong>Esta tela utiliza as mesmas permissões e registros do sistema online. Ações de edição só aparecem para usuários autorizados.</div>
     <div id="onlineEntidades" class="module-grid"></div>
@@ -179,7 +179,7 @@
 </section>
 <section data-view="perfil" class="hidden">
   <div class="card"><h2>Meu perfil</h2><p><b>Usuário:</b> <span id="perfilUsuario"></span></p><p><b>Perfil:</b> <span id="perfilRole"></span></p></div>
-  <div class="card" id="appAtualizacaoCard"><h2>Aplicativo Android</h2><p class="muted">Versão deste pacote: <b>10.0.69</b>. Use a página oficial para instalar ou atualizar sem cabo USB.</p><div class="toolbar"><a class="primary" href="https://guardamunicipalbs-alt.github.io/gcmbs-online/instalar.html" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Baixar / atualizar app</a><button id="verificarAtualizacaoApp" class="secondary" type="button">Verificar atualização</button></div><div id="statusAtualizacaoApp" class="notice">Consulte a versão publicada antes de instalar.</div></div>
+  <div class="card" id="appAtualizacaoCard"><h2>Aplicativo Android</h2><p class="muted">Versão deste pacote: <b>10.0.70</b>. Use a página oficial para instalar ou atualizar sem cabo USB.</p><div class="toolbar"><a class="primary" href="https://guardamunicipalbs-alt.github.io/gcmbs-online/instalar.html" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Baixar / atualizar app</a><button id="verificarAtualizacaoApp" class="secondary" type="button">Verificar atualização</button></div><div id="statusAtualizacaoApp" class="notice">Consulte a versão publicada antes de instalar.</div></div>
   <div class="card"><h2>Permissões recebidas do Desktop</h2><div id="listaPermissoes" class="permission-list"></div></div>
   <div class="card"><h2>Solicitações enviadas pelo aplicativo</h2><div id="listaSolicitacoes" class="list"></div></div><div class="notice">As solicitações são enviadas ao GCMBS Desktop para validação e processamento. O gerador de escala não é alterado pelo aplicativo.</div>
 </section>

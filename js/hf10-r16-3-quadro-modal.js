@@ -1,6 +1,6 @@
-// GCMBS 10.0.68 - HF10 R16.3 + R20
-// Quadro Operacional: detalhe A/B com ordinarios + extras do turno,
-// mantendo os contadores principais exclusivamente ordinarios.
+// GCMBS 10.0.70 - Quadro Operacional com efetivo completo.
+// O contador e o detalhe A/B representam os mesmos GCMs: ordinarios + extras
+// ativos, com cada GCM contado uma unica vez por turno.
 const R163_QUADRO_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v62';
 const R163_EXTRAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-extras-v68';
 
@@ -54,13 +54,14 @@ async function r163Abrir(btn){
     ]);
     const key=turno==='A'?'servicoA':'servicoB';
     const atual=Array.isArray(d?.efetivo?.detalhes?.[key])?d.efetivo.detalhes[key]:[];
-    const ord=Number(d?.efetivo?.[key]||0);
+    const consolidado=d?.efetivo?.contagemIncluiExtras===true;
+    const ord=Number(d?.efetivo?.[turno==='A'?'ordinariosA':'ordinariosB']??(consolidado?0:d?.efetivo?.[key])??0);
     let itens=atual;
-    if(x){
+    if(!consolidado&&x){
       const diretos=Array.isArray(turno==='A'?x.extrasA:x.extrasB)?(turno==='A'?x.extrasA:x.extrasB):[];
       itens=[...atual.filter(y=>!r163EhEvento(y)),...diretos];
     }
-    const extras=Math.max(0,itens.length-ord);
+    const extras=Number(d?.efetivo?.[turno==='A'?'extrasA':'extrasB']??Math.max(0,itens.length-ord));
     r163Render(btn.dataset.title||`Serviço ${turno}`,d?.data||data,itens,ord,extras);
   }catch(e){
     console.warn('[GCMBS] HF10 R20 detalhe do Quadro:',e?.message||e);
@@ -82,7 +83,7 @@ import('./hf10-r17-4-banco-gestao-filter.js?v=20260831hf10r17r4')
   .catch(err=>console.warn('[GCMBS] HF10 R17.4 falha ao carregar filtro visual da Analise',err));
 
 // HF10 R18: estado operacional da Frota e sincronizacao manual consolidada.
-import('./hf10-r18-frota-sync.js?v=100069')
+import('./hf10-r18-frota-sync.js?v=100070')
   .catch(err=>console.warn('[GCMBS] HF10 R18 falha ao carregar Frota/Sync',err));
 
 // HF10 R19: logout explicito revoga inclusive sessao lembrada.
@@ -90,7 +91,7 @@ import('./hf10-r19-session-security.js?v=20260831hf10r19')
   .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
 // HF10 R21D: paridade visual, Equipes/Postos/Tipos e versao; query nova evita cache legado.
-import('./hf10-r21-form-parity.js?v=100069')
+import('./hf10-r21-form-parity.js?v=100070')
   .catch(err=>console.warn('[GCMBS] HF10 R21 falha ao carregar paridade visual',err));
 
-console.info('[GCMBS] HF10 R20 Quadro com extras dedicados ativo');
+console.info('[GCMBS] 10.0.70 Quadro com efetivo completo ativo');
