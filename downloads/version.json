@@ -8,6 +8,6 @@
     "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
     "migrationRequired":  false,
     "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-05T21:02:29.7883755Z",
+    "publishedAt":  "2026-09-05T21:05:25.8828450Z",
     "notes":  "10.0.72 Consolidacao: fila cronologica de permutas pendentes de todas as competencias; seguranca de APIs; Folha com carga unica; backup SQLite automatico; saneamento de push; Android code 72."
 }
