@@ -87,9 +87,12 @@ async function captureMixedActionsV71(ev){
   const accept=ev.target.closest?.('[data-pm-accept],[data-pm-reject]');
   const command=ev.target.closest?.('[data-cmd-pm-ok],[data-cmd-pm-no]');
   const target=accept||command;if(!target)return;
+  if(target.dataset.v71Bypass==='1'){delete target.dataset.v71Bypass;return;}
   const id=Number(target.dataset.pmAccept||target.dataset.pmReject||target.dataset.cmdPmOk||target.dataset.cmdPmNo||0);if(!id)return;
-  let req;try{req=await mixedRequestByIdV71(id);}catch{return;}if(!req)return;
+  // Bloqueia imediatamente o handler antigo enquanto conferimos a modalidade.
   ev.preventDefault();ev.stopImmediatePropagation();
+  let req;try{req=await mixedRequestByIdV71(id);}catch{target.dataset.v71Bypass='1';target.click();return;}
+  if(!req){target.dataset.v71Bypass='1';target.click();return;}
   if(accept){
     const aceitou=!!target.dataset.pmAccept;if(!confirm(aceitou?'Autorizar a troca ordinário ↔ extra sem transferência financeira?':'Recusar esta troca ordinário ↔ extra?'))return;
     try{await mixedV71('accept_mixed',{id,aceitou});location.reload();}catch(e){alert(e.message);}
@@ -97,7 +100,7 @@ async function captureMixedActionsV71(ev){
   }
   if(target.dataset.cmdPmOk&&Number(req.payload?.aceite_contraparte)!==1){alert('O titular do serviço extra ainda não autorizou a troca. A aprovação do Comando permanece bloqueada.');return;}
   // Após o aceite, a decisão do Comando segue o fluxo já existente para o Desktop consolidar.
-  target.click();
+  target.dataset.v71Bypass='1';target.click();
 }
 function markMixedCardsV71(){
   dataV71().then(d=>{
