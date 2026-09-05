@@ -1,4 +1,4 @@
-// GCMBS 10.0.72 - Quadro Operacional com efetivo completo.
+// GCMBS 10.0.73 - Quadro Operacional com efetivo completo.
 // O contador e o detalhe A/B representam os mesmos GCMs: ordinarios + extras
 // ativos, com cada GCM contado uma unica vez por turno.
 const R163_QUADRO_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v62';
@@ -83,7 +83,7 @@ import('./hf10-r17-4-banco-gestao-filter.js?v=20260831hf10r17r4')
   .catch(err=>console.warn('[GCMBS] HF10 R17.4 falha ao carregar filtro visual da Analise',err));
 
 // HF10 R18: estado operacional da Frota e sincronizacao manual consolidada.
-import('./hf10-r18-frota-sync.js?v=100072')
+import('./hf10-r18-frota-sync.js?v=100073')
   .catch(err=>console.warn('[GCMBS] HF10 R18 falha ao carregar Frota/Sync',err));
 
 // HF10 R19: logout explicito revoga inclusive sessao lembrada.
@@ -91,7 +91,7 @@ import('./hf10-r19-session-security.js?v=20260831hf10r19')
   .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
 // HF10 R21D: paridade visual, Equipes/Postos/Tipos e versao; query nova evita cache legado.
-import('./hf10-r21-form-parity.js?v=100072')
+import('./hf10-r21-form-parity.js?v=100073')
   .catch(err=>console.warn('[GCMBS] HF10 R21 falha ao carregar paridade visual',err));
 
-console.info('[GCMBS] 10.0.72 Quadro com efetivo completo ativo');
+console.info('[GCMBS] 10.0.73 Quadro com efetivo completo ativo');

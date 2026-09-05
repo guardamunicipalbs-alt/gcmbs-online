@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a"><link rel="icon" type="image/png" href="favicon.png?v=100072"><link rel="manifest" href="manifest.webmanifest?v=100072"><link rel="stylesheet" href="css/app.css?v=100072"><title>GCMBS</title></head>
+<meta name="theme-color" content="#0f172a"><link rel="icon" type="image/png" href="favicon.png?v=100073"><link rel="manifest" href="manifest.webmanifest?v=100073"><link rel="stylesheet" href="css/app.css?v=100073"><title>GCMBS</title></head>
 <body>
 <section id="loginTela" class="login-screen">
   <div class="login-card">
@@ -54,6 +54,13 @@
     <button id="escalaGerar" class="primary" type="button">Gerar relatório</button><button id="escalaLimpar" class="secondary" type="button">Limpar filtros</button><button id="escalaImprimir" class="secondary" type="button">Imprimir compacto</button>
   </div>
   <div class="card"><div class="report-summary"><strong id="escalaInfo">Informe o período para consultar.</strong><span id="escalaFiltroAtivo"></span></div><h2>Escala — visão por posto e horário</h2><p class="muted">As datas ficam na horizontal. Em telas menores, deslize a tabela lateralmente.</p><div class="matrix-wrap"><table class="report-matrix"><thead><tr id="cabecalhoMatrizMobile"></tr></thead><tbody id="resultadoMatrizMobile"></tbody></table></div></div>
+</section>
+
+
+<section data-view="relatorios" class="hidden">
+  <div class="desktop-page-head"><div><h1>Relatórios</h1><p>Consulta institucional própria, alimentada exclusivamente pela réplica integral do Desktop.</p></div><div class="toolbar"><button id="relatoriosAtualizar" class="secondary" type="button">↻ Atualizar</button><button id="relatoriosImprimir" class="secondary" type="button">Imprimir</button></div></div>
+  <div class="card report-filters"><label>Data inicial<input id="relatoriosIni" type="date"></label><label>Data final<input id="relatoriosFim" type="date"></label><label>GCM<select id="relatoriosGcm"><option value="">Todos os GCMs</option></select></label><label>Posto<select id="relatoriosPosto"><option value="">Todos os postos</option></select></label><button id="relatoriosGerar" class="primary" type="button">Gerar relatório</button></div>
+  <div class="card"><div id="relatoriosStatus" class="notice">Carregando relatório institucional...</div><div id="relatoriosLista" class="list module-record-list" style="margin-top:12px"></div></div>
 </section>
 
 <section data-view="ocorrencias" class="hidden">
@@ -143,7 +150,7 @@
   <div class="card"><div class="toolbar"><div><h2>Pendências consolidadas</h2><small class="muted">Atualizadas junto com a sincronização online.</small></div></div><div id="pendenciasLista" class="pending-list"></div></div>
 </section>
 <section data-view="online" class="hidden">
-  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Online/App 10.0.72</small></div></div>
+  <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Online/App 10.0.73</small></div></div>
   <div class="card module-landing">
     <div class="notice module-sync-note"><strong>Dados únicos e sincronizados</strong>Esta tela utiliza as mesmas permissões e registros do sistema online. Ações de edição só aparecem para usuários autorizados.</div>
     <div id="onlineEntidades" class="module-grid"></div>
@@ -181,7 +188,7 @@
 </section>
 <section data-view="perfil" class="hidden">
   <div class="card"><h2>Meu perfil</h2><p><b>Usuário:</b> <span id="perfilUsuario"></span></p><p><b>Perfil:</b> <span id="perfilRole"></span></p></div>
-  <div class="card" id="appAtualizacaoCard"><h2>Aplicativo Android</h2><p class="muted">Versão deste pacote: <b>10.0.72</b>. Use a página oficial para instalar ou atualizar sem cabo USB.</p><div class="toolbar"><a class="primary" href="https://guardamunicipalbs-alt.github.io/gcmbs-online/instalar.html" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Baixar / atualizar app</a><button id="verificarAtualizacaoApp" class="secondary" type="button">Verificar atualização</button></div><div id="statusAtualizacaoApp" class="notice">Consulte a versão publicada antes de instalar.</div></div>
+  <div class="card" id="appAtualizacaoCard"><h2>Aplicativo Android</h2><p class="muted">Versão deste pacote: <b>10.0.73</b>. Use a página oficial para instalar ou atualizar sem cabo USB.</p><div class="toolbar"><a class="primary" href="https://guardamunicipalbs-alt.github.io/gcmbs-online/instalar.html" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Baixar / atualizar app</a><button id="verificarAtualizacaoApp" class="secondary" type="button">Verificar atualização</button></div><div id="statusAtualizacaoApp" class="notice">Consulte a versão publicada antes de instalar.</div></div>
   <div class="card"><h2>Permissões recebidas do Desktop</h2><div id="listaPermissoes" class="permission-list"></div></div>
   <div class="card"><h2>Solicitações enviadas pelo aplicativo</h2><div id="listaSolicitacoes" class="list"></div></div><div class="notice">As solicitações são enviadas ao GCMBS Desktop para validação e processamento. O gerador de escala não é alterado pelo aplicativo.</div>
 </section>
@@ -189,8 +196,8 @@
 <div id="quadroModal" class="quadro-modal hidden" role="dialog" aria-modal="true"><div class="quadro-modal-card"><div class="quadro-modal-head"><h2 id="quadroModalTitulo">Detalhes</h2><button id="quadroModalFechar" type="button">×</button></div><div id="quadroModalMeta" class="muted"></div><div id="quadroModalLista" class="list"></div></div></div>
 <nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="avisos" data-fixed="true">📢 <span>Quadro de Avisos</span> <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
 </div>
-<script type="module" src="js/hf10-r15-online-stability.js?v=100072"></script>
-<script type="module" src="js/hf10-r12-guardas-rescue.js?v=100072"></script>
-<script type="module" src="js/v62-auditoria-app-fix.js?v=100072"></script>
-<script type="module" src="js/app.js?v=100072"></script>
+<script type="module" src="js/hf10-r15-online-stability.js?v=100073"></script>
+<script type="module" src="js/hf10-r12-guardas-rescue.js?v=100073"></script>
+<script type="module" src="js/v62-auditoria-app-fix.js?v=100073"></script>
+<script type="module" src="js/app.js?v=100073"></script>
 </body></html>

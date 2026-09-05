@@ -1,13 +1,13 @@
 {
-    "version":  "10.0.72",
-    "versionCode":  72,
+    "version":  "10.0.73",
+    "versionCode":  73,
     "available":  true,
-    "apk":  "GCMBS-10.0.72.apk",
-    "sha256":  "3526E7105A25FBBF51E8ECC3E0063ADC923FD073F1DD9B059946A67500027D70",
-    "sizeBytes":  5283297,
+    "apk":  "GCMBS-10.0.73.apk",
+    "sha256":  "1E1ECE30913DFA751ED075867A187CE7A105F931D4711ACAF2AA59999FE5AA2C",
+    "sizeBytes":  4559818,
     "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
     "migrationRequired":  false,
     "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-05T21:05:25.8828450Z",
-    "notes":  "10.0.72 Consolidacao: fila cronologica de permutas pendentes de todas as competencias; seguranca de APIs; Folha com carga unica; backup SQLite automatico; saneamento de push; Android code 72."
+    "publishedAt":  "2026-09-05T22:12:01.1716837Z",
+    "notes":  "10.0.73 Contrato Canonico: Desktop Online e App usam os mesmos modulos, aliases, entidades, campos e replica integral; anexos e relatorios alinhados; Android code 73."
 }

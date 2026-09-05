@@ -1,6 +1,7 @@
-import {AuthenticatedProvider} from './data-provider.js?v=100072';
+import {AuthenticatedProvider} from './data-provider.js?v=100073';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// GCMBS 10.0.72 — consolidação — fechamento das três pendências históricas:
+// GCMBS 10.0.73 — comunicação canônica — fluxos protegidos consolidados:
 // 1) permutas pendentes por serviço mais próximo;
 // 2) seleção segura de participantes em Serviço Extra por Evento;
 // 3) preservação do anexo da Justificativa de Faltas no fluxo de gravação.
@@ -99,4 +100,4 @@ function watchEditor(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchEditor,{once:true});else watchEditor();
 
-console.info('[GCMBS] 10.0.72 — pendências históricas fechadas');
+console.info('[GCMBS] 10.0.73 — fluxos protegidos de comunicação ativos');

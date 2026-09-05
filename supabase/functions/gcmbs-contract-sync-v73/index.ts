@@ -1,0 +1,7 @@
+import postgres from 'npm:postgres@3.4.7';
+import { createHash } from 'node:crypto';
+const db=postgres(Deno.env.get('SUPABASE_DB_URL')!,{prepare:false,max:1,idle_timeout:2,max_lifetime:10,connect_timeout:5});
+const sha=(v:string)=>createHash('sha256').update(v).digest('hex');
+const reply=(s:number,b:unknown)=>new Response(JSON.stringify(b),{status:s,headers:{'Content-Type':'application/json; charset=utf-8'}});
+async function authorized(req:Request){const k=req.headers.get('x-gcmbs-sync-key')||'';if(!k)return false;const r=await db`select 1 from private.mobile_sync_clients where key_sha256=${sha(k)} and ativo=true limit 1`;return !!r.length;}
+Deno.serve(async(req:Request)=>{if(req.method!=='POST')return reply(405,{message:'Método não permitido.'});try{if(!(await authorized(req)))return reply(401,{message:'Chave de sincronização inválida.'});const b=await req.json().catch(()=>({}));const catalog=Array.isArray(b.catalog)?b.catalog:[];let updated=0;for(const c of catalog){const e=String(c.entity||'');if(!e)continue;await db`update public.mobile_entity_catalog set aliases=${(c.aliases||[]).map(String)},write_fields=${(c.write_fields||[]).map(String)},heavy_fields=${(c.heavy_fields||[]).map(String)},protected_write=${!!c.protected_write},updated_at=now() where entity=${e}`;updated++;}return reply(200,{success:true,updated,contract_version:b.contract_version||null,app_version:b.app_version||null});}catch(e){console.error(e);return reply(500,{message:e instanceof Error?e.message:'Erro interno.'});}});

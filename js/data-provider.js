@@ -1,9 +1,9 @@
-import './login-security.js?v=100072';
-import './v62-sync-ui.js?v=100072';
-import './v58-ui.js?v=100072';
-import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100072';
+import './login-security.js?v=100073';
+import './v62-sync-ui.js?v=100073';
+import './v58-ui.js?v=100073';
+import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100073';
 
-const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
+const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v73';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
 const ACTIONS_V58='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-actions-v62';
 const QUADRO_V62='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v62';
@@ -89,15 +89,8 @@ export class AuthenticatedProvider {
     const body=await this.call('data');
     this.data=body;
     try{this.refs=await this.call('references')}catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
-    // O relatório usa prioritariamente a réplica integral do Desktop. Isso evita
-    // divergência entre a tabela móvel resumida e a tabela real de escalas.
-    if(this.pode('escalas') || this.pode('relatorios')){
-      try{
-        const mirror=await this.entityList('escalas',5000,0);
-        const rows=(mirror.records||[]).map(r=>r.data||{});
-        if(rows.length) this.data.escalas=rows;
-      }catch(e){ console.warn('[GCMBS] relatório usando réplica móvel resumida:',e?.message||e); }
-    }
+    // v73: a ação data já é montada pela réplica integral canônica do Desktop.
+    // Não há mais substituição parcial por módulo no cliente.
     return this;
   }
 
@@ -114,6 +107,7 @@ export class AuthenticatedProvider {
   async branding(){return (await this.call('branding')).branding||[]}
   async entityCatalog(){return (await this.call('entity_catalog')).entities||[]}
   async entityList(entity,limit=500,offset=0){return this.call('entity_list',{entity,limit,offset})}
+  async entityGet(entity,record_key){return this.call('entity_get',{entity,record_key})}
   async entityMutate(entity,record_key,operation,data,client_change_id=''){return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id})}
   async quadro(data){const token=localStorage.getItem('gcmbs.mobile.token');const r=await fetch(QUADRO_V62,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({action:'quadro_operacional',data}),cache:'no-store'});let b={};try{b=await r.json()}catch{}if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);return b}
   async syncStatus(){const token=localStorage.getItem('gcmbs.mobile.token');const r=await fetch(QUADRO_V62,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify({action:'sync_status'}),cache:'no-store'});let b={};try{b=await r.json()}catch{}if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);return b.sincronizacao||{}}

@@ -1,6 +1,6 @@
-import './v62-permuta-loop-guard.js?v=100072';
-import './v72-consolidacao.js?v=100072';
-import './app-core.js?v=100072';
+import './v62-permuta-loop-guard.js?v=100073';
+import './communication-workflows-v73.js?v=100073';
+import './app-core.js?v=100073';
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;

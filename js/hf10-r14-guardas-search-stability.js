@@ -27,7 +27,7 @@ function hf10r14AplicarFiltro(){
   for(const card of cards){const ok=hf10r14Combina(card,consulta);card.style.display=ok?'':'none';if(ok)visiveis++;}
   hf10r14Vazio(host,!!consulta.trim()&&visiveis===0);
   const filtrados=document.getElementById('onlineFiltrados');if(filtrados)filtrados.textContent=consulta.trim()?`${visiveis} encontrado(s)`:'Todos os registros';
-  const versao=document.getElementById('onlineVersao');if(versao)versao.textContent='Online/App 10.0.72';
+  const versao=document.getElementById('onlineVersao');if(versao)versao.textContent='Online/App 10.0.73';
 }
 function hf10r14Agendar(){if(!hf10r14Frame)hf10r14Frame=requestAnimationFrame(hf10r14AplicarFiltro);}
 document.addEventListener('input',ev=>{if(ev.target?.id!=='onlineFiltro'||!hf10r14GuardasAtivo())return;ev.stopImmediatePropagation();hf10r14Agendar();},true);
