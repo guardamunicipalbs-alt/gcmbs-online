@@ -1,10 +1,10 @@
-import './v62-permuta-loop-guard.js?v=100071';
+import './v62-permuta-loop-guard.js?v=100072';
 import './v62-extra-multi.js?v=20260831hf10r22a';
 import './hf10-r23-justificativas.js?v=20260831hf10r23';
 import './central-pendencias-fix.js';
 import './relatorios-route-fix.js';
-import './hf10-r21d-version-guard.js?v=100071';
-import './audit-pending-fixes.js?v=100071';
+import './hf10-r21d-version-guard.js?v=100072';
+import './audit-pending-fixes.js?v=100072';
 // HF10 R24/R24.1: uma unica interface da Folha e escrita pela rota dedicada.
 import './hf10-r24-1-folha-write.js?v=20260831hf10r24_1';
 import './folha-online-v62.js?v=20260831hf10r24';

@@ -1,7 +1,7 @@
-import './login-security.js?v=100071';
-import './v62-sync-ui.js?v=100071';
-import './v58-ui.js?v=100071';
-import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100071';
+import './login-security.js?v=100072';
+import './v62-sync-ui.js?v=100072';
+import './v58-ui.js?v=100072';
+import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100072';
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
@@ -10,6 +10,11 @@ const QUADRO_V62='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-qu
 const CESSION_V58='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-extra-assumption-v62';
 const EXTRA_PERMUTAS_V68='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-extra-permutas-v68';
 const MIXED_PERMUTA_V71='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mixed-permuta-v71';
+const PERMUTA_ADMIN_V72='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-permuta-admin-v72';
+
+const PENDING_PERMUTA_STATUS=new Set(['AGUARDANDO_ACEITE','PENDENTE','PENDENTE_DESKTOP','PROCESSADO','ACEITE_PENDENTE_DESKTOP','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE']);
+function gcmbsServiceTime(x){const p=x?.payload&&typeof x.payload==='object'?x.payload:(x||{}),data=String(p.data||x?.data||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(data))return Number.MAX_SAFE_INTEGER;const turno=String(p.turno||x?.turno||'').toUpperCase();let hora=String(p.horario_inicio||x?.horario_inicio||'').slice(0,5);if(!/^\d{2}:\d{2}$/.test(hora))hora=turno==='B'?'19:00':'07:00';const t=Date.parse(`${data}T${hora}:00-03:00`);return Number.isFinite(t)?t:Number.MAX_SAFE_INTEGER;}
+function gcmbsSortPermutas(list){return [...(list||[])].sort((a,b)=>{const ap=PENDING_PERMUTA_STATUS.has(String(a?.status||a?.payload?.status||'').toUpperCase()),bp=PENDING_PERMUTA_STATUS.has(String(b?.status||b?.payload?.status||'').toUpperCase());if(ap!==bp)return ap?-1:1;if(ap&&bp){const d=gcmbsServiceTime(a)-gcmbsServiceTime(b);if(d)return d;return Number(a?.id||0)-Number(b?.id||0);}const ac=Date.parse(String(a?.processado_em||a?.created_at||a?.data||''))||Number(a?.id||0),bc=Date.parse(String(b?.processado_em||b?.created_at||b?.data||''))||Number(b?.id||0);return bc-ac;});}
 
 export class AuthenticatedProvider {
   constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}; }
@@ -75,6 +80,11 @@ export class AuthenticatedProvider {
   async changePassword(senha_atual,nova_senha){return this.call('change_password',{senha_atual,nova_senha})}
   async resetPasswordAdmin(guarda_id){return this.call('reset_password_admin',{guarda_id:Number(guarda_id)})}
 
+  async decideMirrorPermuta(desktopId,decisao,motivo=''){
+    const token=localStorage.getItem('gcmbs.mobile.token');if(!token)throw new Error('Sessão online não autenticada.');
+    const r=await fetch(PERMUTA_ADMIN_V72,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'decide_mirror',desktop_id:Number(desktopId),decisao:String(decisao||'').toUpperCase(),motivo:String(motivo||'')}),cache:'no-store'});
+    let b={};try{b=await r.json()}catch{}if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);return b;
+  }
   async load(){
     const body=await this.call('data');
     this.data=body;
@@ -94,11 +104,11 @@ export class AuthenticatedProvider {
   guardas(){return this.data?.guardas||[]}
   escalas(){return this.data?.escalas||[]}
   extras(){return this.data?.extras||[]}
-  permutas(){return this.data?.permutas||[]}
+  permutas(){return gcmbsSortPermutas(this.data?.permutas||[])}
   bancoHoras(){return this.data?.banco_horas||[]}
   notifications(){return this.data?.notifications||[]}
   institutionalNotices(){return this.data?.institutional_notices||[]}
-  actionRequests(){return this.data?.action_requests||[]}
+  actionRequests(){return gcmbsSortPermutas(this.data?.action_requests||[])}
   permutationCandidates(){return this.data?.permutation_candidates||[]}
 
   async branding(){return (await this.call('branding')).branding||[]}

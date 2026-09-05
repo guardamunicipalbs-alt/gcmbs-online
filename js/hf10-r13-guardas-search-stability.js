@@ -59,7 +59,7 @@ function hf10r13AplicarFiltro(){
   const filtrados=document.getElementById('onlineFiltrados');
   if(filtrados)filtrados.textContent=consulta.trim()?`${visiveis} encontrado(s)`:'Todos os registros';
   const versao=document.getElementById('onlineVersao');
-  if(versao)versao.textContent='Online/App 10.0.71';
+  if(versao)versao.textContent='Online/App 10.0.72';
 }
 function hf10r13Agendar(){
   if(hf10r13Frame)return;
@@ -83,7 +83,7 @@ function hf10r13ObservarLista(){
 function hf10r13Inicializar(){
   hf10r13ObservarLista();
   const versao=document.getElementById('onlineVersao');
-  if(versao&&/10\.0\.(?:62|67|68)/.test(versao.textContent||''))versao.textContent='Online/App 10.0.71';
+  if(versao&&/10\.0\.(?:62|67|68)/.test(versao.textContent||''))versao.textContent='Online/App 10.0.72';
   hf10r13Agendar();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hf10r13Inicializar,{once:true});else hf10r13Inicializar();

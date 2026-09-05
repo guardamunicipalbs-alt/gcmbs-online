@@ -1,13 +1,13 @@
 {
-    "version":  "10.0.71",
-    "versionCode":  71,
+    "version":  "10.0.72",
+    "versionCode":  72,
     "available":  true,
-    "apk":  "GCMBS-10.0.71.apk",
-    "sha256":  "39279C0EC90B603D9F67702DD064EF70F599CA93167B5185C4D750BB49E80D16",
-    "sizeBytes":  5287479,
+    "apk":  "GCMBS-10.0.72.apk",
+    "sha256":  "3526E7105A25FBBF51E8ECC3E0063ADC923FD073F1DD9B059946A67500027D70",
+    "sizeBytes":  5283297,
     "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
     "migrationRequired":  false,
     "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-05T19:59:51.4643173Z",
-    "notes":  "HF13: permutas pendentes por proximidade; Evento Extra com participantes protegidos; anexos de Justificativa preservados e processados pelo Desktop."
+    "publishedAt":  "2026-09-05T21:02:29.7883755Z",
+    "notes":  "10.0.72 Consolidacao: fila cronologica de permutas pendentes de todas as competencias; seguranca de APIs; Folha com carga unica; backup SQLite automatico; saneamento de push; Android code 72."
 }

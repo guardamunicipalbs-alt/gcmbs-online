@@ -1,11 +1,11 @@
 
-import {AuthenticatedProvider} from './data-provider.js?v=100071';
-import {MODULOS_GCMBS} from './access-catalog.js?v=100071';
+import {AuthenticatedProvider} from './data-provider.js?v=100072';
+import {MODULOS_GCMBS} from './access-catalog.js?v=100072';
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.71';
-const GCMBS_APP_VERSION_CODE=71;
+const GCMBS_APP_VERSION='10.0.72';
+const GCMBS_APP_VERSION_CODE=72;
 const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
 const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
 async function verificarAtualizacaoApp(){
@@ -28,7 +28,7 @@ const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Amer
 const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia||p.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.71';
+const APP_VERSION='10.0.72';
 let provider=new AuthenticatedProvider();
 let permutasEspelho=[];
 let permutaExtrasCache={mine:[],others:[]};
@@ -536,24 +536,31 @@ function renderPermutas(){
 }
 function renderPermutasGestao(){
   const card=$('permutaGestaoCard'),el=$('listaPermutasGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('permutas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
-  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'),'pmCompetenciaFiltro');
-  const titulo=card.querySelector('h2');if(titulo)titulo.textContent='Solicitações online — análise e histórico da competência';
-  el.innerHTML=req.length?req.map(x=>{
-    const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',assuncaoExtra=modal==='CESSAO_EXTRA',sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM',dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null;
-    const exigeAceite=troca||mista||assuncaoExtra,aceiteOk=!exigeAceite||Number(q.aceite_contraparte)===1;
-    const pend=['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE','ACEITE_PENDENTE_DESKTOP'].includes(st)&&st!=='AGUARDANDO_ACEITE'&&aceiteOk;
+  if(!permutasEspelho.length){provider.entityList('permutas',500,0).then(r=>{permutasEspelho=(r.records||[]).map(x=>x.data||{});renderPermutasGestao();}).catch(e=>console.warn('[GCMBS] espelho de permutas:',e?.message||e));}
+  const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
+  const actionAll=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA');
+  const actionReady=actionAll.filter(x=>String(x.status||'').toUpperCase()==='PENDENTE').sort((a,b)=>String(a.payload?.data||'9999-99-99').slice(0,10).localeCompare(String(b.payload?.data||'9999-99-99').slice(0,10))||Number(a.id)-Number(b.id));
+  const desktopLinked=new Set(actionAll.map(x=>Number(x.desktop_referencia_id||0)).filter(Boolean));
+  const mirrorReady=permutasEspelho.filter(x=>String(x.status||'').toUpperCase()==='PENDENTE'&&!desktopLinked.has(Number(x.id||x.desktop_id||0))).sort((a,b)=>String(a.data||'9999-99-99').localeCompare(String(b.data||'9999-99-99'))||Number(a.id||0)-Number(b.id||0));
+  const titulo=card.querySelector('h2');if(titulo)titulo.textContent='Pendências de análise do Comando — todas as competências';
+  const renderAction=x=>{
+    const q=x.payload||{},modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',assuncaoExtra=modal==='CESSAO_EXTRA',sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM',dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null,data=String(q.data||'').slice(0,10),passada=!!data&&data<hoje;
     const tit=troca?`Troca bilateral de extras · ${esc(sol)}`:mista?`Troca ordinário ↔ extra · ${esc(sol)}`:`${esc(sol)} assume serviço de ${esc(sub)}`;
-    const detalhes=troca
-      ?`<div class="record-meta">Origem: ${dt.a}<br>Contrapartida: ${dt.b}</div><div class="record-warning"><b>Financeiro neutro:</b> a execução muda, mas os créditos financeiros originais permanecem com os titulares.</div><div class="record-ok">Aceite do outro GCM: ${aceiteOk?'CONFIRMADO':'AGUARDANDO'}</div>`
-      :mista
-        ?`<div class="record-meta">Ordinário oferecido: ${dm.ordinario}<br>Extra recebido: ${dm.extra}</div><div class="record-warning"><b>Financeiro neutro:</b> o titular original do extra mantém o respectivo crédito; diferenças de 50%/100% não geram vantagem ou compensação.</div><div class="record-ok">Aceite do titular do extra: ${aceiteOk?'CONFIRMADO':'AGUARDANDO'}</div>`
-        :`<div class="record-meta">${fmt(q.data)} · Turno ${esc(q.turno||'-')} · ${Number(q.servico_extra)?'Serviço extra':'Serviço ordinário'}</div>${assuncaoExtra?`<div class="record-ok">Autorização do GCM originalmente escalado: ${aceiteOk?'CONFIRMADA':'AGUARDANDO'}</div>`:''}`;
-    return `<article class="record-card"><div class="record-card-head"><strong>${tit}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div>${detalhes}${q.observacao?`<div>${esc(q.observacao)}</div>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="request-actions"><button class="mini" data-cmd-pm-ok="${x.id}">Aprovar${troca||mista?' com ciência':''}</button><button class="mini" data-cmd-pm-no="${x.id}">Recusar</button><button class="mini danger-soft" data-cmd-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</article>`;
-  }).join(''):'<div class="empty">Nenhuma solicitação de permuta visível ao Comando.</div>';
+    const detalhes=troca?`<div class="record-meta">Origem: ${dt.a}<br>Contrapartida: ${dt.b}</div>`:mista?`<div class="record-meta">Ordinário oferecido: ${dm.ordinario}<br>Extra recebido: ${dm.extra}</div>`:`<div class="record-meta">${fmt(data)} · Turno ${esc(q.turno||'-')} · ${Number(q.servico_extra)?'Serviço extra':'Serviço ordinário'}</div>`;
+    return `<article class="record-card"><div class="record-card-head"><strong>${tit}</strong><span class="status-pill status-PENDENTE">PENDENTE</span></div>${detalhes}${passada?'<div class="record-warning"><b>Serviço já ocorrido.</b> A solicitação permanece para decisão, porém não pode ser aprovada retroativamente porque a escala histórica é imutável.</div>':''}${q.observacao?`<div>${esc(q.observacao)}</div>`:''}<div class="request-actions">${passada?'':`<button class="mini" data-cmd-pm-ok="${x.id}">Aprovar</button>`}<button class="mini" data-cmd-pm-no="${x.id}">Recusar</button><button class="mini danger-soft" data-cmd-pm-del="${x.id}">Excluir solicitação</button></div></article>`;
+  };
+  const renderMirror=x=>{
+    const id=Number(x.id||x.desktop_id||0),data=String(x.data||'').slice(0,10),passada=!!data&&data<hoje,substituido=pessoaPorId(x.substituido_id)||x.substituido_nome||'GCM',substituto=pessoaPorId(x.substituto_id)||x.substituto_nome||'GCM',modal=String(x.modalidade||'ASSUNCAO').toUpperCase();
+    return `<article class="record-card"><div class="record-card-head"><strong>Desktop #${id} · ${esc(substituto)} ↔ ${esc(substituido)}</strong><span class="status-pill status-PENDENTE">PENDENTE</span></div><div class="record-meta">${fmt(data)} · Turno ${esc(x.turno||'-')} · ${esc(modal)}</div>${passada?'<div class="record-warning"><b>Serviço já ocorrido.</b> Permanece na fila para decisão do Comando; aprovação retroativa é bloqueada.</div>':''}<div class="request-actions">${passada?'':`<button class="mini" data-cmd-mirror-ok="${id}">Aprovar</button>`}<button class="mini" data-cmd-mirror-no="${id}">Recusar</button></div></article>`;
+  };
+  el.innerHTML=(actionReady.map(renderAction).join('')+mirrorReady.map(renderMirror).join(''))||'<div class="empty">Nenhuma permuta aguardando análise do Comando.</div>';
   el.querySelectorAll('[data-cmd-pm-ok]').forEach(b=>b.onclick=()=>decidirPermutaComando(Number(b.dataset.cmdPmOk),'APROVADA'));
   el.querySelectorAll('[data-cmd-pm-no]').forEach(b=>b.onclick=()=>decidirPermutaComando(Number(b.dataset.cmdPmNo),'NEGADA'));
   el.querySelectorAll('[data-cmd-pm-del]').forEach(b=>b.onclick=()=>excluirPermutaComando(Number(b.dataset.cmdPmDel)));
+  el.querySelectorAll('[data-cmd-mirror-ok]').forEach(b=>b.onclick=()=>decidirPermutaEspelho(Number(b.dataset.cmdMirrorOk),'APROVADA'));
+  el.querySelectorAll('[data-cmd-mirror-no]').forEach(b=>b.onclick=()=>decidirPermutaEspelho(Number(b.dataset.cmdMirrorNo),'NEGADA'));
 }
+async function decidirPermutaEspelho(id,decisao){let motivo='';if(decisao==='NEGADA'){motivo=prompt('Informe o motivo da recusa da permuta:','')||'';if(!motivo.trim())return alert('O motivo da recusa é obrigatório.')}else if(!confirm('Aprovar esta permuta Desktop pendente? A aplicação ocorrerá no Desktop após sincronização.'))return;try{await provider.decideMirrorPermuta(id,decisao,motivo);await provider.load();permutasEspelho=[];renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
 async function decidirPermutaComando(id,decisao){let motivo='';if(decisao==='NEGADA'){motivo=prompt('Informe o motivo da recusa da permuta:','')||'';if(!motivo.trim())return alert('O motivo da recusa é obrigatório.')}else{motivo=prompt('Observação da aprovação (opcional):','')||'';}try{await provider.decidePermutaRequest(id,decisao,motivo);renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
 async function excluirPermutaComando(id){const motivo=prompt('Informe o motivo da exclusão/cancelamento administrativo:','Solicitação registrada de forma equivocada')||'';if(!motivo.trim())return;if(!confirm('Retirar esta solicitação pendente da fila? O histórico administrativo será preservado.'))return;try{await provider.adminDeletePermutaRequest(id,motivo);renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
 function resetPermutaForm(){permutaEditingId=null;if($('pmModalidade'))$('pmModalidade').value='ASSUNCAO';$('pmTitulo').textContent='Nova solicitação de permuta';$('pmEnviar').textContent='Enviar solicitação';$('pmCancelarEdicao').classList.add('hidden');$('pmData').value='';$('pmTurno').value='A';$('pmExtra').value='0';$('pmSubstituto').value='';if($('pmExtraData'))$('pmExtraData').value='';$('pmObs').value='';$('pmTermo').checked=false;atualizarModoPermuta();}
@@ -1183,10 +1190,20 @@ function renderRelatoriosFrota(){
   const refs=refData(),vs=refs.viaturas||[];if($('rfTotal'))$('rfTotal').textContent=String(vs.length);if($('rfAtivas'))$('rfAtivas').textContent=String(vs.filter(v=>!['MANUTENCAO','MANUTENÇÃO','INDISPONIVEL','INDISPONÍVEL','BAIXADA','INATIVA'].includes(String(v.situacao_operacional||v.status||'ATIVA').toUpperCase())).length);
 }
 function renderCentralPendencias(){
-  const host=$('pendenciasLista');if(!host)return;const req=(provider.actionRequests()||[]).filter(x=>!['APROVADA','RECUSADA','REPROVADA','CANCELADA','CONCLUIDA'].includes(String(x.status||'PENDENTE').toUpperCase()));const notif=(provider.notifications()||[]).filter(x=>!x.lida_em);
-  const itens=[...req.map(x=>({data:x.created_at,tipo:'Solicitação',titulo:String(x.tipo||'PENDÊNCIA').replace(/_/g,' '),texto:x.resposta||'Aguardando análise/processamento.',status:x.status||'PENDENTE',modulo:String(x.tipo||'').startsWith('PERMUTA')?'permutas':String(x.tipo||'').startsWith('BANCO_HORAS')?'banco_horas':''})),...notif.map(x=>({data:x.created_at,tipo:'Aviso',titulo:x.titulo||'Notificação',texto:x.mensagem||'',status:'NÃO LIDA',modulo:x.referencia_tipo&&String(x.referencia_tipo).includes('PERMUTA')?'permutas':''}))].sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
-  if($('pTotal'))$('pTotal').textContent=String(itens.length);if($('pSolic'))$('pSolic').textContent=String(req.length);if($('pAvisos'))$('pAvisos').textContent=String(notif.length);
-  host.innerHTML=itens.map(x=>`<article class="pending-card" ${x.modulo?`data-pend-open="${esc(x.modulo)}" tabindex="0" role="button"`:''}><div><small>${esc(x.tipo)} · ${fmt(String(x.data||'').slice(0,10))}</small><strong>${esc(x.titulo)}</strong><p>${esc(x.texto)}</p></div><span class="status-pill status-PENDENTE">${esc(x.status)}</span></article>`).join('')||'<div class="empty">Nenhuma pendência visível para seu perfil.</div>'; host.querySelectorAll('[data-pend-open]').forEach(el=>{const abrir=()=>abrirModuloPrincipal(el.dataset.pendOpen);el.addEventListener('click',abrir);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();abrir();}})});
+  const host=$('pendenciasLista');if(!host)return;
+  const finais=new Set(['APROVADA','RECUSADA','REPROVADA','NEGADA','CANCELADA','CONCLUIDA']);
+  const req=(provider.actionRequests()||[]).filter(x=>!finais.has(String(x.status||'PENDENTE').toUpperCase()));
+  const notif=(provider.notifications()||[]).filter(x=>!x.lida_em);
+  const refs=new Set(req.map(x=>Number(x.desktop_referencia_id||0)).filter(Boolean));
+  const espelho=provider.gestor()?(provider.permutas()||[]).filter(x=>String(x.status||'').toUpperCase()==='PENDENTE'&&!refs.has(Number(x.id||x.desktop_id||0))):[];
+  const itens=[
+    ...req.map(x=>{const perm=String(x.tipo||'').startsWith('PERMUTA'),dataServico=perm?String(x.payload?.data||'').slice(0,10):'';return{data:dataServico||x.created_at,sort:dataServico||String(x.created_at||''),tipo:'Solicitação',titulo:String(x.tipo||'PENDÊNCIA').replace(/_/g,' '),texto:x.resposta||'Aguardando análise/processamento.',status:x.status||'PENDENTE',modulo:perm?'permutas':String(x.tipo||'').startsWith('BANCO_HORAS')?'banco_horas':'',analise:true};}),
+    ...espelho.map(x=>({data:String(x.data||'').slice(0,10),sort:String(x.data||'9999-99-99').slice(0,10),tipo:'Permuta Desktop',titulo:`Permuta #${Number(x.id||x.desktop_id||0)} aguardando análise`,texto:`${pessoaPorId(x.substituto_id)||x.substituto_nome||'GCM'} ↔ ${pessoaPorId(x.substituido_id)||x.substituido_nome||'GCM'} · turno ${x.turno||'-'}.`,status:'PENDENTE',modulo:'permutas',analise:true})),
+    ...notif.map(x=>({data:x.created_at,sort:String(x.created_at||''),tipo:'Aviso',titulo:x.titulo||'Notificação',texto:x.mensagem||'',status:'NÃO LIDA',modulo:x.referencia_tipo&&String(x.referencia_tipo).includes('PERMUTA')?'permutas':'',analise:false}))
+  ].sort((a,b)=>{if(a.analise!==b.analise)return a.analise?-1:1;return a.analise?String(a.sort||'9999').localeCompare(String(b.sort||'9999')):String(b.sort||'').localeCompare(String(a.sort||''));});
+  if($('pTotal'))$('pTotal').textContent=String(itens.length);if($('pSolic'))$('pSolic').textContent=String(req.length+espelho.length);if($('pAvisos'))$('pAvisos').textContent=String(notif.length);
+  host.innerHTML=itens.map(x=>`<article class="pending-card" ${x.modulo?`data-pend-open="${esc(x.modulo)}" tabindex="0" role="button"`:''}><div><small>${esc(x.tipo)} · ${fmt(String(x.data||'').slice(0,10))}</small><strong>${esc(x.titulo)}</strong><p>${esc(x.texto)}</p></div><span class="status-pill status-PENDENTE">${esc(x.status)}</span></article>`).join('')||'<div class="empty">Nenhuma pendência visível para seu perfil.</div>';
+  host.querySelectorAll('[data-pend-open]').forEach(el=>{const abrir=()=>abrirModuloPrincipal(el.dataset.pendOpen);el.addEventListener('click',abrir);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();abrir();}})});
 }
 
 function renderTudo(resetView=true){
@@ -1296,6 +1313,6 @@ async function boot(){
 }
 boot();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100071',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100072',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

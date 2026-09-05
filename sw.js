@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100071-hf13-pendencias';
+const VERSION='gcmbs-online-100072-consolidacao';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -16,9 +16,9 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.71');
+    headers.set('x-gcmbs-version','10.0.72');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] 10.0.71 HF13 ativo',VERSION);
+console.info('[GCMBS SW] 10.0.72 HF13 ativo',VERSION);

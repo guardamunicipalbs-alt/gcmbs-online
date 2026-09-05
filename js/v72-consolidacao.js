@@ -1,55 +1,12 @@
-import {AuthenticatedProvider} from './data-provider.js?v=100071';
+import {AuthenticatedProvider} from './data-provider.js?v=100072';
 
-// GCMBS 10.0.71 HF13 — fechamento das três pendências históricas:
+// GCMBS 10.0.72 — consolidação — fechamento das três pendências históricas:
 // 1) permutas pendentes por serviço mais próximo;
 // 2) seleção segura de participantes em Serviço Extra por Evento;
 // 3) preservação do anexo da Justificativa de Faltas no fluxo de gravação.
 
 const EVENT_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-eventos-hf13';
 const ENTITY_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-entity-hf13';
-const PENDING=new Set([
-  'AGUARDANDO_ACEITE','PENDENTE','PENDENTE_DESKTOP','PROCESSADO',
-  'ACEITE_PENDENTE_DESKTOP','DECISAO_PENDENTE_DESKTOP',
-  'CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP',
-  'CANCELAMENTO_COMANDO_PENDENTE'
-]);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-function payloadOf(x){return x?.payload&&typeof x.payload==='object'?x.payload:(x||{});}
-function pendingOf(x){return PENDING.has(String(x?.status||payloadOf(x)?.status||'').toUpperCase());}
-function serviceTime(x){
-  const p=payloadOf(x),data=String(p.data||x?.data||'').slice(0,10);
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(data))return Number.MAX_SAFE_INTEGER;
-  const turno=String(p.turno||x?.turno||'').toUpperCase();
-  let hora=String(p.horario_inicio||x?.horario_inicio||'').slice(0,5);
-  if(!/^\d{2}:\d{2}$/.test(hora))hora=turno==='B'?'19:00':'07:00';
-  const t=Date.parse(`${data}T${hora}:00-03:00`);
-  return Number.isFinite(t)?t:Number.MAX_SAFE_INTEGER;
-}
-function sortPermutas(list){
-  return [...(list||[])].sort((a,b)=>{
-    const ap=pendingOf(a),bp=pendingOf(b);
-    if(ap!==bp)return ap?-1:1;
-    if(ap&&bp){const dt=serviceTime(a)-serviceTime(b);if(dt)return dt;return Number(a?.id||0)-Number(b?.id||0);}
-    const ac=Date.parse(String(a?.processado_em||a?.created_at||a?.data||''))||Number(a?.id||0);
-    const bc=Date.parse(String(b?.processado_em||b?.created_at||b?.data||''))||Number(b?.id||0);
-    return bc-ac;
-  });
-}
-
-// Patch no protótipo antes de app-core criar a instância: toda tela passa a receber
-// pendências em ordem cronológica crescente, mantendo histórico do mais recente para trás.
-const oldActionRequests=AuthenticatedProvider.prototype.actionRequests;
-if(oldActionRequests&&!oldActionRequests.__gcmbs_hf13){
-  const fn=function(){return sortPermutas(oldActionRequests.call(this));};
-  fn.__gcmbs_hf13=true;AuthenticatedProvider.prototype.actionRequests=fn;
-}
-const oldPermutas=AuthenticatedProvider.prototype.permutas;
-if(oldPermutas&&!oldPermutas.__gcmbs_hf13){
-  const fn=function(){return sortPermutas(oldPermutas.call(this));};
-  fn.__gcmbs_hf13=true;AuthenticatedProvider.prototype.permutas=fn;
-}
-
 async function post(url,payload={}){
   const token=localStorage.getItem('gcmbs.mobile.token');
   if(!token)throw new Error('Sessão online não autenticada.');
@@ -142,4 +99,4 @@ function watchEditor(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchEditor,{once:true});else watchEditor();
 
-console.info('[GCMBS] 10.0.71 HF13 — pendências históricas fechadas');
+console.info('[GCMBS] 10.0.72 — pendências históricas fechadas');
