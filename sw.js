@@ -1,5 +1,5 @@
-const VERSION='gcmbs-online-100071-hf12-permuta-mista';
-const HF12_IMPORT="import './v71-permuta-mista.js?v=100071';\n";
+const VERSION='gcmbs-online-100071-hf12-paridade';
+const HF12_IMPORTS="import './v71-version-status.js?v=100071';\nimport './v71-permuta-mista.js?v=100071';\n";
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -8,8 +8,8 @@ self.addEventListener('activate',event=>event.waitUntil((async()=>{
 })()));
 
 // O GCMBS é operacional e deve sempre consultar a publicação mais recente.
-// HF12 injeta SOMENTE o import da camada v71 no js/app.js do Online.
-// Nenhum HTML, dado operacional ou outro script é alterado pelo Service Worker.
+// HF12 injeta SOMENTE as duas camadas 10.0.71 no js/app.js do Online:
+// status real Online/Android e nova permuta ordinário ↔ extra.
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
@@ -22,7 +22,7 @@ self.addEventListener('fetch',event=>{
     headers.set('x-gcmbs-version','10.0.71-hf12-online');
     if(url.pathname.endsWith('/js/app.js')){
       const original=await response.text();
-      const body=original.includes("./v71-permuta-mista.js")?original:HF12_IMPORT+original;
+      const body=original.includes("./v71-permuta-mista.js")?original:HF12_IMPORTS+original;
       headers.set('content-type','application/javascript; charset=utf-8');
       return new Response(body,{status:response.status,statusText:response.statusText,headers});
     }
