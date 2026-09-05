@@ -1,6 +1,5 @@
-import './v62-permuta-loop-guard.js?v=100073';
-import './communication-workflows-v73.js?v=100073';
-import './app-core.js?v=100073';
+import './communication-workflows-v74.js?v=100075';
+import './app-core.js?v=100075';
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;
@@ -49,7 +48,7 @@ function gcmbsAjustarOficios(){
 }
 
 // Frequência do Comando: espelha o controle do Desktop e grava online imediatamente.
-const GCMBS_FREQUENCIA_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-frequency-v62';
+const GCMBS_FREQUENCIA_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 let gcmbsFreqRows=[],gcmbsFreqCanEdit=false,gcmbsFreqLoading=false,gcmbsFreqLoadedKey='',gcmbsFreqTimer=null;
 const gcmbsFreqDirty=new Set();
 async function gcmbsFreqCall(action,payload={}){
@@ -113,7 +112,7 @@ async function gcmbsFreqSave(tr){
   const btn=tr.querySelector('[data-freq-save]'),status=document.getElementById('gcmbsFreqStatus');const original=btn.textContent;btn.disabled=true;btn.textContent='Salvando...';
   try{
     const situacao=tr.querySelector('[data-freq-field="situacao"]')?.value||row.situacao||'PRESENTE';const observacao=tr.querySelector('[data-freq-field="observacao"]')?.value||'';
-    const r=await gcmbsFreqCall('save',{registro:{source_entity:row.source_entity,source_record_key:row.source_record_key,situacao,observacao}});
+    const r=await gcmbsFreqCall('frequency_save',{registro:{source_entity:row.source_entity,source_record_key:row.source_record_key,situacao,observacao}});
     row.situacao=r.registro?.situacao||situacao;row.observacao=r.registro?.observacao||observacao;row.frequency_record_key=r.record_key||row.frequency_record_key;gcmbsFreqDirty.delete(uid);
     if(status){status.textContent='Salvo online agora · aguardando/consolidando sincronização do Desktop.';status.style.color='#15803d';}
     btn.textContent='Salvo';setTimeout(()=>{btn.textContent='Salvar';btn.disabled=!gcmbsFreqCanEdit;},1200);
@@ -124,7 +123,7 @@ async function gcmbsFreqLoad(force=false,silent=false){
   const ini=document.getElementById('gcmbsFreqIni')?.value||gcmbsDataAtual(),fim=document.getElementById('gcmbsFreqFim')?.value||ini,key=`${ini}|${fim}`;
   if(!force&&gcmbsFreqLoadedKey===key&&document.querySelector('[data-gcmbs-frequencia-controle]'))return;
   gcmbsFreqLoading=true;const st=document.getElementById('gcmbsFreqStatus');if(st&&!silent){st.textContent='Atualizando frequência operacional...';st.style.color='#52627a';}
-  try{const b=await gcmbsFreqCall('list',{data_inicial:ini,data_final:fim});gcmbsFreqRows=b.rows||[];gcmbsFreqCanEdit=!!b.can_edit;gcmbsFreqLoadedKey=key;gcmbsFreqOptionsGcm();gcmbsFreqRender();if(st){st.textContent=`Atualizado ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · gravação online em tempo real.`;st.style.color='#15803d';}}
+  try{const b=await gcmbsFreqCall('frequency_list',{data_inicial:ini,data_final:fim});gcmbsFreqRows=b.rows||[];gcmbsFreqCanEdit=!!b.can_edit;gcmbsFreqLoadedKey=key;gcmbsFreqOptionsGcm();gcmbsFreqRender();if(st){st.textContent=`Atualizado ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · gravação online em tempo real.`;st.style.color='#15803d';}}
   catch(e){const host=document.getElementById('onlineRegistros');if(host)host.innerHTML=`<div data-gcmbs-frequencia-controle="1" style="padding:22px;text-align:center;color:#b91c1c">${gcmbsEsc(e.message||'Falha ao carregar frequência.')}</div>`;if(st){st.textContent=e.message||'Falha ao carregar frequência.';st.style.color='#b91c1c';}}
   finally{gcmbsFreqLoading=false;}
 }

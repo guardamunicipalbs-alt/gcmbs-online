@@ -1,13 +1,13 @@
-import {AuthenticatedProvider} from './data-provider.js?v=100073';
+import {AuthenticatedProvider} from './data-provider.js?v=100075';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// GCMBS 10.0.73 — comunicação canônica — fluxos protegidos consolidados:
+// GCMBS 10.0.75 — comunicação canônica — fluxos protegidos consolidados:
 // 1) permutas pendentes por serviço mais próximo;
 // 2) seleção segura de participantes em Serviço Extra por Evento;
 // 3) preservação do anexo da Justificativa de Faltas no fluxo de gravação.
 
-const EVENT_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-eventos-hf13';
-const ENTITY_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-entity-hf13';
+const EVENT_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const ENTITY_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 async function post(url,payload={}){
   const token=localStorage.getItem('gcmbs.mobile.token');
   if(!token)throw new Error('Sessão online não autenticada.');
@@ -43,7 +43,7 @@ async function loadEventParticipants(){
   const seq=++contextSeq,fields=eventFields(),list=document.getElementById('hf13EventoLista');
   if(list)list.innerHTML='<span class="muted">Atualizando elegibilidade...</span>';
   try{
-    const ctx=await post(EVENT_API,{action:'context',record_key:currentEventKey,...fields});if(seq!==contextSeq)return;
+    const ctx=await post(EVENT_API,{action:'event_context',record_key:currentEventKey,...fields});if(seq!==contextSeq)return;
     const eligible=(ctx.guards||[]).filter(g=>g.eligible!==false),hidden=(ctx.guards||[]).length-eligible.length;
     if(list){
       list.innerHTML=eligible.map(g=>`<label data-hf13-name="${esc(String(g.nome_guerra||'').toLowerCase())}"><input type="checkbox" data-hf13-event-gcm value="${Number(g.guarda_id)}" ${g.selected?'checked':''}> <b>${esc(g.nome_guerra||`GCM ${g.guarda_id}`)}</b>${g.cargo?` <small>${esc(g.cargo)}</small>`:''}</label>`).join('')||'<span class="muted">Nenhum GCM elegível para o período informado.</span>';
@@ -100,4 +100,4 @@ function watchEditor(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchEditor,{once:true});else watchEditor();
 
-console.info('[GCMBS] 10.0.73 — fluxos protegidos de comunicação ativos');
+console.info('[GCMBS] 10.0.75 — fluxos protegidos de comunicação ativos');

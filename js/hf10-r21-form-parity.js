@@ -1,4 +1,4 @@
-// GCMBS 10.0.73 - paridade visual
+// GCMBS 10.0.75 - paridade visual
 // Paridade visual dos formularios Online/App. Nao altera dados nem regras de gravacao.
 let r21Frame=0;
 
@@ -97,14 +97,14 @@ function r21CleanupEmpty(){
 
 function r21PatchVersion(){
   const onlineVersao=document.getElementById('onlineVersao');
-  if(onlineVersao&&onlineVersao.textContent!=='Online/App 10.0.73')onlineVersao.textContent='Online/App 10.0.73';
+  if(onlineVersao&&onlineVersao.textContent!=='Online/App 10.0.75')onlineVersao.textContent='Online/App 10.0.75';
   const card=document.getElementById('appAtualizacaoCard');
-  if(card&&/10\.0\.(?:62|68|69)/.test(card.innerHTML))card.innerHTML=card.innerHTML.replace(/10\.0\.(?:62|68|69)/g,'10.0.73');
+  if(card&&/10\.0\.(?:62|68|69)/.test(card.innerHTML))card.innerHTML=card.innerHTML.replace(/10\.0\.(?:62|68|69)/g,'10.0.75');
   document.querySelectorAll('[data-app-version],.app-version,.online-version').forEach(el=>{
-    if(/10\.0\.(?:62|68|69)/.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/10\.0\.(?:62|68|69)/g,'10.0.73');
+    if(/10\.0\.(?:62|68|69)/.test(el.textContent||''))el.textContent=(el.textContent||'').replace(/10\.0\.(?:62|68|69)/g,'10.0.75');
   });
   document.querySelectorAll('main *').forEach(el=>{
-    if(el.children.length===0&&/^Online(?:\/App)?\s+10\.0\.(?:62|68|69)$/i.test(String(el.textContent||'').trim()))el.textContent='Online/App 10.0.73';
+    if(el.children.length===0&&/^Online(?:\/App)?\s+10\.0\.(?:62|68|69)$/i.test(String(el.textContent||'').trim()))el.textContent='Online/App 10.0.75';
   });
 }
 
@@ -151,4 +151,4 @@ function r21Schedule(){if(r21Frame)return;r21Frame=requestAnimationFrame(()=>{r2
 const r21Obs=new MutationObserver(r21Schedule);
 function r21Init(){r21Obs.observe(document.body,{childList:true,subtree:true,characterData:true});r21Apply();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r21Init,{once:true});else r21Init();
-console.info('[GCMBS] Paridade visual 10.0.73 ativa');
+console.info('[GCMBS] Paridade visual 10.0.75 ativa');

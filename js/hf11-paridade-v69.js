@@ -1,4 +1,4 @@
-// GCMBS 10.0.73 — paridade de impressão Desktop, Online e App.
+// GCMBS 10.0.75 — paridade de impressão Desktop, Online e App.
 // A tabela é dividida em páginas equilibradas de até oito dias, sem página final vazia.
 (function(){
   const MAX_DIAS=8;
@@ -64,7 +64,7 @@
       const header=document.createElement('header');header.innerHTML='<h1>ESCALA DE SERVIÇO</h1>';
       const p=document.createElement('p');p.textContent=[info,filtro].filter(Boolean).join(' · ');header.appendChild(p);
       pagina.appendChild(header);pagina.appendChild(criarTabela(origem,bloco.inicio,bloco.fim));
-      const footer=document.createElement('footer');footer.textContent=`GCMBS 10.0.73 · Página ${i+1} de ${blocos.length}`;pagina.appendChild(footer);
+      const footer=document.createElement('footer');footer.textContent=`GCMBS 10.0.75 · Página ${i+1} de ${blocos.length}`;pagina.appendChild(footer);
       area.appendChild(pagina);
     });
     document.body.classList.add('gcmbs-print-scale');

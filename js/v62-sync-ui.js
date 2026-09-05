@@ -1,6 +1,6 @@
 const BASE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
 const QUADRO=BASE+'gcmbs-quadro-v62';
-const API=BASE+'gcmbs-communication-gateway-v73';
+const API=BASE+'gcmbs-communication-gateway-v74';
 const REQUEST_SYNC=BASE+'gcmbs-request-sync-v62';
 
 const _fetch=window.fetch.bind(window);
@@ -284,7 +284,7 @@ async function atualizarBadge(){
         s.pendentes||0
       )} · Erros recentes: ${Number(
         s.erros_recentes||0
-      )} · GCMBS Online/App 10.0.73`;
+      )} · GCMBS Online/App 10.0.75`;
 
     e.style.color=
       Number(s.erros_recentes||0)
@@ -1125,5 +1125,5 @@ window.addEventListener(
 );
 
 console.info(
-  '[GCMBS] consolidação Online/App 10.0.73 ativa'
+  '[GCMBS] consolidação Online/App 10.0.75 ativa'
 );

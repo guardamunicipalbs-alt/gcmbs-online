@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100073-communication-contract';
+const VERSION='gcmbs-online-100075-communication-contract';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -16,9 +16,9 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.73');
+    headers.set('x-gcmbs-version','10.0.75');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] 10.0.73 contrato canônico ativo',VERSION);
+console.info('[GCMBS SW] 10.0.75 contrato canônico ativo',VERSION);

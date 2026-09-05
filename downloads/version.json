@@ -1,13 +1,13 @@
 {
-    "version":  "10.0.73",
-    "versionCode":  73,
+    "version":  "10.0.75",
+    "versionCode":  75,
     "available":  true,
-    "apk":  "GCMBS-10.0.73.apk",
-    "sha256":  "1E1ECE30913DFA751ED075867A187CE7A105F931D4711ACAF2AA59999FE5AA2C",
-    "sizeBytes":  4559818,
+    "apk":  "GCMBS-10.0.75.apk",
+    "sha256":  "2D04A3660C1CBC5BD25061BE1ABC9DB9EF4DF55D21CB7D63882D1EA0FE19B430",
+    "sizeBytes":  4564210,
     "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
     "migrationRequired":  false,
     "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-05T22:12:01.1716837Z",
-    "notes":  "10.0.73 Contrato Canonico: Desktop Online e App usam os mesmos modulos, aliases, entidades, campos e replica integral; anexos e relatorios alinhados; Android code 73."
+    "publishedAt":  "2026-09-05T23:45:19.5885683Z",
+    "notes":  "10.0.75 Hotfix Runtime ESM: corrige exports PRIMARY_ENTITY/DEDICATED_VIEW/canonicalModule; preserva motor de regras 10.0.74 e adiciona validacao de imports/exports."
 }

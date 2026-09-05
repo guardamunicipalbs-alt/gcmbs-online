@@ -1,9 +1,9 @@
 // GCMBS 10.0.68 - HF10 R18
 // Frota: estado operacional derivado de manutencoes abertas + sincronizacao manual consolidada.
 // Nao altera registros; somente ajusta disponibilidade/apresentacao e usa as rotas oficiais existentes.
-const R18_FLEET='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-fleet-state-v68';
-const R18_SYNC='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-request-sync-v62';
-const R18_QUADRO='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v62';
+const R18_FLEET='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const R18_SYNC='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const R18_QUADRO='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 let r18Fleet=null,r18FleetTs=0,r18Loading=false,r18Frame=0;
 
 const r18Token=()=>localStorage.getItem('gcmbs.mobile.token')||'';
@@ -68,14 +68,14 @@ function r18PatchCards(){
 }
 function r18PatchSyncVersion(){
   const e=document.getElementById('syncStatus');
-  if(e&&/10\.0\.(?:62|68|69)/.test(String(e.title||'')))e.title=String(e.title).replace(/10\.0\.(?:62|68|69)/g,'10.0.73');
+  if(e&&/10\.0\.(?:62|68|69)/.test(String(e.title||'')))e.title=String(e.title).replace(/10\.0\.(?:62|68|69)/g,'10.0.75');
 }
 async function r18AtualizarBadge(){
   const e=document.getElementById('syncStatus');if(!e||!r18Token())return;
   try{
     const b=await r18Post(R18_QUADRO,{action:'sync_status'}),s=b.sincronizacao||{};
     const text=`Última sincronização Desktop ↔ Online/App: ${s.ultima_sincronizacao?new Date(s.ultima_sincronizacao).toLocaleString('pt-BR',{timeZone:'America/Fortaleza'}):'não registrada'}${s.desktop_version?' · Desktop '+s.desktop_version:''}`;
-    const title=`Pendentes: ${Number(s.pendentes||0)} · Erros recentes: ${Number(s.erros_recentes||0)} · GCMBS Online/App 10.0.73`;
+    const title=`Pendentes: ${Number(s.pendentes||0)} · Erros recentes: ${Number(s.erros_recentes||0)} · GCMBS Online/App 10.0.75`;
     if(e.textContent!==text)e.textContent=text;if(e.title!==title)e.title=title;
     e.style.color=Number(s.erros_recentes||0)?'#fecaca':Number(s.pendentes||0)?'#fde68a':'#bbf7d0';
   }catch{}
