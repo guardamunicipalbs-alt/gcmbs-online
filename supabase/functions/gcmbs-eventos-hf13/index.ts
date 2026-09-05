@@ -36,7 +36,7 @@ Deno.serve(async(req:Request)=>{
     const conflict=new Map<number,string>();
     if(data&&hi&&hf){for(const p of partRows){const d=p.data||{},eid=Number(d.evento_id)||0,gid=Number(d.guarda_id)||0;if(!gid||!eid||eid===eventId)continue;const ev=eventMap.get(eid);if(!ev)continue;if(overlap(hi,hf,ev.horario_inicio,ev.horario_fim))conflict.set(gid,norm(ev.nome)||`Evento #${eid}`);}}
     const sel=new Set(selected);
-    const guards=profiles.map((g:any)=>{const id=Number(g.guarda_id),reason=just.has(id)?'Possui justificativa ativa para serviço extra nesta data.':conflict.has(id)?`Já está designado para ${conflict.get(id)} no mesmo horário.`:'';return{guarda_id:id,nome_guerra:g.nome_guerra||g.nome_completo||`GCM ${id}`,cargo:g.cargo||'',selected:sel.has(id),eligible:!reason||sel.has(id),reason};});
+    const guards=profiles.map((g:any)=>{const id=Number(g.guarda_id),reason=just.has(id)?'Possui justificativa ativa para serviço extra nesta data.':conflict.has(id)?`Já está designado para ${conflict.get(id)} no mesmo horário.`:'';return{guarda_id:id,nome_guerra:g.nome_guerra||g.nome_completo||`GCM ${id}`,cargo:g.cargo||'',selected:sel.has(id),eligible:!reason,reason};});
     return reply(200,{success:true,guards,selected});
   }catch(e){console.error('[gcmbs-eventos-hf13]',e);return reply(500,{message:e instanceof Error?e.message:'Erro interno.'});}
 });
