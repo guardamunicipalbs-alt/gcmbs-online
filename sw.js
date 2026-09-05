@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100071-hf12-paridade';
+const VERSION='gcmbs-online-100071-hf13-pendencias';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -21,4 +21,4 @@ self.addEventListener('fetch',event=>{
   }));
 });
 
-console.info('[GCMBS SW] 10.0.71 HF12 ativo',VERSION);
+console.info('[GCMBS SW] 10.0.71 HF13 ativo',VERSION);
