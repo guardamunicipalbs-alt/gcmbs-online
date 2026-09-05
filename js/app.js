@@ -1,5 +1,4 @@
 import './v62-permuta-loop-guard.js?v=100071';
-import './hf13-pendencias-v71.js?v=100071hf13';
 import './app-core.js?v=100071';
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
@@ -113,16 +112,107 @@ async function gcmbsFreqSave(tr){
   const btn=tr.querySelector('[data-freq-save]'),status=document.getElementById('gcmbsFreqStatus');const original=btn.textContent;btn.disabled=true;btn.textContent='Salvando...';
   try{
     const situacao=tr.querySelector('[data-freq-field="situacao"]')?.value||row.situacao||'PRESENTE';const observacao=tr.querySelector('[data-freq-field="observacao"]')?.value||'';
-    const r=await gcmbsFreqCall('save',{uid:row.uid,situacao,observacao});Object.assign(row,r.row||{situacao,observacao});gcmbsFreqDirty.delete(uid);status.textContent=r.message||'Frequência salva.';status.style.color='#15803d';
-  }catch(e){status.textContent=e.message||'Falha ao salvar.';status.style.color='#b91c1c';}finally{btn.disabled=!gcmbsFreqCanEdit;btn.textContent=original;}
+    const r=await gcmbsFreqCall('save',{registro:{source_entity:row.source_entity,source_record_key:row.source_record_key,situacao,observacao}});
+    row.situacao=r.registro?.situacao||situacao;row.observacao=r.registro?.observacao||observacao;row.frequency_record_key=r.record_key||row.frequency_record_key;gcmbsFreqDirty.delete(uid);
+    if(status){status.textContent='Salvo online agora · aguardando/consolidando sincronização do Desktop.';status.style.color='#15803d';}
+    btn.textContent='Salvo';setTimeout(()=>{btn.textContent='Salvar';btn.disabled=!gcmbsFreqCanEdit;},1200);
+  }catch(e){if(status){status.textContent=e.message||'Falha ao salvar frequência.';status.style.color='#b91c1c';}btn.textContent=original;btn.disabled=false;}
 }
 async function gcmbsFreqLoad(force=false,silent=false){
-  if(gcmbsFreqLoading)return;const wrap=gcmbsFreqEnsureControls();if(!wrap)return;const ini=document.getElementById('gcmbsFreqIni')?.value||gcmbsDataAtual(),fim=document.getElementById('gcmbsFreqFim')?.value||ini,key=`${ini}|${fim}`;if(!force&&key===gcmbsFreqLoadedKey){gcmbsFreqRender();return}gcmbsFreqLoading=true;const status=document.getElementById('gcmbsFreqStatus');if(!silent){status.textContent='Atualizando frequência...';status.style.color='#52627a';}
-  try{const b=await gcmbsFreqCall('list',{inicio:ini,fim});gcmbsFreqRows=b.rows||[];gcmbsFreqCanEdit=!!b.can_edit;gcmbsFreqLoadedKey=key;gcmbsFreqDirty.clear();gcmbsFreqOptionsGcm();gcmbsFreqRender();if(!silent){status.textContent=gcmbsFreqCanEdit?'Alterações salvas aqui entram no Desktop automaticamente.':'Consulta de frequência.';status.style.color='#15803d';}}catch(e){status.textContent=e.message||'Falha ao consultar frequência.';status.style.color='#b91c1c';}finally{gcmbsFreqLoading=false;}
+  const wrap=gcmbsFreqEnsureControls();if(!wrap||gcmbsFreqLoading)return;
+  const ini=document.getElementById('gcmbsFreqIni')?.value||gcmbsDataAtual(),fim=document.getElementById('gcmbsFreqFim')?.value||ini,key=`${ini}|${fim}`;
+  if(!force&&gcmbsFreqLoadedKey===key&&document.querySelector('[data-gcmbs-frequencia-controle]'))return;
+  gcmbsFreqLoading=true;const st=document.getElementById('gcmbsFreqStatus');if(st&&!silent){st.textContent='Atualizando frequência operacional...';st.style.color='#52627a';}
+  try{const b=await gcmbsFreqCall('list',{data_inicial:ini,data_final:fim});gcmbsFreqRows=b.rows||[];gcmbsFreqCanEdit=!!b.can_edit;gcmbsFreqLoadedKey=key;gcmbsFreqOptionsGcm();gcmbsFreqRender();if(st){st.textContent=`Atualizado ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · gravação online em tempo real.`;st.style.color='#15803d';}}
+  catch(e){const host=document.getElementById('onlineRegistros');if(host)host.innerHTML=`<div data-gcmbs-frequencia-controle="1" style="padding:22px;text-align:center;color:#b91c1c">${gcmbsEsc(e.message||'Falha ao carregar frequência.')}</div>`;if(st){st.textContent=e.message||'Falha ao carregar frequência.';st.style.color='#b91c1c';}}
+  finally{gcmbsFreqLoading=false;}
 }
-function gcmbsFrequenciaAjustar(){const titulo=String(document.getElementById('onlineTitulo')?.textContent||'').trim(),wrap=gcmbsFreqControls(),filtro=document.getElementById('onlineFiltro');if(titulo!=='Frequência'){if(wrap)wrap.remove();if(filtro)filtro.style.display='';return}gcmbsFreqEnsureControls();gcmbsFreqLoad(false).catch(()=>{});}
+function gcmbsAjustarFrequenciaComando(){
+  const titulo=String(document.getElementById('onlineTitulo')?.textContent||'').trim(),wrap=gcmbsFreqControls(),filtro=document.getElementById('onlineFiltro');
+  if(titulo!=='Frequência'){if(wrap)wrap.remove();if(filtro)filtro.style.display='';gcmbsFreqLoadedKey='';gcmbsFreqDirty.clear();return;}
+  gcmbsFreqEnsureControls();
+  if(!document.querySelector('[data-gcmbs-frequencia-controle]'))gcmbsFreqLoadedKey='';
+  gcmbsFreqLoad(false);
+}
 
-let gcmbsAjustePendente=false;
-function gcmbsAgendarAjustes(){if(gcmbsAjustePendente)return;gcmbsAjustePendente=true;queueMicrotask(()=>{gcmbsAjustePendente=false;gcmbsAjustarOficios();gcmbsFrequenciaAjustar();gcmbsFormatarDatasTexto();});}
-new MutationObserver(gcmbsAgendarAjustes).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',gcmbsAgendarAjustes,{once:true});else gcmbsAgendarAjustes();
+let gcmbsUiScheduled=false;
+function gcmbsAgendarAjustesVisuais(){if(gcmbsUiScheduled)return;gcmbsUiScheduled=true;queueMicrotask(()=>{gcmbsUiScheduled=false;gcmbsFormatarDatasTexto(document.body);gcmbsAjustarOficios();gcmbsAjustarFrequenciaComando();});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',gcmbsAgendarAjustesVisuais,{once:true});else gcmbsAgendarAjustesVisuais();
+new MutationObserver(gcmbsAgendarAjustesVisuais).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+
+// Auditoria visual 22/08/2026: impede exposição de valores e rótulos técnicos do banco na UI.
+// Atua apenas na camada de apresentação; não altera payloads, inputs, selects ou dados persistidos.
+const GCMBS_ROTULOS_UI=new Map([
+  ['rg','RG'],['cnh','CNH'],['autorizado viatura','Autorizado a dirigir viatura'],['autorizado motocicleta','Autorizado a conduzir motocicleta'],
+  ['disponivel escala','Disponível para escala'],['pode noite','Pode trabalhar à noite'],['pode 24h','Pode cumprir serviço de 24h'],
+  ['tipo escala id','Tipo de Escala'],['turno inicio','Turno inicial'],['funcionamento 24h','Funcionamento 24h'],
+  ['valor 50','Valor da hora 50%'],['valor 100','Valor da hora 100%'],['max horas','Máximo de horas'],
+  ['participa gerador','Participa do gerador'],['exige viatura','Exige viatura'],['exige motorista','Exige motorista']
+]);
+const GCMBS_BOOLEANOS_UI=new Set([
+  'autorizado a dirigir viatura','autorizado a conduzir motocicleta','disponível para escala','pode trabalhar à noite','pode cumprir serviço de 24h',
+  'ativo','ativa','participa do gerador','funcionamento 24h','exige viatura','exige motorista'
+]);
+const GCMBS_MODULOS_UI=new Map([
+  ['dashboard','Quadro Operacional'],['guardas','Cadastro de Guardas'],['equipes','Equipes'],['postos','Postos Operacionais'],['tipos_escalas','Tipos de Escalas'],
+  ['escala_extra','Escala Extra'],['escalas_extras_manuais','Escala Extra Manual'],['feriados','Feriados'],['justificativas_faltas','Justificativa de Faltas'],
+  ['eventos','Eventos / Serviço Extra por Evento'],['eventos_extras','Eventos / Serviço Extra por Evento'],['folha','Folha de Pagamento'],['folha_pagamento','Folha de Pagamento'],
+  ['banco_horas','Banco de Horas'],['relatorios','Relatórios'],['viaturas','Cadastro de Viaturas'],['permutas','Permutas'],['abastecimento','Abastecimento'],
+  ['manutencao_viaturas','Manutenção de Viaturas'],['checklist','Check-list de Viaturas'],['relatorios_frota','Relatórios da Frota'],['ocorrencias','Ocorrências / Produção'],
+  ['ocorrencias_operacionais','Ocorrências / Produção'],['equipamentos','Equipamentos e Cautelas'],['cursos','Cursos e Habilitações'],['oficios','Ofícios'],
+  ['frequencia','Frequência'],['central_pendencias','Central de Pendências'],['controle_acesso','Controle de Acesso'],['imagens','Imagens da GCM'],['avisos','Quadro de Avisos']
+]);
+const GCMBS_CODIGOS_TEXTO=new Map([
+  ['ESCALA_EXTRA_MANUAL','Escala extra manual'],['MESMA_EQUIPE','Mesma equipe'],['ORDINARIO','Ordinário'],['EDICAO','Edição'],['CONSULTA','Consulta']
+]);
+function gcmbsNormalizarRotuloTexto(v){
+  const s=String(v||'').trim();const k=s.toLocaleLowerCase('pt-BR');return GCMBS_ROTULOS_UI.get(k)||s;
+}
+function gcmbsValorBooleanoUi(v){
+  const s=String(v??'').trim().toUpperCase();
+  if(['1','SIM','TRUE','ATIVO','ATIVA'].includes(s))return 'Sim';
+  if(['0','NAO','NÃO','FALSE','INATIVO','INATIVA'].includes(s))return 'Não';
+  return null;
+}
+function gcmbsAjustarCardsTecnicos(){
+  document.querySelectorAll('.online-kv').forEach(kv=>{
+    const filhos=[...kv.children];
+    for(let i=0;i<filhos.length-1;i++){
+      const b=filhos[i];if(b.tagName!=='B')continue;const valor=b.nextElementSibling;if(!valor)continue;
+      const original=String(b.textContent||'').trim();
+      if(/(?:^|\s)(?:id|uuid|record key|dedupe key|payload|hash)$/i.test(original)){b.style.display='none';valor.style.display='none';continue;}
+      const rotulo=gcmbsNormalizarRotuloTexto(original);if(rotulo!==original)b.textContent=rotulo;
+      const chave=rotulo.toLocaleLowerCase('pt-BR');
+      if(GCMBS_BOOLEANOS_UI.has(chave)){const x=gcmbsValorBooleanoUi(valor.textContent);if(x)valor.textContent=x;}
+      if(chave==='módulo'||chave==='modulo'){
+        const atual=String(valor.textContent||'').trim();const amigavel=GCMBS_MODULOS_UI.get(atual.toLowerCase());if(amigavel)valor.textContent=amigavel;
+      }
+      if(chave==='nível'||chave==='nivel'){
+        const atual=String(valor.textContent||'').trim().toUpperCase();if(atual==='EDICAO'||atual==='EDIÇÃO')valor.textContent='Edição';else if(atual==='CONSULTA')valor.textContent='Consulta';
+      }
+    }
+  });
+}
+function gcmbsAjustarRotulosFormulario(){
+  const host=document.getElementById('onlineEditor');if(!host)return;
+  host.querySelectorAll('label').forEach(label=>{
+    const n=[...label.childNodes].find(x=>x.nodeType===Node.TEXT_NODE&&String(x.nodeValue||'').trim());if(!n)return;
+    const atual=String(n.nodeValue||'').trim(),novo=gcmbsNormalizarRotuloTexto(atual);if(novo!==atual)n.nodeValue=novo;
+  });
+}
+function gcmbsAjustarCodigosVisiveis(root=document.body){
+  if(!root)return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+    const p=node.parentElement;if(!p||['SCRIPT','STYLE','TEXTAREA','CODE','PRE','INPUT','SELECT','OPTION'].includes(p.tagName))return NodeFilter.FILTER_REJECT;
+    const s=String(node.nodeValue||'');return [...GCMBS_CODIGOS_TEXTO.keys()].some(k=>s.includes(k))?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+  }});
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const node of nodes){let s=String(node.nodeValue||'');for(const [cod,rot] of GCMBS_CODIGOS_TEXTO)s=s.replaceAll(cod,rot);if(s!==node.nodeValue)node.nodeValue=s;}
+}
+let gcmbsAuditoriaUiAgendada=false;
+function gcmbsAplicarAuditoriaUi(){
+  if(gcmbsAuditoriaUiAgendada)return;gcmbsAuditoriaUiAgendada=true;
+  queueMicrotask(()=>{gcmbsAuditoriaUiAgendada=false;gcmbsAjustarCardsTecnicos();gcmbsAjustarRotulosFormulario();gcmbsAjustarCodigosVisiveis(document.body);});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',gcmbsAplicarAuditoriaUi,{once:true});else gcmbsAplicarAuditoriaUi();
+new MutationObserver(gcmbsAplicarAuditoriaUi).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
