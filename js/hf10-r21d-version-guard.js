@@ -1,8 +1,8 @@
-// GCMBS 10.0.70 - compatibilidade com camadas legadas
+// GCMBS 10.0.71 - compatibilidade com camadas legadas
 // Protege apenas o indicador visual de versao contra camadas legadas 10.0.62.
 // Nao altera dados, permissoes, payloads ou regras operacionais.
 (function(){
-  const corrigir=v=>String(v??'').replace(/10\.0\.(?:62|68|69)/g,'10.0.70');
+  const corrigir=v=>String(v??'').replace(/10\.0\.(?:62|68|69)/g,'10.0.71');
 
   function instalar(){
     const el=document.getElementById('onlineVersao');
@@ -35,5 +35,5 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',instalar,{once:true});
   else instalar();
-  console.info('[GCMBS] Proteção de versão 10.0.70 ativa');
+  console.info('[GCMBS] Proteção de versão 10.0.71 ativa');
 })();

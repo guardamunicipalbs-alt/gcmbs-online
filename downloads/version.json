@@ -1,13 +1,13 @@
 {
-    "version":  "10.0.70",
-    "versionCode":  70,
+    "version":  "10.0.71",
+    "versionCode":  71,
     "available":  true,
-    "apk":  "GCMBS-10.0.70.apk",
-    "sha256":  "86A1883D1421DF4B4350C392AE3B5726CA90010F5752DD6E856778A6C79BE2B8",
-    "sizeBytes":  5279119,
+    "apk":  "GCMBS-10.0.71.apk",
+    "sha256":  "F9BC0BD129CDC46DA5818DCC1B37FB52FF8BD1985966CF6CC6553E1C1A36C68C",
+    "sizeBytes":  5283298,
     "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
     "migrationRequired":  false,
     "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-04T23:33:49.1296091Z",
-    "notes":  "Quadro Operacional contabiliza ordinários e todos os extras ativos, sem duplicar o mesmo GCM no turno."
+    "publishedAt":  "2026-09-05T19:06:21.8665524Z",
+    "notes":  "HF3 de integridade + permuta ordinario por extra financeiramente neutra; Desktop, Online e Android alinhados."
 }

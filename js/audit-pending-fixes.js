@@ -1,7 +1,7 @@
 // GCMBS 10.0.62 — correcoes acumuladas da auditoria funcional Online/Android.
 // Este modulo atua somente na camada de interface/fluxos Online e nao altera o Gerador de Escala.
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
-const APP_VERSION='10.0.70';
+const APP_VERSION='10.0.71';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isoDate=v=>String(v||'').slice(0,10);

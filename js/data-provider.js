@@ -1,7 +1,7 @@
-import './login-security.js?v=100070';
-import './v62-sync-ui.js?v=100070';
-import './v58-ui.js?v=100070';
-import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100070';
+import './login-security.js?v=100071';
+import './v62-sync-ui.js?v=100071';
+import './v58-ui.js?v=100071';
+import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100071';
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
@@ -9,6 +9,7 @@ const ACTIONS_V58='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-a
 const QUADRO_V62='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-v62';
 const CESSION_V58='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-extra-assumption-v62';
 const EXTRA_PERMUTAS_V68='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-extra-permutas-v68';
+const MIXED_PERMUTA_V71='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mixed-permuta-v71';
 
 export class AuthenticatedProvider {
   constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}; }
@@ -41,6 +42,7 @@ export class AuthenticatedProvider {
 
   async callCessionV58(request){const headers={'Content-Type':'application/json'};const token=localStorage.getItem('gcmbs.mobile.token');if(token)headers.Authorization=`Bearer ${token}`;const r=await fetch(CESSION_V58,{method:'POST',headers,body:JSON.stringify({request}),cache:'no-store'});let body={};try{body=await r.json()}catch{}if(!r.ok)throw new Error(body.message||`Erro ${r.status}`);return body;}
   async callExtraPermutasV68(action,payload={}){const headers={'Content-Type':'application/json'};const token=localStorage.getItem('gcmbs.mobile.token');if(token)headers.Authorization=`Bearer ${token}`;const r=await fetch(EXTRA_PERMUTAS_V68,{method:'POST',headers,body:JSON.stringify({action,...payload}),cache:'no-store'});let body={};try{body=await r.json()}catch{}if(!r.ok)throw new Error(body.message||`Erro ${r.status}`);return body;}
+  async callMixedPermutaV71(action,payload={}){const headers={'Content-Type':'application/json'};const token=localStorage.getItem('gcmbs.mobile.token');if(token)headers.Authorization=`Bearer ${token}`;const r=await fetch(MIXED_PERMUTA_V71,{method:'POST',headers,body:JSON.stringify({action,...payload}),cache:'no-store'});let body={};try{body=await r.json()}catch{}if(!r.ok)throw new Error(body.message||`Erro ${r.status}`);return body;}
 
   async login(identificador,senha,remember=false){
     const body=await this.call('login',{identificador,senha,remember},false);
@@ -115,8 +117,8 @@ export class AuthenticatedProvider {
   references(){return this.refs||{viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}}
 
   async requestBankCorrection(request){const r=await this.call('request_bank_correction',{request});await this.load();return r}
-  async requestPermuta(request){const modalidade=String(request?.modalidade||'ASSUNCAO').toUpperCase();const r=modalidade==='TROCA_EXTRA'?await this.callExtraPermutasV68('request_swap',{request}):modalidade==='CESSAO_EXTRA'?await this.callExtraPermutasV68('request_assumption',{request}):await this.call('request_permuta',{request});await this.load();return r}
-  async acceptExtraSwap(id,aceitou){const r=await this.callExtraPermutasV68('accept',{id,aceitou});await this.load();return r}
+  async requestPermuta(request){const modalidade=String(request?.modalidade||'ASSUNCAO').toUpperCase();const r=modalidade==='TROCA_EXTRA'?await this.callExtraPermutasV68('request_swap',{request}):modalidade==='CESSAO_EXTRA'?await this.callExtraPermutasV68('request_assumption',{request}):modalidade==='TROCA_ORDINARIO_EXTRA'?await this.callMixedPermutaV71('request_mixed_swap',{request}):await this.call('request_permuta',{request});await this.load();return r}
+  async acceptExtraSwap(id,aceitou,modalidade=''){const r=String(modalidade||'').toUpperCase()==='TROCA_ORDINARIO_EXTRA'?await this.callMixedPermutaV71('accept_mixed',{id,aceitou}):await this.callExtraPermutasV68('accept',{id,aceitou});await this.load();return r}
   async updatePermutaRequest(id,request){const r=await this.call('update_permuta_request',{id,request});await this.load();return r}
   async cancelPermutaRequest(id){const r=await this.call('cancel_permuta_request',{id});await this.load();return r}
   async decidePermutaRequest(id,decisao,motivo=''){const r=await this.call('decide_permuta_request',{id,decisao,motivo});await this.load();return r}

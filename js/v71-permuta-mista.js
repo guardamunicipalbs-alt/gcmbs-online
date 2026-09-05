@@ -1,5 +1,5 @@
 // GCMBS 10.0.71 — permuta operacional ordinário ↔ extra.
-// Camada compatível com o app-core 10.0.70. Mantém as modalidades antigas intactas.
+// Camada compatível com o app-core 10.0.71. Mantém as modalidades antigas intactas.
 const GCMBS_V71_MIXED_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mixed-permuta-v71';
 const GCMBS_V71_DATA_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6-cors';
 const $v71=id=>document.getElementById(id);
