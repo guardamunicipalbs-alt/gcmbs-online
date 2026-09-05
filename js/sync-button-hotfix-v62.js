@@ -1,7 +1,5 @@
-import './dashboard-resilience-v62.js?v=100073';
-
 // GCMBS 10.0.62 — compatibilidade para a duplicidade visual do botão de sincronização.
-// A rotina principal de deduplicação e recuperação do Quadro está em dashboard-resilience-v62.js.
+// v74: deduplicação visual autocontida; recuperação do Quadro usa o gateway canônico.
 function removerBotaoSyncEstaticoSeDuplicado(){
   const funcional=document.getElementById('onlineSyncNow');
   const antigo=document.getElementById('syncAgoraOnline');

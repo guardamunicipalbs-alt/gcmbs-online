@@ -1,14 +1,6 @@
-import './v62-permuta-loop-guard.js?v=100073';
-import './v62-extra-multi.js?v=20260831hf10r22a';
-import './hf10-r23-justificativas.js?v=20260831hf10r23';
-import './central-pendencias-fix.js';
-import './relatorios-route-fix.js';
-import './hf10-r21d-version-guard.js?v=100073';
-import './communication-ui-v73.js?v=100073';
-// HF10 R24/R24.1: uma unica interface da Folha e escrita pela rota dedicada.
-import './hf10-r24-1-folha-write.js?v=20260831hf10r24_1';
-import './folha-online-v62.js?v=20260831hf10r24';
-import './hf11-paridade-v69.js?v=20260904v69';
+import './hf10-r21d-version-guard.js?v=100074';
+import './communication-ui-v74.js?v=100074';
+import './hf11-paridade-v69.js?v=100074';
 
 // Politica de seguranca do login GCMBS.
 // Quando "Lembrar meu acesso" estiver desmarcado, nenhum dado de login

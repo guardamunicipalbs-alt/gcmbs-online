@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="92" fill="#0f172a"/>
-<path d="M256 74 398 124v112c0 92-56 157-142 202C170 393 114 328 114 236V124L256 74Z" fill="#e2e8f0"/>
-<path d="M256 119 354 154v82c0 65-37 114-98 151-61-37-98-86-98-151v-82l98-35Z" fill="#0f172a"/>
-<text x="256" y="278" text-anchor="middle" font-family="Arial,sans-serif" font-size="92" font-weight="700" fill="#e2e8f0">GCM</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><path fill="#0f172a" d="M64 6 112 24v34c0 31-20 52-48 64C36 110 16 89 16 58V24z"/><path fill="#fff" d="M64 21 96 33v25c0 21-12 37-32 48-20-11-32-27-32-48V33z"/><path fill="#1d4ed8" d="M64 32 84 40v18c0 14-7 25-20 33-13-8-20-19-20-33V40z"/><text x="64" y="66" text-anchor="middle" font-family="Arial" font-weight="700" font-size="18" fill="#fff">GCM</text></svg>
