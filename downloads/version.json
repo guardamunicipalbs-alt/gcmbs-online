@@ -3,11 +3,11 @@
     "versionCode":  71,
     "available":  true,
     "apk":  "GCMBS-10.0.71.apk",
-    "sha256":  "F9BC0BD129CDC46DA5818DCC1B37FB52FF8BD1985966CF6CC6553E1C1A36C68C",
-    "sizeBytes":  5283298,
+    "sha256":  "39279C0EC90B603D9F67702DD064EF70F599CA93167B5185C4D750BB49E80D16",
+    "sizeBytes":  5287479,
     "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
     "migrationRequired":  false,
     "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-05T19:06:21.8665524Z",
-    "notes":  "HF3 de integridade + permuta ordinario por extra financeiramente neutra; Desktop, Online e Android alinhados."
+    "publishedAt":  "2026-09-05T19:59:51.4643173Z",
+    "notes":  "HF13: permutas pendentes por proximidade; Evento Extra com participantes protegidos; anexos de Justificativa preservados e processados pelo Desktop."
 }

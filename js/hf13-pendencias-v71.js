@@ -13,7 +13,7 @@ const PENDING=new Set([
   'CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP',
   'CANCELAMENTO_COMANDO_PENDENTE'
 ]);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function payloadOf(x){return x?.payload&&typeof x.payload==='object'?x.payload:(x||{});}
 function pendingOf(x){return PENDING.has(String(x?.status||payloadOf(x)?.status||'').toUpperCase());}
@@ -37,6 +37,8 @@ function sortPermutas(list){
   });
 }
 
+// Patch no protótipo antes de app-core criar a instância: toda tela passa a receber
+// pendências em ordem cronológica crescente, mantendo histórico do mais recente para trás.
 const oldActionRequests=AuthenticatedProvider.prototype.actionRequests;
 if(oldActionRequests&&!oldActionRequests.__gcmbs_hf13){
   const fn=function(){return sortPermutas(oldActionRequests.call(this));};
@@ -96,6 +98,9 @@ async function loadEventParticipants(){
 function renderFilter(){const q=String(document.getElementById('hf13EventoBusca')?.value||'').trim().toLowerCase();document.querySelectorAll('#hf13EventoLista label[data-hf13-name]').forEach(x=>x.style.display=!q||x.dataset.hf13Name.includes(q)?'':'none');}
 function showEventError(e){const m=document.getElementById('onlineMsg');if(m)m.textContent=e?.message||String(e);}
 
+// A gravação genérica continua sendo usada para transportar a solicitação, mas o
+// payload de evento recebe guarda_ids. O Desktop HF13 intercepta essa entidade e
+// a envia ao MobileProtectedWorkflowService, que aplica todas as regras operacionais.
 const oldEntityMutate=AuthenticatedProvider.prototype.entityMutate;
 if(oldEntityMutate&&!oldEntityMutate.__gcmbs_hf13){
   const fn=async function(entity,record_key,operation,data,client_change_id=''){
@@ -108,6 +113,7 @@ if(oldEntityMutate&&!oldEntityMutate.__gcmbs_hf13){
     if(ent==='justificativas_faltas'&&op==='UPSERT'&&d?.arquivo_dados){
       let raw=String(d.arquivo_dados||'');if(raw.length>8*1024*1024)throw new Error('O documento da justificativa excede o limite permitido.');
       if(!d.arquivo_tipo)d.arquivo_tipo='application/octet-stream';
+      // O Desktop armazena e visualiza o documento como Data URL, igual ao formulário nativo.
       if(!raw.startsWith('data:'))raw=`data:${d.arquivo_tipo};base64,${raw}`;
       d={...d,arquivo_dados:raw};
     }
@@ -119,6 +125,7 @@ if(oldEntityMutate&&!oldEntityMutate.__gcmbs_hf13){
   fn.__gcmbs_hf13=true;AuthenticatedProvider.prototype.entityMutate=fn;
 }
 
+// Captura qual registro de evento será editado antes do handler do app-core abrir o modal.
 document.addEventListener('click',e=>{
   const edit=e.target.closest?.('[data-online-edit]');if(edit)currentEventKey=String(edit.dataset.onlineEdit||'');
   if(e.target.closest?.('#onlineNovo'))currentEventKey='';
