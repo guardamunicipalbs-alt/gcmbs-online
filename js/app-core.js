@@ -1,12 +1,12 @@
 
-import {AuthenticatedProvider} from './data-provider.js?v=100078';
-import {MODULOS_GCMBS} from './access-catalog.js?v=100078';
-import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100078';
+import {AuthenticatedProvider} from './data-provider.js?v=100079';
+import {MODULOS_GCMBS} from './access-catalog.js?v=100079';
+import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100079';
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.78';
-const GCMBS_APP_VERSION_CODE=78;
+const GCMBS_APP_VERSION='10.0.79';
+const GCMBS_APP_VERSION_CODE=79;
 const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
 const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
 async function verificarAtualizacaoApp(){
@@ -29,7 +29,7 @@ const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Amer
 const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia||p.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.78';
+const APP_VERSION='10.0.79';
 let provider=new AuthenticatedProvider();
 let permutasEspelho=[];
 let permutaExtrasCache={mine:[],others:[]};
@@ -351,7 +351,7 @@ function preencherFiltrosRelatorios(){
 }
 function renderRelatoriosInstitucionais(){
   preencherFiltrosRelatorios();const dados=filtrarRelatoriosInstitucionais(),host=$('relatoriosLista'),status=$('relatoriosStatus');if(!host)return;
-  if(status)status.textContent=`${dados.length} registro(s) institucional(is) · fonte: réplica integral do Desktop 10.0.78`;
+  if(status)status.textContent=`${dados.length} registro(s) institucional(is) · fonte: réplica integral do Desktop 10.0.79`;
   host.innerHTML=dados.length?dados.map(x=>`<article class="record-card"><div class="record-card-head"><strong>${esc(nomeEscala(x)||'GCM')}</strong><span>${esc(fmt(String(x.data||'').slice(0,10)))}</span></div><div class="record-meta">${esc(postoEscala(x)||'Posto não informado')} · ${esc(horarioRelatorio(x)||x.turno||'Horário não informado')}</div><div>${x.motorista?'<span class="tag-driver">MOTORISTA</span> ':''}${x.viatura?`Viatura: ${esc(x.viatura)}`:''}${ehExtraEscala(x)?' <span class="tag-extra">Extra</span>':''}</div></article>`).join(''):'<div class="empty">Nenhum registro encontrado para os filtros informados.</div>';
 }
 async function carregarRelatoriosInstitucionais(force=false){
@@ -362,7 +362,7 @@ async function carregarRelatoriosInstitucionais(force=false){
 function imprimirRelatoriosInstitucionais(){
   const dados=filtrarRelatoriosInstitucionais();const w=window.open('','_blank','noopener,noreferrer');if(!w)return alert('Libere pop-ups para imprimir o relatório.');
   const rows=dados.map(x=>`<tr><td>${esc(fmt(String(x.data||'').slice(0,10)))}</td><td>${esc(nomeEscala(x)||'')}</td><td>${esc(postoEscala(x)||'')}</td><td>${esc(horarioRelatorio(x)||x.turno||'')}</td><td>${esc(x.viatura||'')}</td></tr>`).join('');
-  w.document.write(`<!doctype html><meta charset="utf-8"><title>GCMBS 10.0.78 - Relatório</title><style>body{font:12px Arial;margin:24px}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:5px;text-align:left}th{background:#eee}</style><h1>GCMBS — Relatório Institucional de Escalas</h1><p>${dados.length} registro(s)</p><table><thead><tr><th>Data</th><th>GCM</th><th>Posto</th><th>Horário</th><th>Viatura</th></tr></thead><tbody>${rows}</tbody></table>`);w.document.close();w.focus();w.print();
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>GCMBS 10.0.79 - Relatório</title><style>body{font:12px Arial;margin:24px}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:5px;text-align:left}th{background:#eee}</style><h1>GCMBS — Relatório Institucional de Escalas</h1><p>${dados.length} registro(s)</p><table><thead><tr><th>Data</th><th>GCM</th><th>Posto</th><th>Horário</th><th>Viatura</th></tr></thead><tbody>${rows}</tbody></table>`);w.document.close();w.focus();w.print();
 }
 
 function abrirAjusteEscala(id){
@@ -1355,6 +1355,6 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100078',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100079',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

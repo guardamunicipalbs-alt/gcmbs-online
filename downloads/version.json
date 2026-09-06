@@ -1,17 +1,18 @@
 {
-    "version":  "10.0.78",
-    "versionCode":  78,
-    "apk":  "GCMBS-10.0.78.apk",
-    "publishedAt":  "2026-09-06T17:18:05.8983597Z",
-    "sha256":  "4911EE602CF6314B7CEB7385F625F34DACC1196C010C1650F2FCAA3EAB0D65FF",
-    "sizeBytes":  6439027,
+    "version":  "10.0.79",
+    "versionCode":  79,
+    "apk":  "GCMBS-10.0.79.apk",
+    "publishedAt":  "2026-09-06T17:30:37.3377906Z",
+    "sha256":  "1D240CD8F52C1FFC812BE660154156F5508C633DFFF989478DF92A8096020A7A",
+    "sizeBytes":  6447403,
     "notes":  [
-                  "Paridade cumulativa V102 Online/App.",
+                  "PadrÃ£o Desktop V103 aplicado ao Online/App.",
                   "Login institucional no modelo aprovado.",
-                  "Quadro Operacional com indicadores, grafico, resumo e detalhes.",
+                  "Organizacao visual igual ao Desktop: cabecalho, acesso relacionado, sidebar e cadastros.",
+                  "Quadro Operacional profissional com indicadores, grafico, resumo e detalhes clicaveis.",
                   "Central de Pendencias interativa.",
                   "Controle de Acesso com acesso rapido por GCM.",
-                  "Justificativas preservam a rota protegida.",
-                  "Atualizacao Android preserva os dados instalados."
+                  "Justificativas preservam a rota protegida para exclusao/cancelamento.",
+                  "Atualizacao preserva os dados instalados."
               ]
 }
