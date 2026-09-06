@@ -8,8 +8,15 @@ function Sha([string]$p){if(!(Test-Path -LiteralPath $p)){return $null};(Get-Fil
 function Dir([string]$p){New-Item -ItemType Directory -Path $p -Force|Out-Null}
 function GetVisual([string]$rel,[string]$dst){$u="$SourceBase/$($rel.Replace('\','/'))?v=$VisualVersion";Invoke-WebRequest -Uri $u -OutFile $dst -UseBasicParsing;if(!(Test-Path -LiteralPath $dst) -or (Get-Item $dst).Length -lt 80){throw "Download incompleto: $rel"}}
 function Rel([string]$from,[string]$to){$a=New-Object System.Uri(((Resolve-Path $from).Path.TrimEnd('\')+'\'));$b=New-Object System.Uri((Resolve-Path $to).Path);[Uri]::UnescapeDataString($a.MakeRelativeUri($b).ToString())}
-function PatchHtml([string]$html,[string]$css,[string]$js){$t=Get-Content $html -Raw;if($t -notmatch '</head>' -or $t -notmatch '</body>'){return};$cr=Rel (Split-Path $html -Parent) $css;$jr=Rel (Split-Path $html -Parent) $js;if($t -notmatch 'gcmbs-premium-3d-v79-fix\.css'){$t=$t -replace '</head>',("<link rel=\"stylesheet\" href=\"$cr?v=100079\" data-gc79-refined=\"1\">`r`n</head>")};if($t -notmatch 'gcmbs-premium-3d-v79-fix\.js'){$t=$t -replace '</body>',("<script defer src=\"$jr?v=100079\" data-gc79-refined=\"1\"></script>`r`n</body>")};$t=$t -replace 'gcmbs-design-system-v76\.js\?v=100078','gcmbs-design-system-v76.js?v=100079';$t=$t -replace 'gcmbs-design-system-v76\.css\?v=100078','gcmbs-design-system-v76.css?v=100079';Set-Content $html $t -Encoding UTF8}
-
+function PatchHtml([string]$html,[string]$css,[string]$js){
+  $t=Get-Content $html -Raw;if($t -notmatch '</head>' -or $t -notmatch '</body>'){return}
+  $cr=Rel (Split-Path $html -Parent) $css;$jr=Rel (Split-Path $html -Parent) $js
+  if($t -notmatch 'gcmbs-premium-3d-v79-fix\.css'){$styleTag='<link rel="stylesheet" href="{0}?v=100079" data-gc79-refined="1">' -f $cr;$t=$t -replace '</head>',($styleTag+"`r`n</head>")}
+  if($t -notmatch 'gcmbs-premium-3d-v79-fix\.js'){$scriptTag='<script defer src="{0}?v=100079" data-gc79-refined="1"></script>' -f $jr;$t=$t -replace '</body>',($scriptTag+"`r`n</body>")}
+  $t=$t -replace 'gcmbs-design-system-v76\.js\?v=100078','gcmbs-design-system-v76.js?v=100079'
+  $t=$t -replace 'gcmbs-design-system-v76\.css\?v=100078','gcmbs-design-system-v76.css?v=100079'
+  Set-Content $html $t -Encoding UTF8
+}
 try{
  Say '==============================================================================' Cyan
  Say ' GCMBS - CORRECAO VISUAL PREMIUM 3D V79' Cyan
