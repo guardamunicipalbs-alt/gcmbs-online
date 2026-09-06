@@ -26,6 +26,38 @@ const r163Quadro=data=>r163Call(R163_QUADRO_API,{action:'quadro_operacional',dat
 const r163Extras=data=>r163Call(R163_EXTRAS_API,{action:'extras_evento',data});
 const r163EhEvento=x=>String(x?.origem||'').toUpperCase()==='EVENTO_EXTRA'||/extra\s+por\s+evento/i.test(String(x?.complemento||''));
 
+// 10.0.75 HF: o detalhe de "Postos cobertos" deve respeitar o posto efetivo
+// mostrado em cada turno. A implementação antiga podia classificar Praça Chico
+// Leite como "Moto patrulhamento" apenas porque a viatura vinculada era uma moto.
+function r163NomePostoDoDetalhe(x){
+  const c=String(x?.complemento||'').trim();
+  if(!c)return'';
+  const primeiroBloco=c.split(' | ')[0];
+  const posto=String(primeiroBloco.split(' · ')[0]||'').trim();
+  return posto&&posto!=='-'?posto:'';
+}
+function r163PostosPorTurno(d){
+  const grupos=new Map();
+  const add=(turno,x)=>{
+    const posto=r163NomePostoDoDetalhe(x);if(!posto)return;
+    const chave=posto.toLocaleUpperCase('pt-BR');
+    if(!grupos.has(chave))grupos.set(chave,{nome:posto,A:new Set(),B:new Set()});
+    const g=grupos.get(chave),nome=String(x?.nome||'').trim();
+    if(nome&&nome!=='-')g[turno].add(nome);
+  };
+  for(const x of Array.isArray(d?.efetivo?.detalhes?.servicoA)?d.efetivo.detalhes.servicoA:[])add('A',x);
+  for(const x of Array.isArray(d?.efetivo?.detalhes?.servicoB)?d.efetivo.detalhes.servicoB:[])add('B',x);
+  return [...grupos.values()]
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
+    .map(g=>({
+      nome:g.nome,
+      complemento:[
+        g.A.size?`Turno A: ${[...g.A].sort((a,b)=>a.localeCompare(b,'pt-BR')).join(', ')}`:'',
+        g.B.size?`Turno B: ${[...g.B].sort((a,b)=>a.localeCompare(b,'pt-BR')).join(', ')}`:''
+      ].filter(Boolean).join(' · ')
+    }));
+}
+
 function r163Render(titulo,data,itens,ord,extras){
   const modal=document.getElementById('quadroModal');
   const title=document.getElementById('quadroModalTitulo');
@@ -44,14 +76,21 @@ async function r163Abrir(btn){
   if(r163Busy)return;
   const caminho=String(btn?.dataset?.quadroDetail||'');
   const turno=caminho==='efetivo.servicoA'?'A':caminho==='efetivo.servicoB'?'B':'';
-  if(!turno)return;
+  const postos=caminho==='postos.cobertos';
+  if(!turno&&!postos)return;
   const data=document.getElementById('quadroData')?.value||new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
   r163Busy=true;
   try{
     const [d,x]=await Promise.all([
       r163Quadro(data),
-      r163Extras(data).catch(e=>{console.warn('[GCMBS] HF10 R20 extras dedicados indisponiveis:',e?.message||e);return null;})
+      turno?r163Extras(data).catch(e=>{console.warn('[GCMBS] HF10 R20 extras dedicados indisponiveis:',e?.message||e);return null;}):Promise.resolve(null)
     ]);
+    if(postos){
+      const itens=r163PostosPorTurno(d);
+      const q=document.getElementById('qPostos');if(q)q.textContent=String(itens.length);
+      r163Render(btn.dataset.title||'Postos cobertos no dia',d?.data||data,itens,NaN,NaN);
+      return;
+    }
     const key=turno==='A'?'servicoA':'servicoB';
     const atual=Array.isArray(d?.efetivo?.detalhes?.[key])?d.efetivo.detalhes[key]:[];
     const consolidado=d?.efetivo?.contagemIncluiExtras===true;
@@ -69,7 +108,7 @@ async function r163Abrir(btn){
 }
 
 document.addEventListener('click',e=>{
-  const btn=e.target.closest?.('[data-quadro-detail="efetivo.servicoA"],[data-quadro-detail="efetivo.servicoB"]');
+  const btn=e.target.closest?.('[data-quadro-detail="efetivo.servicoA"],[data-quadro-detail="efetivo.servicoB"],[data-quadro-detail="postos.cobertos"]');
   if(!btn)return;
   queueMicrotask(()=>r163Abrir(btn));
 },false);
