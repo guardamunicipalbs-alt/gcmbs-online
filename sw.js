@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100076-design-system';
+const VERSION='gcmbs-online-100078-premium-3d';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -16,8 +16,9 @@ self.addEventListener('fetch',event=>{
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
     headers.set('x-gcmbs-version','10.0.76');
+    headers.set('x-gcmbs-visual','premium-3d-v78');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] 10.0.76 design system ativo',VERSION);
+console.info('[GCMBS SW] Premium 3D v78 ativo',VERSION);
