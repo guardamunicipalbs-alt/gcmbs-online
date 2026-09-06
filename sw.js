@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100078-premium-3d';
+const VERSION='gcmbs-online-100079-premium-3d';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -6,7 +6,7 @@ self.addEventListener('activate',event=>event.waitUntil((async()=>{
   await self.clients.claim();
 })()));
 
-// O GCMBS é operacional: HTML, JS e CSS usam sempre a publicação mais recente.
+// HTML, JS e CSS sempre consultam a publicação mais recente.
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
@@ -16,9 +16,9 @@ self.addEventListener('fetch',event=>{
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
     headers.set('x-gcmbs-version','10.0.76');
-    headers.set('x-gcmbs-visual','premium-3d-v78');
+    headers.set('x-gcmbs-visual','premium-3d-v79');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] Premium 3D v78 ativo',VERSION);
+console.info('[GCMBS SW] Premium 3D v79 ativo',VERSION);

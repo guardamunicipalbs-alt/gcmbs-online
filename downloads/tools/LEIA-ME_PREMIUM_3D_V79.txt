@@ -1,0 +1,14 @@
+GCMBS — PREMIUM 3D V79
+
+Correção visual baseada na captura de produção enviada em 05/09/2026.
+
+Ajustes:
+- bloqueia a prévia v77 para impedir sobreposição de estilos e elementos;
+- remove ícones e avatares duplicados;
+- normaliza o menu lateral com um único conjunto de ícones SVG;
+- reorganiza o Quadro Operacional em: hero institucional, faixa de 6 KPIs, gráfico/resumo e painéis de detalhes;
+- reduz contornos excessivos dos botões do menu e mantém relevo 3D elegante;
+- mantém cabeçalho claro, avatar único e contexto da página;
+- melhora proporções do dashboard em desktop e responsividade no celular.
+
+Escopo exclusivamente visual. Não altera banco, Gerador de Escala, folha, permutas, banco de horas, eventos, extras, permissões, APIs ou cálculos.
