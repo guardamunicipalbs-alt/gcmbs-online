@@ -68,14 +68,14 @@ function r18PatchCards(){
 }
 function r18PatchSyncVersion(){
   const e=document.getElementById('syncStatus');
-  if(e&&/10\.0\.(?:62|68|69)/.test(String(e.title||'')))e.title=String(e.title).replace(/10\.0\.(?:62|68|69)/g,'10.0.76');
+  if(e&&/10\.0\.(?:62|68|69)/.test(String(e.title||'')))e.title=String(e.title).replace(/10\.0\.(?:62|68|69)/g,'10.0.85');
 }
 async function r18AtualizarBadge(){
   const e=document.getElementById('syncStatus');if(!e||!r18Token())return;
   try{
     const b=await r18Post(R18_QUADRO,{action:'sync_status'}),s=b.sincronizacao||{};
     const text=`Última sincronização Desktop ↔ Online/App: ${s.ultima_sincronizacao?new Date(s.ultima_sincronizacao).toLocaleString('pt-BR',{timeZone:'America/Fortaleza'}):'não registrada'}${s.desktop_version?' · Desktop '+s.desktop_version:''}`;
-    const title=`Pendentes: ${Number(s.pendentes||0)} · Erros recentes: ${Number(s.erros_recentes||0)} · GCMBS Online/App 10.0.76`;
+    const title=`Pendentes: ${Number(s.pendentes||0)} · Erros recentes: ${Number(s.erros_recentes||0)} · GCMBS Online/App 10.0.85`;
     if(e.textContent!==text)e.textContent=text;if(e.title!==title)e.title=title;
     e.style.color=Number(s.erros_recentes||0)?'#fecaca':Number(s.pendentes||0)?'#fde68a':'#bbf7d0';
   }catch{}
@@ -86,14 +86,14 @@ async function r18SolicitarSync(btn){
     const r=await r18Post(R18_SYNC,{action:'request_sync'});
     btn.textContent='Solicitação enviada';
     alert(r.message||'Sincronização solicitada ao Desktop.');
-    await r18AtualizarBadge();
-    setTimeout(()=>{document.getElementById('quadroData')?.dispatchEvent(new Event('change',{bubbles:true}));r18AtualizarBadge();btn.textContent=old;btn.disabled=false;},5000);
+    await r18AtualizarBadge();window.dispatchEvent(new Event('gcmbs:v110-refresh'));
+    setTimeout(()=>{document.getElementById('quadroData')?.dispatchEvent(new Event('change',{bubbles:true}));r18AtualizarBadge();window.dispatchEvent(new Event('gcmbs:v110-refresh'));btn.textContent=old;btn.disabled=false;},5000);
   }catch(e){alert('Não foi possível solicitar a sincronização: '+(e?.message||e));btn.textContent=old;btn.disabled=false;}
 }
 function r18BindSync(){
   const canonical=document.getElementById('syncAgoraOnline'),legacy=document.getElementById('onlineSyncNow');
   if(canonical&&legacy)legacy.remove();
-  if(canonical&&!canonical.dataset.r18Bound){canonical.dataset.r18Bound='1';canonical.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();r18SolicitarSync(canonical);},true);}
+  if(canonical&&!canonical.dataset.r18Bound){canonical.dataset.r18Bound='1';canonical.dataset.gcmbsV110Bound='1';canonical.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();r18SolicitarSync(canonical);},true);}
   r18PatchSyncVersion();
   const status=document.getElementById('syncStatus');
   if(status&&!status.dataset.r18Observed){status.dataset.r18Observed='1';new MutationObserver(r18PatchSyncVersion).observe(status,{attributes:true,attributeFilter:['title'],childList:true});}

@@ -57,7 +57,7 @@ function dynamicOnline(){
     const h=$('h1',head),p=$('p',head),mh=$('#onlineModuloTitulo'),mp=$('#onlineModuloDescricao');
     if(h&&mh&&text(mh))h.textContent=text(mh);if(p&&mp&&text(mp))p.textContent=text(mp);
   }
-  const ver=$('#onlineVersao');if(ver&&/10\.0\.7[68]/.test(text(ver)))ver.textContent='Online/App 10.0.78 · V103';
+  const ver=$('#onlineVersao');if(ver&&/10\.0\.7[68]/.test(text(ver)))ver.textContent='Online/App 10.0.85 · V110';
 }
 function compactRecordActions(){
   $$('[data-view="online"] #onlineRegistros .record-card').forEach(card=>{
@@ -73,7 +73,7 @@ function versionLabels(){
   $$('#appTela').forEach(()=>{});
   $$('[id*="Versao"],small,span').forEach(el=>{
     if(el.children.length)return;
-    const s=text(el);if(s==='Online 10.0.76')el.textContent='Online 10.0.78';
+    const s=text(el);if(s==='Online 10.0.85')el.textContent='Online 10.0.85';
   });
 }
 function update(){ensureHeader();ensureRelated();dynamicOnline();compactRecordActions();versionLabels();syncState();ensureHeader()}

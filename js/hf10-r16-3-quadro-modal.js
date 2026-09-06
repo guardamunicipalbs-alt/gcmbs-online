@@ -123,7 +123,7 @@ import('./hf10-r17-4-banco-gestao-filter.js?v=20260831hf10r17r4')
   .catch(err=>console.warn('[GCMBS] HF10 R17.4 falha ao carregar filtro visual da Analise',err));
 
 // HF10 R18: estado operacional da Frota e sincronizacao manual consolidada.
-import('./hf10-r18-frota-sync.js?v=100076')
+import('./hf10-r18-frota-sync.js?v=100110')
   .catch(err=>console.warn('[GCMBS] HF10 R18 falha ao carregar Frota/Sync',err));
 
 // HF10 R19: logout explicito revoga inclusive sessao lembrada.

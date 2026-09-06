@@ -1,4 +1,4 @@
-// GCMBS 10.0.76 - HF82 R2
+// GCMBS 10.0.85 - HF82 R2
 // Estabilidade consolidada do Online/PWA/App.
 // Foco: evitar travamentos, tempestade de requests e loops de MutationObserver
 // sem alterar banco, payloads, permissoes ou regras do Desktop.
@@ -233,7 +233,7 @@ if(!window.__gcmbsR15RefreshTriggerGuard){
 function r15Stamp(){
   r15EnsureListObserver();
   const v=document.getElementById('onlineVersao');
-  if(v)v.textContent='Online/App 10.0.76';
+  if(v)v.textContent='Online/App 10.0.85';
 }
 function r15Init(){r15Stamp();r15ScheduleSearch();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r15Init,{once:true});else r15Init();

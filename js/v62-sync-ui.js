@@ -284,7 +284,7 @@ async function atualizarBadge(){
         s.pendentes||0
       )} · Erros recentes: ${Number(
         s.erros_recentes||0
-      )} · GCMBS Online/App 10.0.76`;
+      )} · GCMBS Online/App 10.0.85`;
 
     e.style.color=
       Number(s.erros_recentes||0)
@@ -351,6 +351,9 @@ function corrigirData(){
 }
 
 function instalarSync(){
+
+  const canonical=document.getElementById('syncAgoraOnline');
+  if(canonical){document.getElementById('onlineSyncNow')?.remove();return;}
 
   if(
     document.getElementById(
@@ -1125,5 +1128,5 @@ window.addEventListener(
 );
 
 console.info(
-  '[GCMBS] consolidação Online/App 10.0.76 ativa'
+  '[GCMBS] consolidação Online/App 10.0.85 ativa'
 );

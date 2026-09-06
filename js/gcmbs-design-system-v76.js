@@ -41,5 +41,5 @@
   loadScript('js/hf83-justificativas-protected-route.js?v=100083','gc83-justificativas');
   loadScript('js/hf84-utf8-branding-fix.js?v=100084','gc84-utf8-branding');
   loadScript('js/gcmbs-cumulative-v102.js?v=100102','gc102-cumulative');
-  loadScript('js/gcmbs-desktop-parity-v103.js?v=100103','gc103-desktop-parity');
+  loadScript('js/gcmbs-desktop-parity-v103.js?v=100110','gc103-desktop-parity');
 })();

@@ -1,6 +1,6 @@
-import './hf10-r21d-version-guard.js?v=100076';
+import './hf10-r21d-version-guard.js?v=100110';
 import './communication-ui-v74.js?v=100076';
-import './hf11-paridade-v69.js?v=100076';
+import './hf11-paridade-v69.js?v=100110';
 
 // Politica de seguranca do login GCMBS.
 // Quando "Lembrar meu acesso" estiver desmarcado, nenhum dado de login

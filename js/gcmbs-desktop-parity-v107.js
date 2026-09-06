@@ -1,4 +1,4 @@
-/* GCMBS V108 - V107 + ordem decrescente de data na Escala Extra Manual */
+/* GCMBS V110 - V107 + ordem decrescente de data na Escala Extra Manual */
 (()=>{
 'use strict';
 const root=document.documentElement;
@@ -175,11 +175,11 @@ function buildList(){
   }finally{rebuilding=false}
 }
 function version(){
-  const ov=$('#onlineVersao');if(ov)ov.textContent='Online/App 10.0.84 · V108';
+  const ov=$('#onlineVersao');if(ov)ov.textContent='Online/App 10.0.85 · V110';
   $$('small,span').forEach(el=>{
     if(el.children.length)return;
     const s=txt(el);
-    if(/^Online\s*(?:\/App)?\s*[-·]?\s*10\.0\.\d+(?:\s*[-·]\s*V\d+)?$/i.test(s))el.textContent='Online · 10.0.84 · V108';
+    if(/^Online\s*(?:\/App)?\s*[-·]?\s*10\.0\.\d+(?:\s*[-·]\s*V\d+)?$/i.test(s))el.textContent='Online · 10.0.85 · V110';
   });
 }
 function tick(){
@@ -196,5 +196,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 let timer=0;
 new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(tick,70)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class']});
 setInterval(()=>{if(active())version()},1500);
-console.info('[GCMBS] V108 ordem decrescente de data ativa');
+console.info('[GCMBS] V110 ordem decrescente de data ativa');
 })();
