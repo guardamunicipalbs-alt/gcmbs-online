@@ -1,4 +1,4 @@
-/* GCMBS V110 - auditoria: sincronizacao e botoes consolidados. */
+/* GCMBS V110 - auditoria: sincronizacao, botoes e quadro consolidado. */
 (()=>{
 'use strict';
 const VERSION='10.0.85';
@@ -24,7 +24,6 @@ function ensureSync(){
   const legacy=$('onlineSyncNow');if(legacy)legacy.remove();
   let btn=$('syncAgoraOnline');if(!btn)return;
   if(btn.dataset.gcmbsV110Bound==='1')return;
-  // Remove listeners legados impossiveis de enumerar e deixa um unico botao canonico.
   const clean=btn.cloneNode(true);btn.replaceWith(clean);btn=clean;
   btn.dataset.gcmbsV110Bound='1';btn.dataset.r18Bound='1';
   btn.addEventListener('click',async ev=>{
@@ -43,10 +42,24 @@ function ensureSync(){
     }
   },true);
 }
-function init(){stampVersion();ensureSync();}
+
+/* A V102 ainda injeta um segundo bloco de Distribuição Operacional + Resumo do Dia.
+   O painel institucional atual já possui esses componentes. Removemos somente a
+   cópia legada, preservando os cards/fontes #q* e toda a lógica de sincronização. */
+function removeDuplicateDashboard(){
+  const view=document.querySelector('[data-view="inicio"]');
+  if(!view)return;
+  view.querySelectorAll('.gc102-analytics').forEach(el=>el.remove());
+}
+function init(){stampVersion();ensureSync();removeDuplicateDashboard();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-[100,700,1800].forEach(ms=>setTimeout(init,ms));
-document.addEventListener('click',e=>{if(e.target.closest?.('#mainNav [data-module],#menuToggle'))setTimeout(stampVersion,80)},true);
+[100,350,700,1200,1800,3000].forEach(ms=>setTimeout(init,ms));
+let dedupeTimer=0;
+new MutationObserver(()=>{
+  clearTimeout(dedupeTimer);
+  dedupeTimer=setTimeout(removeDuplicateDashboard,40);
+}).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',e=>{if(e.target.closest?.('#mainNav [data-module],#menuToggle'))setTimeout(init,80)},true);
 window.addEventListener('pageshow',()=>setTimeout(init,0));
-console.info('[GCMBS] V110 auditoria: sincronização e botões consolidados ativos');
+console.info('[GCMBS] V110 auditoria: sincronização, botões e Quadro sem duplicação ativos');
 })();
