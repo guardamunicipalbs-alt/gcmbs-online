@@ -1,28 +1,28 @@
 /*
- * GCMBS — Bootstrap visual de compatibilidade.
- * Aprovacao visual 05/09/2026: Premium 3D v78 passa a ser o tema institucional
- * compartilhado por Desktop Electron, Online e App.
- * Este bootstrap nao altera regras, dados, permissoes ou fluxos funcionais.
+ * GCMBS — Bootstrap visual institucional.
+ * Premium 3D v79 = v78 aprovado + correções de paridade visual observadas em produção.
+ * Camada exclusivamente visual; preserva regras, dados, permissões e cálculos.
  */
 (()=>{
   'use strict';
   const root=document.documentElement;
-  root.classList.add('gcmbs-ds');
+  root.classList.add('gcmbs-ds','gc78-premium','gc79-refined');
   root.classList.remove('gc77-preview');
+  root.dataset.gc77Premium='1';
 
-  if(!document.querySelector('link[data-gc78-premium]')){
-    const link=document.createElement('link');
-    link.rel='stylesheet';
-    link.href='css/gcmbs-premium-3d-v78.css?v=100078';
-    link.dataset.gc78Premium='1';
-    document.head.appendChild(link);
-  }
+  document.querySelectorAll('link[href*="gcmbs-online-premium-v77"],script[src*="gcmbs-online-premium-v77"]').forEach(el=>el.remove());
 
-  if(!document.querySelector('script[data-gc78-premium]')){
-    const script=document.createElement('script');
-    script.src='js/gcmbs-premium-3d-v78.js?v=100078';
-    script.defer=true;
-    script.dataset.gc78Premium='1';
-    document.head.appendChild(script);
-  }
+  const loadStyle=(href,key)=>{
+    if(document.querySelector(`link[data-${key}]`))return;
+    const link=document.createElement('link');link.rel='stylesheet';link.href=href;link.setAttribute(`data-${key}`,'1');document.head.appendChild(link);
+  };
+  const loadScript=(src,key)=>{
+    if(document.querySelector(`script[data-${key}]`))return;
+    const script=document.createElement('script');script.src=src;script.defer=true;script.setAttribute(`data-${key}`,'1');document.head.appendChild(script);
+  };
+
+  loadStyle('css/gcmbs-premium-3d-v78.css?v=100079','gc78-premium');
+  loadStyle('css/gcmbs-premium-3d-v79-fix.css?v=100079','gc79-refined');
+  loadScript('js/gcmbs-premium-3d-v78.js?v=100079','gc78-premium');
+  loadScript('js/gcmbs-premium-3d-v79-fix.js?v=100079','gc79-refined');
 })();
