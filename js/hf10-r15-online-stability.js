@@ -1,30 +1,69 @@
-// GCMBS 10.0.68 - HF10 R15
+// GCMBS 10.0.76 - HF82 R1
 // Estabilidade consolidada do Online/PWA/App.
-// Foco: evitar travamentos de abas sem alterar banco, payloads, permissões ou regras do Desktop.
-const HF10_R15='20260826hf10r15';
+// Foco: evitar travamentos, tempestade de requests e loops de MutationObserver
+// sem alterar banco, payloads, permissoes ou regras do Desktop.
+const HF10_R15='20260905hf82r1';
 
-// 1) Coalescência global dos MutationObservers: no máximo uma execução por frame.
-// Evita cascatas síncronas de observador -> alteração de DOM -> observador.
+// 1) Coalescencia global dos MutationObservers: no maximo uma execucao por frame.
+// HF82: o observer legado de listaPermutasSolicitadas se autoacionava apos cada
+// host.innerHTML do proprio renderPermutasComando(), provocando novo render e
+// quatro chamadas remotas em sequencia. Limitamos SOMENTE esse observer a uma
+// execucao a cada 5 segundos. Assim uma mutacao externa ainda atualiza a lista,
+// mas a mutacao produzida pelo proprio render nao cria um ciclo infinito.
 if(!window.__gcmbsR15ObserverCoalescing && window.MutationObserver){
   window.__gcmbsR15ObserverCoalescing=true;
   const NativeMutationObserver=window.MutationObserver;
   function GcmbsMutationObserver(callback){
     let scheduled=false;
     let pending=[];
+    let observedTarget=null;
+    let minInterval=0;
+    let lastRun=0;
+
     const native=new NativeMutationObserver((mutations,observer)=>{
+      const now=Date.now();
+      if(minInterval && lastRun && now-lastRun<minInterval)return;
+
       if(mutations?.length){
         if(pending.length<1200) pending.push(...mutations);
         else pending=mutations.slice(-200);
       }
       if(scheduled)return;
       scheduled=true;
+
       const run=()=>{
         scheduled=false;
+        const stamp=Date.now();
+        if(minInterval && lastRun && stamp-lastRun<minInterval){pending=[];return;}
+        if(minInterval)lastRun=stamp;
         const batch=pending;pending=[];
-        try{callback(batch,observer)}catch(err){console.error('[GCMBS] observer isolado pelo HF10 R15',err);}
+        try{callback(batch,observer)}catch(err){console.error('[GCMBS] observer isolado pelo HF82',err);}
       };
+
       if(document.hidden)setTimeout(run,32);else requestAnimationFrame(run);
     });
+
+    const nativeObserve=native.observe.bind(native);
+    native.observe=function(target,options){
+      observedTarget=target||null;
+      try{
+        if(
+          target instanceof Element &&
+          target.id==='listaPermutasSolicitadas' &&
+          options?.childList===true &&
+          !options?.subtree &&
+          !options?.attributes &&
+          !options?.characterData
+        ){
+          minInterval=5000;
+          target.dataset.hf82ObserverGuard='1';
+          console.info('[GCMBS] HF82 protecao anti-loop ativa em listaPermutasSolicitadas');
+        }
+      }catch{}
+      return nativeObserve(target,options);
+    };
+
+    native.__gcmbsObservedTarget=()=>observedTarget;
     return native;
   }
   GcmbsMutationObserver.prototype=NativeMutationObserver.prototype;
@@ -32,8 +71,8 @@ if(!window.__gcmbsR15ObserverCoalescing && window.MutationObserver){
   window.MutationObserver=GcmbsMutationObserver;
 }
 
-// 2) Proteção específica contra o ciclo encontrado em Ofícios:
-// o código legado reapendava cards que já estavam no mesmo container e acordava o observer novamente.
+// 2) Protecao especifica contra o ciclo encontrado em Oficios:
+// o codigo legado reapendava cards que ja estavam no mesmo container e acordava o observer novamente.
 if(!window.__gcmbsR15OficiosAppendGuard){
   window.__gcmbsR15OficiosAppendGuard=true;
   const previousAppendChild=Node.prototype.appendChild;
@@ -46,8 +85,8 @@ if(!window.__gcmbsR15OficiosAppendGuard){
   };
 }
 
-// 3) Pesquisa leve para TODOS os módulos genéricos.
-// Intercepta antes do listener legado, que serializava e reconstruía a lista inteira a cada tecla.
+// 3) Pesquisa leve para TODOS os modulos genericos.
+// Intercepta antes do listener legado, que serializava e reconstruia a lista inteira a cada tecla.
 let r15SearchFrame=0;
 function r15Norm(v){
   const s=String(v??'');
@@ -111,8 +150,8 @@ document.addEventListener('input',ev=>{
   r15ScheduleSearch();
 },true);
 
-// 4) Deduplicação de chamadas caras idênticas enquanto ainda estão em voo.
-// Reduz sobreposição entre atualização de 60 s, retorno à aba e abertura de módulo.
+// 4) Dedupe de chamadas caras identicas enquanto ainda estao em voo.
+// Reduz sobreposicao entre atualizacao de 60 s, retorno a aba e abertura de modulo.
 if(!window.__gcmbsR15FetchDedupe){
   window.__gcmbsR15FetchDedupe=true;
   const nativeFetch=window.fetch.bind(window);
@@ -190,9 +229,9 @@ document.addEventListener('click',ev=>{
 },true);
 window.addEventListener('pageshow',()=>setTimeout(r15Init,0));
 
-// HF10 R16.4: carregar o detalhe canônico do Quadro também a partir da camada R15.
-// Usa a mesma URL do Service Worker para que o módulo seja avaliado uma única vez.
+// HF10 R16.4: carregar o detalhe canonico do Quadro tambem a partir da camada R15.
+// Usa a mesma URL do Service Worker para que o modulo seja avaliado uma unica vez.
 import('./hf10-r16-3-quadro-modal.js?v=100076')
   .catch(err=>console.warn('[GCMBS] HF10 R16.4 falha ao carregar detalhe do Quadro',err));
 
-console.info('[GCMBS] HF10 R15 estabilidade consolidada carregada',HF10_R15);
+console.info('[GCMBS] HF82 R1 estabilidade consolidada carregada',HF10_R15);
