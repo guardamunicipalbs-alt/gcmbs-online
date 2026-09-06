@@ -1,30 +1,28 @@
 /*
- * GCMBS ONLINE — Bootstrap da Interface Institucional Premium v77.
- * Este arquivo publicado no GitHub Pages afeta somente o Online.
- * O APK e o Desktop mantêm suas cópias locais 10.0.76 até aprovação visual.
+ * GCMBS — Bootstrap visual de compatibilidade.
+ * Aprovacao visual 05/09/2026: Premium 3D v78 passa a ser o tema institucional
+ * compartilhado por Desktop Electron, Online e App.
+ * Este bootstrap nao altera regras, dados, permissoes ou fluxos funcionais.
  */
 (()=>{
   'use strict';
   const root=document.documentElement;
   root.classList.add('gcmbs-ds');
+  root.classList.remove('gc77-preview');
 
-  // A prévia premium é intencionalmente restrita ao site Online oficial.
-  if(location.hostname!=='guardamunicipalbs-alt.github.io') return;
-  root.classList.add('gc77-preview');
-
-  if(!document.querySelector('link[data-gc77-premium]')){
+  if(!document.querySelector('link[data-gc78-premium]')){
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='css/gcmbs-online-premium-v77.css?v=20260906-premium-3';
-    link.dataset.gc77Premium='1';
+    link.href='css/gcmbs-premium-3d-v78.css?v=100078';
+    link.dataset.gc78Premium='1';
     document.head.appendChild(link);
   }
 
-  if(!document.querySelector('script[data-gc77-premium]')){
+  if(!document.querySelector('script[data-gc78-premium]')){
     const script=document.createElement('script');
-    script.src='js/gcmbs-online-premium-v77.js?v=20260906-premium-3';
+    script.src='js/gcmbs-premium-3d-v78.js?v=100078';
     script.defer=true;
-    script.dataset.gc77Premium='1';
+    script.dataset.gc78Premium='1';
     document.head.appendChild(script);
   }
 })();
