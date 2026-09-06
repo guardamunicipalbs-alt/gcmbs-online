@@ -1,0 +1,139 @@
+:root{
+  --gc104-navy:#06172d;
+  --gc104-navy2:#0a2b56;
+  --gc104-blue:#0d67d0;
+  --gc104-blue2:#2a8bec;
+  --gc104-gold:#e8ba4d;
+  --gc104-ink:#0a2850;
+  --gc104-muted:#6d829a;
+  --gc104-line:#cfddea;
+  --gc104-bg:#edf4fb;
+  --gc104-card:#ffffff;
+  --gc104-shadow:inset 0 1px 0 #fff,0 2px 0 #d5e1eb,0 12px 28px rgba(8,43,79,.09);
+}
+
+/* Padrão Desktop para módulos de cadastro no Online/App */
+body.gc104-cadastro-on [data-view],
+body.gc104-cadastro-on #conteudoOnline,
+body.gc104-cadastro-on main{background:transparent!important}
+body.gc104-cadastro-on .gc104-cadastro-layout{display:flex;flex-direction:column;gap:16px}
+body.gc104-cadastro-on .gc104-hide{display:none!important}
+
+body.gc104-cadastro-on .gc104-form-card,
+body.gc104-cadastro-on .gc104-list-card{
+  border:1px solid var(--gc104-line)!important;
+  border-radius:20px!important;
+  background:linear-gradient(180deg,#fff,#fbfdff)!important;
+  box-shadow:var(--gc104-shadow)!important;
+  padding:16px 16px 18px!important;
+}
+body.gc104-cadastro-on .gc104-section-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid #e5eef5;
+}
+body.gc104-cadastro-on .gc104-section-head h2{
+  margin:0!important;font-size:17px!important;line-height:1.2!important;
+  color:var(--gc104-ink)!important;font-weight:900!important;
+}
+body.gc104-cadastro-on .gc104-section-head p{
+  margin:4px 0 0!important;font-size:11px!important;color:#7890a8!important;
+}
+body.gc104-cadastro-on .gc104-list-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+body.gc104-cadastro-on .gc104-list-tools input,
+body.gc104-cadastro-on .gc104-list-tools select,
+body.gc104-cadastro-on .gc104-list-tools button{margin:0!important}
+body.gc104-cadastro-on .gc104-list-tools .gc104-spacer{flex:1 1 auto}
+
+/* Formulário */
+body.gc104-cadastro-on .gc104-form-card input:not([type=checkbox]):not([type=radio]),
+body.gc104-cadastro-on .gc104-form-card select,
+body.gc104-cadastro-on .gc104-form-card textarea,
+body.gc104-cadastro-on .gc104-list-card input:not([type=checkbox]):not([type=radio]),
+body.gc104-cadastro-on .gc104-list-card select{
+  border:1px solid #b9cee2!important;border-radius:12px!important;
+  background:linear-gradient(180deg,#fff,#f8fbfe)!important;
+  color:#0b2c55!important;min-height:42px!important;box-shadow:none!important;
+}
+body.gc104-cadastro-on .gc104-form-card textarea{min-height:86px!important}
+body.gc104-cadastro-on .gc104-form-card label,
+body.gc104-cadastro-on .gc104-list-card label{
+  color:#43617d!important;font-size:11px!important;font-weight:800!important;letter-spacing:.02em!important;
+}
+body.gc104-cadastro-on .gc104-form-card .actions,
+body.gc104-cadastro-on .gc104-form-card .toolbar,
+body.gc104-cadastro-on .gc104-form-card .botoes,
+body.gc104-cadastro-on .gc104-form-card .gc104-form-actions{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px
+}
+
+/* Botões em padrão Desktop */
+body.gc104-cadastro-on button,
+body.gc104-cadastro-on .button,
+body.gc104-cadastro-on [role="button"]{
+  border-radius:14px!important;border:1px solid #b9cee2!important;
+  background:linear-gradient(180deg,#fff,#eef5fb)!important;
+  color:#163f73!important;font-weight:800!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 0 #d6e2ec,0 8px 18px rgba(10,43,79,.08)!important;
+}
+body.gc104-cadastro-on button:hover,
+body.gc104-cadastro-on .button:hover,
+body.gc104-cadastro-on [role="button"]:hover{transform:translateY(-1px)!important}
+body.gc104-cadastro-on .primary,
+body.gc104-cadastro-on .btn-primary,
+body.gc104-cadastro-on [data-primary="1"],
+body.gc104-cadastro-on #btnSalvarGuardas,
+body.gc104-cadastro-on #salvarGuarda,
+body.gc104-cadastro-on #novoGcm,
+body.gc104-cadastro-on .gc104-action-edit,
+body.gc104-cadastro-on .gc104-action-open{
+  border-color:#0758b8!important;
+  background:linear-gradient(180deg,#2e93f1,#0d6bd1)!important;color:#fff!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 #064991,0 10px 18px rgba(7,91,184,.18)!important;
+}
+body.gc104-cadastro-on .danger,
+body.gc104-cadastro-on .btn-danger,
+body.gc104-cadastro-on .gc104-action-del{
+  border-color:#cf8c8c!important;background:linear-gradient(180deg,#fff,#fff7f7)!important;color:#9b2f2f!important;
+}
+
+/* Lista/Tabela no padrão desktop */
+body.gc104-cadastro-on .gc104-table-wrap{width:100%;overflow:auto;border:1px solid #d8e5ef;border-radius:18px;background:#fff;box-shadow:var(--gc104-shadow)}
+body.gc104-cadastro-on .gc104-data-table{width:100%;border-collapse:separate;border-spacing:0;min-width:920px;background:#fff}
+body.gc104-cadastro-on .gc104-data-table thead th{
+  position:sticky;top:0;z-index:1;padding:12px 10px;background:linear-gradient(180deg,#f7fbff,#edf4fb);
+  color:#3a5874;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:1px solid #d8e5ef;text-align:left;white-space:nowrap;
+}
+body.gc104-cadastro-on .gc104-data-table tbody td{
+  padding:10px 10px;border-bottom:1px solid #e8eff5;color:#1f3e63;font-size:12px;vertical-align:middle;background:#fff;
+}
+body.gc104-cadastro-on .gc104-data-table tbody tr:nth-child(even) td{background:#fbfdff}
+body.gc104-cadastro-on .gc104-data-table tbody tr:hover td{background:#f4f9ff}
+body.gc104-cadastro-on .gc104-data-table td.gc104-col-id{width:60px}
+body.gc104-cadastro-on .gc104-data-table td.gc104-col-status{font-weight:800}
+body.gc104-cadastro-on .gc104-data-table td.gc104-col-actions{white-space:nowrap;width:170px}
+body.gc104-cadastro-on .gc104-inline-actions{display:flex;gap:8px;flex-wrap:wrap}
+body.gc104-cadastro-on .gc104-inline-actions button{min-height:36px;padding:0 14px!important}
+body.gc104-cadastro-on .gc104-hidden-source{display:none!important}
+body.gc104-cadastro-on .gc104-record-note{margin:0 0 10px;padding:10px 12px;border:1px solid #d9e6f0;border-radius:12px;background:#f7fbff;color:#627b95;font-size:11px}
+
+/* Ajustes para o topo do cadastro */
+body.gc104-cadastro-on .desktop-page-head h1,
+body.gc104-cadastro-on .desktop-page-head h2,
+body.gc104-cadastro-on #onlineTitulo{
+  color:var(--gc104-ink)!important;
+}
+body.gc104-cadastro-on .desktop-page-head p{color:#7389a0!important}
+body.gc104-cadastro-on .gc104-summary-strip{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+body.gc104-cadastro-on .gc104-summary-box{
+  min-width:170px;padding:12px 14px;border:1px solid #d6e3ee;border-radius:16px;
+  background:linear-gradient(180deg,#fff,#f8fbfe);box-shadow:var(--gc104-shadow)
+}
+body.gc104-cadastro-on .gc104-summary-box span{display:block;font-size:10px;font-weight:900;color:#5a7692;text-transform:uppercase;letter-spacing:.08em}
+body.gc104-cadastro-on .gc104-summary-box b{display:block;margin-top:6px;font-size:28px;line-height:1;color:var(--gc104-ink)}
+
+@media(max-width:900px){
+  body.gc104-cadastro-on .gc104-section-head{align-items:flex-start}
+  body.gc104-cadastro-on .gc104-list-tools{display:grid;grid-template-columns:1fr;gap:8px}
+  body.gc104-cadastro-on .gc104-list-tools .gc104-spacer{display:none}
+}
