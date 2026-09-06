@@ -78,7 +78,7 @@
 
   function composeDashboard(){
     const home=$('section[data-view="inicio"]');if(!home)return;
-    const sectors=$(':scope > .dashboard-sector',home);
+    const sectors=$$(':scope > .dashboard-sector',home);
     if(sectors.length<3)return;
     sectors.forEach(s=>$$('.dashboard-card',s).forEach(dashboardIcon));
 
@@ -91,7 +91,7 @@
       }
     }
     if(!home.querySelector('.gc77-bottom-grid')){
-      const remaining=$(':scope > .dashboard-sector',home);
+      const remaining=$$(':scope > .dashboard-sector',home);
       const posts=remaining.find(s=>norm(s.querySelector('h2')?.textContent).includes('postos'));
       const notices=$('#quadroAvisosHome',home);
       if(posts&&notices){
@@ -117,10 +117,7 @@
     const ctx=$('.gc77-topbar-copy strong');if(ctx&&label)ctx.textContent=label;
   }
 
-  function apply(){
-    ensureTopbar();pageEyebrows();composeDashboard();decorateModuleCards();activeContext();
-  }
-
+  function apply(){ensureTopbar();pageEyebrows();composeDashboard();decorateModuleCards();activeContext();}
   let scheduled=false;
   function queue(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;apply()})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',queue,{once:true});else queue();
