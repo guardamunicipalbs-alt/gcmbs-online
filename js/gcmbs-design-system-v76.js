@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * Premium 3D v79 = v78 aprovado + correções de paridade visual observadas em produção.
+ * Premium 3D v79 R2 = v78 aprovado + correções de paridade, modal e navegação.
  * Camada exclusivamente visual; preserva regras, dados, permissões e cálculos.
  */
 (()=>{
@@ -21,8 +21,10 @@
     const script=document.createElement('script');script.src=src;script.defer=true;script.setAttribute(`data-${key}`,'1');document.head.appendChild(script);
   };
 
-  loadStyle('css/gcmbs-premium-3d-v78.css?v=100079','gc78-premium');
-  loadStyle('css/gcmbs-premium-3d-v79-fix.css?v=100079','gc79-refined');
-  loadScript('js/gcmbs-premium-3d-v78.js?v=100079','gc78-premium');
-  loadScript('js/gcmbs-premium-3d-v79-fix.js?v=100079','gc79-refined');
+  loadStyle('css/gcmbs-premium-3d-v78.css?v=100080','gc78-premium');
+  loadStyle('css/gcmbs-premium-3d-v79-fix.css?v=100080','gc79-refined');
+  loadStyle('css/gcmbs-premium-3d-v79-r2.css?v=100080','gc79-r2');
+  loadScript('js/gcmbs-premium-3d-v78.js?v=100080','gc78-premium');
+  loadScript('js/gcmbs-premium-3d-v79-fix.js?v=100080','gc79-refined');
+  loadScript('js/gcmbs-premium-3d-v79-r2.js?v=100080','gc79-r2');
 })();
