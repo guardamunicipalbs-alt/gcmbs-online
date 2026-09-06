@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100080-platform-parity';
+const VERSION='gcmbs-online-100081-login-institucional';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -16,9 +16,9 @@ self.addEventListener('fetch',event=>{
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
     headers.set('x-gcmbs-version','10.0.76');
-    headers.set('x-gcmbs-visual','premium-3d-v80-platform-parity');
+    headers.set('x-gcmbs-visual','login-institucional-v81');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] Premium 3D v80 Platform Parity ativo',VERSION);
+console.info('[GCMBS SW] Login Institucional v81 ativo',VERSION);
