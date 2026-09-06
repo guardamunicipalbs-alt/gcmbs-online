@@ -1,7 +1,8 @@
 /*
  * GCMBS — Bootstrap visual institucional.
  * Premium 3D v79 R2 = v78 aprovado + correções de paridade, modal e navegação.
- * Camada exclusivamente visual; preserva regras, dados, permissões e cálculos.
+ * A carga HF83 abaixo é uma proteção de compatibilidade do Online/App contra
+ * um wrapper legado que sobrescrevia a rota protegida de Justificativa de Faltas.
  */
 (()=>{
   'use strict';
@@ -27,4 +28,5 @@
   loadScript('js/gcmbs-premium-3d-v78.js?v=100080','gc78-premium');
   loadScript('js/gcmbs-premium-3d-v79-fix.js?v=100080','gc79-refined');
   loadScript('js/gcmbs-premium-3d-v79-r2.js?v=100080','gc79-r2');
+  loadScript('js/hf83-justificativas-protected-route.js?v=100083','gc83-justificativas');
 })();
