@@ -1,7 +1,8 @@
 /*
  * GCMBS — Bootstrap visual institucional.
  * Premium 3D v80 = v78 aprovado + correções v79 + paridade App/Desktop.
- * A carga HF83 mantém a rota protegida de Justificativa de Faltas.
+ * HF83 mantém a rota protegida de Justificativa de Faltas.
+ * HF84 corrige mojibake e fallback do brasão institucional.
  */
 (()=>{
   'use strict';
@@ -31,4 +32,5 @@
   loadScript('js/gcmbs-premium-3d-v79-r2.js?v=100080','gc79-r2');
   loadScript('js/gcmbs-platform-parity-v80.js?v=100080','gc80-platform');
   loadScript('js/hf83-justificativas-protected-route.js?v=100083','gc83-justificativas');
+  loadScript('js/hf84-utf8-branding-fix.js?v=100084','gc84-utf8-branding');
 })();
