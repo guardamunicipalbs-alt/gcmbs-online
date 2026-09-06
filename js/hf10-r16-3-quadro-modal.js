@@ -1,4 +1,4 @@
-// GCMBS 10.0.75 - Quadro Operacional com efetivo completo.
+// GCMBS 10.0.76 - Quadro Operacional com efetivo completo.
 // O contador e o detalhe A/B representam os mesmos GCMs: ordinarios + extras
 // ativos, com cada GCM contado uma unica vez por turno.
 const R163_QUADRO_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
@@ -26,7 +26,8 @@ const r163Quadro=data=>r163Call(R163_QUADRO_API,{action:'quadro_operacional',dat
 const r163Extras=data=>r163Call(R163_EXTRAS_API,{action:'extras_evento',data});
 const r163EhEvento=x=>String(x?.origem||'').toUpperCase()==='EVENTO_EXTRA'||/extra\s+por\s+evento/i.test(String(x?.complemento||''));
 
-// 10.0.75 HF: o detalhe de "Postos cobertos" deve respeitar o posto efetivo
+
+// 10.0.76 HF: o detalhe de "Postos cobertos" deve respeitar o posto efetivo
 // mostrado em cada turno. A implementação antiga podia classificar Praça Chico
 // Leite como "Moto patrulhamento" apenas porque a viatura vinculada era uma moto.
 function r163NomePostoDoDetalhe(x){
@@ -122,7 +123,7 @@ import('./hf10-r17-4-banco-gestao-filter.js?v=20260831hf10r17r4')
   .catch(err=>console.warn('[GCMBS] HF10 R17.4 falha ao carregar filtro visual da Analise',err));
 
 // HF10 R18: estado operacional da Frota e sincronizacao manual consolidada.
-import('./hf10-r18-frota-sync.js?v=100075')
+import('./hf10-r18-frota-sync.js?v=100076')
   .catch(err=>console.warn('[GCMBS] HF10 R18 falha ao carregar Frota/Sync',err));
 
 // HF10 R19: logout explicito revoga inclusive sessao lembrada.
@@ -130,7 +131,7 @@ import('./hf10-r19-session-security.js?v=20260831hf10r19')
   .catch(err=>console.warn('[GCMBS] HF10 R19 falha ao carregar seguranca de sessao',err));
 
 // HF10 R21D: paridade visual, Equipes/Postos/Tipos e versao; query nova evita cache legado.
-import('./hf10-r21-form-parity.js?v=100075')
+import('./hf10-r21-form-parity.js?v=100076')
   .catch(err=>console.warn('[GCMBS] HF10 R21 falha ao carregar paridade visual',err));
 
-console.info('[GCMBS] 10.0.75 Quadro com efetivo completo ativo');
+console.info('[GCMBS] 10.0.76 Quadro com efetivo completo ativo');

@@ -1,7 +1,7 @@
-import './login-security.js?v=100075';
-import './v62-sync-ui.js?v=100075';
-import './v58-ui.js?v=100075';
-import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100075';
+import './login-security.js?v=100076';
+import './v62-sync-ui.js?v=100076';
+import './v58-ui.js?v=100076';
+import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100076';
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';

@@ -1,13 +1,13 @@
 {
-    "version":  "10.0.75",
-    "versionCode":  75,
+    "version":  "10.0.76",
+    "versionCode":  76,
     "available":  true,
-    "apk":  "GCMBS-10.0.75.apk",
-    "sha256":  "2D04A3660C1CBC5BD25061BE1ABC9DB9EF4DF55D21CB7D63882D1EA0FE19B430",
-    "sizeBytes":  4564210,
+    "apk":  "GCMBS-10.0.76.apk",
+    "sha256":  "35588BD3C715E0D7671ACD994EABE95189F22BB9A33811231679C09AE4C65ADC",
+    "sizeBytes":  4580847,
     "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
     "migrationRequired":  false,
     "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-05T23:45:19.5885683Z",
-    "notes":  "10.0.75 Hotfix Runtime ESM: corrige exports PRIMARY_ENTITY/DEDICATED_VIEW/canonicalModule; preserva motor de regras 10.0.74 e adiciona validacao de imports/exports."
+    "publishedAt":  "2026-09-06T00:48:54.9646661Z",
+    "notes":  "10.0.76 Design System Institucional: modernizacao visual global Desktop/Online/App; regras de negocio e banco preservados."
 }

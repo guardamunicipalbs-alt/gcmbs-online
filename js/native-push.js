@@ -1,4 +1,4 @@
-// GCMBS 10.0.75 — integração Push nativa autocontida.
+// GCMBS 10.0.76 — integração Push nativa autocontida.
 const isNative=()=>Boolean(globalThis.Capacitor?.isNativePlatform?.() || globalThis.Capacitor?.getPlatform?.()==='android');
 const plugin=()=>globalThis.Capacitor?.Plugins?.PushNotifications || null;
 
@@ -14,7 +14,7 @@ export async function configurarPushNativo(provider){
       try{
         const deviceKey='gcmbs.mobile.deviceId';
         if(!localStorage.getItem(deviceKey)) localStorage.setItem(deviceKey,crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`);
-        await provider.registerPushToken(token.value,{platform:'android',device_id:localStorage.getItem(deviceKey)||'',app_version:'10.0.75'});
+        await provider.registerPushToken(token.value,{platform:'android',device_id:localStorage.getItem(deviceKey)||'',app_version:'10.0.76'});
         localStorage.setItem('gcmbs.mobile.pushToken',token.value);
       }catch(e){console.error('[GCMBS PUSH] Falha ao registrar token:',e);}
     });

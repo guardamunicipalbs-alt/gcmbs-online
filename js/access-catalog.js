@@ -1,5 +1,5 @@
-import './sync-button-hotfix-v62.js?v=100075';
-import {MODULES} from './communication-contract.js?v=100075';
+import './sync-button-hotfix-v62.js?v=100076';
+import {MODULES} from './communication-contract.js?v=100076';
 
 // v74: o runtime canônico não carrega hotfixes opcionais fora do manifesto.
 
