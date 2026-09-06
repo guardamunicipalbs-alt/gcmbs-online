@@ -15,7 +15,7 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.83');
+    headers.set('x-gcmbs-version','10.0.84');
     headers.set('x-gcmbs-visual','paridade-cumulativa-v102');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));

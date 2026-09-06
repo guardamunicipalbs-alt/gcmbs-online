@@ -1,4 +1,4 @@
-/* GCMBS V107 - limpa V104/V105 e fixa a ordem Desktop */
+/* GCMBS V108 - V107 + ordem decrescente de data na Escala Extra Manual */
 (()=>{
 'use strict';
 const root=document.documentElement;
@@ -85,6 +85,15 @@ function kv(card){
   return m;
 }
 function val(m,...keys){for(const k of keys){const n=norm(k);if(m.has(n))return m.get(n)}return ''}
+function gc108DateValue(v){
+  const s=String(v||'').trim();
+  if(!s||s==='—')return -1;
+  let m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(m)return Number(m[3]+m[2]+m[1]);
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m)return Number(m[1]+m[2]+m[3]);
+  return -1;
+}
 function cols(title,cards){
   if(/guardas/i.test(title))return [
     ['ID',m=>m.__key||''],['Nome de guerra',m=>val(m,'nome de guerra','gcm','nome')],
@@ -129,7 +138,17 @@ function buildList(){
     const rows=cards.map(c=>{
       const m=kv(c);m.__key=c.dataset.onlineKey||'';
       return {card:c,map:m,sort:val(m,'nome de guerra','nome','nome completo')||m.__key};
-    }).sort((a,b)=>String(a.sort).localeCompare(String(b.sort),'pt-BR',{sensitivity:'base'}));
+    }).sort((a,b)=>{
+      if(/escala extra manual|escala extra/i.test(title)){
+        const da=gc108DateValue(val(a.map,'data'));
+        const db=gc108DateValue(val(b.map,'data'));
+        if(da!==db)return db-da;
+        const ia=Number(a.map.__key||0),ib=Number(b.map.__key||0);
+        if(Number.isFinite(ia)&&Number.isFinite(ib)&&ia!==ib)return ib-ia;
+        return 0;
+      }
+      return String(a.sort).localeCompare(String(b.sort),'pt-BR',{sensitivity:'base'});
+    });
 
     const table=document.createElement('table');table.className='gc107-table';
     table.innerHTML=`<thead><tr>${columns.map(x=>`<th>${esc(x[0])}</th>`).join('')}<th>Ações</th></tr></thead><tbody></tbody>`;
@@ -156,11 +175,11 @@ function buildList(){
   }finally{rebuilding=false}
 }
 function version(){
-  const ov=$('#onlineVersao');if(ov)ov.textContent='Online/App 10.0.83 · V107';
+  const ov=$('#onlineVersao');if(ov)ov.textContent='Online/App 10.0.84 · V108';
   $$('small,span').forEach(el=>{
     if(el.children.length)return;
     const s=txt(el);
-    if(/^Online\s*(?:\/App)?\s*[-·]?\s*10\.0\.\d+(?:\s*[-·]\s*V\d+)?$/i.test(s))el.textContent='Online · 10.0.83 · V107';
+    if(/^Online\s*(?:\/App)?\s*[-·]?\s*10\.0\.\d+(?:\s*[-·]\s*V\d+)?$/i.test(s))el.textContent='Online · 10.0.84 · V108';
   });
 }
 function tick(){
@@ -177,5 +196,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 let timer=0;
 new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(tick,70)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class']});
 setInterval(()=>{if(active())version()},1500);
-console.info('[GCMBS] V107 estrutura limpa de cadastros ativa');
+console.info('[GCMBS] V108 ordem decrescente de data ativa');
 })();
