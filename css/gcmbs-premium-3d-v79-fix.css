@@ -1,0 +1,80 @@
+/* GCMBS Premium 3D v79 — refinamento visual sobre v78. */
+html.gc78-premium.gc79-refined .gc77-topbar-context,
+html.gc78-premium.gc79-refined .gc77-avatar,
+html.gc78-premium.gc79-refined .gc77-eyebrow,
+html.gc78-premium.gc79-refined .gc77-card-icon{display:none!important}
+
+/* Sidebar: menos contorno, mais profundidade institucional. */
+html.gc78-premium.gc79-refined .app nav.desktop-nav{width:270px!important;padding:0 12px 16px!important;background:radial-gradient(circle at 22% -2%,rgba(19,196,231,.13),transparent 20%),linear-gradient(180deg,#04162b 0%,#06213f 52%,#061a33 100%)!important}
+html.gc78-premium.gc79-refined .desktop-nav .nav-brand{min-height:92px!important;grid-template-columns:52px 1fr!important;padding:13px 47px 12px 14px!important}
+html.gc78-premium.gc79-refined .gc78-brand-crest{width:50px!important;height:60px!important}
+html.gc78-premium.gc79-refined .gc78-brand-crest img{max-width:48px!important;max-height:58px!important}
+html.gc78-premium.gc79-refined .desktop-nav .nav-brand strong{font-size:20px!important}
+html.gc78-premium.gc79-refined .desktop-nav .nav-brand small{font-size:9px!important;color:#9bb1c7!important}
+html.gc78-premium.gc79-refined .nav-group-body,html.gc78-premium.gc79-refined .nav-fixed{gap:5px!important}
+html.gc78-premium.gc79-refined .app nav.desktop-nav button{min-height:42px!important;padding:8px 10px!important;border-radius:12px!important;border:1px solid rgba(142,183,220,.055)!important;background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.009))!important;color:#c7d7e6!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 1px 0 rgba(0,0,0,.20)!important;font-size:10.5px!important}
+html.gc78-premium.gc79-refined .app nav.desktop-nav button:hover{background:linear-gradient(180deg,rgba(48,125,205,.20),rgba(24,81,139,.13))!important;border-color:rgba(135,183,230,.15)!important;transform:translateY(-1px)!important}
+html.gc78-premium.gc79-refined .app nav.desktop-nav button.active{border-color:rgba(150,201,255,.38)!important;background:linear-gradient(180deg,#378df8 0%,#1874e7 49%,#0b5cc8 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.48),inset 0 -1px 0 rgba(0,39,96,.24),0 3px 0 #063f91,0 9px 18px rgba(0,49,116,.34)!important}
+html.gc78-premium.gc79-refined .app nav.desktop-nav button.active::before{content:"";position:absolute;left:-12px;top:9px;bottom:9px;width:3px;border-radius:0 4px 4px 0;background:#64d6ee;box-shadow:0 0 10px rgba(100,214,238,.35)}
+html.gc78-premium.gc79-refined .nav-icon{width:22px!important;height:22px!important;flex-basis:22px!important}
+html.gc78-premium.gc79-refined .nav-icon svg{width:17px!important;height:17px!important}
+html.gc78-premium.gc79-refined .nav-label{line-height:1.22!important}
+
+/* Topbar corrigido: apenas um avatar, contexto sempre visível. */
+html.gc78-premium.gc79-refined .app>header{left:270px!important;height:68px!important;padding:0 22px!important}
+html.gc78-premium.gc79-refined .brand-head>div:not(.gc78-topbar-context){display:none!important}
+html.gc78-premium.gc79-refined .gc78-topbar-context{display:flex!important}
+html.gc78-premium.gc79-refined .gc78-topbar-home{width:38px!important;height:38px!important;border-radius:12px!important}
+html.gc78-premium.gc79-refined .gc78-topbar-copy strong{font-size:14px!important}
+html.gc78-premium.gc79-refined .gc78-avatar{width:36px!important;height:36px!important;font-size:11px!important}
+html.gc78-premium.gc79-refined .header-user{gap:8px!important}
+html.gc78-premium.gc79-refined .header-user .logout{min-height:36px!important;height:36px!important;padding:8px 12px!important}
+html.gc78-premium.gc79-refined .connection-status{height:32px!important}
+html.gc78-premium.gc79-refined .app{padding-left:270px!important}
+html.gc78-premium.gc79-refined .app main{padding:86px 24px 44px!important}
+
+/* Hero aprovado: destaque largo e institucional. */
+html.gc78-premium.gc79-refined section[data-view="inicio"]>.card.hero{min-height:150px!important;margin:0 0 16px!important;padding:24px 28px!important;border-radius:20px!important;background:linear-gradient(90deg,#08233f 0%,#0a3865 52%,#126eba 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,27,64,.42),0 3px 0 rgba(5,70,144,.40),0 15px 30px rgba(6,48,90,.18)!important}
+html.gc78-premium.gc79-refined section[data-view="inicio"]>.card.hero h2{font-size:27px!important}
+html.gc78-premium.gc79-refined .gc78-hero-copy{font-size:11px!important;color:#cde2f7!important}
+html.gc78-premium.gc79-refined .gc78-hero-brand img{width:80px!important;height:80px!important}
+
+/* KPI principal em linha, como no modelo aprovado. */
+html.gc78-premium.gc79-refined .gc79-kpi-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px;margin:0 0 16px}
+html.gc78-premium.gc79-refined .gc79-kpi-strip .dashboard-card{min-height:108px!important;padding:14px 13px 12px!important;border-radius:14px!important;background:linear-gradient(180deg,#fff,#f6f9fd)!important;border:1px solid #d7e3ee!important;box-shadow:inset 0 1px 0 #fff,0 2px 0 #d2dde8,0 8px 18px rgba(12,50,84,.08)!important}
+html.gc78-premium.gc79-refined .gc79-kpi-strip .dashboard-card:hover{transform:translateY(-2px)!important;box-shadow:inset 0 1px 0 #fff,0 3px 0 #c9d7e3,0 13px 24px rgba(12,50,84,.12)!important}
+html.gc78-premium.gc79-refined .gc79-kpi-strip .dashboard-card span{font-size:10px!important;line-height:1.25!important;padding-right:34px!important}
+html.gc78-premium.gc79-refined .gc79-kpi-strip .dashboard-card b{font-size:27px!important;color:#0a2a4b!important}
+html.gc78-premium.gc79-refined .gc79-kpi-strip .dashboard-card small{font-size:8.5px!important}
+html.gc78-premium.gc79-refined .gc79-kpi-strip .gc78-card-icon{width:32px!important;height:32px!important;right:10px!important;top:10px!important;border-radius:10px!important}
+html.gc78-premium.gc79-refined .gc79-kpi-strip .gc78-card-icon svg{width:17px!important;height:17px!important}
+
+/* Gráfico + resumo ocupam a faixa seguinte. */
+html.gc78-premium.gc79-refined .gc78-analytics-grid{grid-template-columns:minmax(0,1.18fr) minmax(300px,.82fr)!important;gap:14px!important;margin:0 0 16px!important}
+html.gc78-premium.gc79-refined .gc78-chart-card,html.gc78-premium.gc79-refined .gc78-status-card{border-radius:16px!important;padding:16px!important;box-shadow:inset 0 1px 0 #fff,0 2px 0 #d7e1ea,0 10px 22px rgba(14,54,88,.08)!important}
+html.gc78-premium.gc79-refined .gc78-bars{height:156px!important}
+
+/* Painéis de detalhe: 3 cards por bloco em vez de cartões gigantes. */
+html.gc78-premium.gc79-refined .gc79-details-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin:0 0 16px}
+html.gc78-premium.gc79-refined .gc79-details-grid>.dashboard-sector{margin:0!important;padding:16px!important;background:linear-gradient(180deg,#fff,#fbfdff)!important;border:1px solid #d8e4ef!important;border-radius:16px!important;box-shadow:inset 0 1px 0 #fff,0 2px 0 #d8e2eb,0 10px 22px rgba(13,50,82,.075)!important}
+html.gc78-premium.gc79-refined .gc79-details-grid>.dashboard-sector>.dashboard-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important}
+html.gc78-premium.gc79-refined .gc79-details-grid .dashboard-card{min-height:105px!important;padding:13px!important}
+html.gc78-premium.gc79-refined .gc79-details-grid .dashboard-card b{font-size:25px!important;color:#0c3157!important}
+html.gc78-premium.gc79-refined .gc79-details-grid .dashboard-card span{font-size:9.5px!important;padding-right:34px!important}
+html.gc78-premium.gc79-refined .gc79-details-grid .dashboard-card small{font-size:8.5px!important}
+html.gc78-premium.gc79-refined .gc79-details-grid .gc78-card-icon{width:30px!important;height:30px!important;right:9px!important;top:9px!important}
+html.gc78-premium.gc79-refined .gc79-alert-slot{grid-column:1/-1;margin:0!important}
+html.gc78-premium.gc79-refined .gc79-hidden-section{display:none!important}
+html.gc78-premium.gc79-refined #quadroAvisosHome{margin:0 0 16px!important;padding:16px!important;background:linear-gradient(180deg,#fff,#fbfdff)!important;border:1px solid #d8e4ef!important;border-radius:16px!important;box-shadow:inset 0 1px 0 #fff,0 2px 0 #d8e2eb,0 10px 22px rgba(13,50,82,.075)!important}
+html.gc78-premium.gc79-refined #quadroAvisosHome>.card{box-shadow:none!important;border:0!important;background:transparent!important;padding:0!important;margin:0!important}
+
+/* Corrige qualquer herança de grid da prévia v77. */
+html.gc78-premium.gc79-refined .dashboard-card{grid-template-columns:none!important;grid-template-rows:none!important;display:grid!important;align-content:start!important;gap:5px!important}
+html.gc78-premium.gc79-refined .dashboard-card>.gc78-card-icon{position:absolute!important;right:11px!important;top:11px!important;left:auto!important;bottom:auto!important}
+html.gc78-premium.gc79-refined .dashboard-card>span:not(.gc78-card-icon){grid-column:auto!important;grid-row:auto!important}
+html.gc78-premium.gc79-refined .dashboard-card>b,html.gc78-premium.gc79-refined .dashboard-card>small{grid-column:auto!important;grid-row:auto!important}
+
+@media(max-width:1380px){html.gc78-premium.gc79-refined .gc79-kpi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1100px){html.gc78-premium.gc79-refined .gc79-details-grid,html.gc78-premium.gc79-refined .gc78-analytics-grid{grid-template-columns:1fr!important}}
+@media(max-width:899px){html.gc78-premium.gc79-refined .app{padding-left:0!important}html.gc78-premium.gc79-refined .app>header{left:0!important;height:62px!important}html.gc78-premium.gc79-refined .app main{padding:76px 12px 28px!important}html.gc78-premium.gc79-refined .app nav.desktop-nav{width:280px!important}html.gc78-premium.gc79-refined .gc79-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important}html.gc78-premium.gc79-refined .gc79-details-grid>.dashboard-sector>.dashboard-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:520px){html.gc78-premium.gc79-refined .gc79-kpi-strip{grid-template-columns:1fr 1fr!important}html.gc78-premium.gc79-refined .gc79-details-grid>.dashboard-sector>.dashboard-cards{grid-template-columns:1fr!important}html.gc78-premium.gc79-refined section[data-view="inicio"]>.card.hero{min-height:136px!important;padding:20px 18px!important}}
