@@ -1,0 +1,32 @@
+GCMBS — PARIDADE VISUAL PREMIUM 3D V80
+
+Objetivo
+Aplicar ao App Android e ao Desktop Electron o mesmo padrão visual Premium 3D aprovado no Online.
+
+App Android
+- cabeçalho compacto e institucional;
+- menu lateral em drawer com acabamento azul-marinho;
+- hero azul e brasão;
+- cartões do Quadro em 2 colunas no celular;
+- botões 3D com alvos de toque maiores;
+- formulários em uma coluna;
+- tabelas com rolagem horizontal;
+- modal do Quadro como bottom sheet;
+- suporte a safe areas do Android.
+
+Desktop Electron
+- superfícies claras e azul institucional;
+- cards com elevação e sombras suaves;
+- botões 3D coerentes com o Online;
+- formulários, tabelas, filtros e menus legados normalizados;
+- telas com shell Online usam sidebar/topbar nas proporções do design aprovado.
+
+Aplicação local
+Execute downloads/tools/APLICAR_GCMBS_PARIDADE_VISUAL_V80.ps1 com o GCMBS fechado.
+O instalador procura D:\GCMBS e G:\GCMBS, cria backup, aplica as camadas em cloud/public, mobile/www, assets Android e src/ui, valida JavaScript e confirma que Gerador de Escala e SQLite não mudaram.
+
+APK
+Após a aplicação, o código Android estará atualizado, mas o aplicativo já instalado no telefone só recebe o novo visual depois de recompilar e instalar um novo APK.
+
+Escopo protegido
+Nenhuma regra do Gerador de Escala, folha, banco de horas, permutas, eventos, extras, banco SQLite ou permissões é alterada pela v80.
