@@ -5,29 +5,33 @@ import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.j
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
+const JUSTIFICATIVAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-justificativas-v68';
 
 const PENDING_PERMUTA_STATUS=new Set(['AGUARDANDO_ACEITE','PENDENTE','PENDENTE_DESKTOP','PROCESSADO','ACEITE_PENDENTE_DESKTOP','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE']);
 function gcmbsServiceTime(x){const p=x?.payload&&typeof x.payload==='object'?x.payload:(x||{}),data=String(p.data||x?.data||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(data))return Number.MAX_SAFE_INTEGER;const turno=String(p.turno||x?.turno||'').toUpperCase();let hora=String(p.horario_inicio||x?.horario_inicio||'').slice(0,5);if(!/^\d{2}:\d{2}$/.test(hora))hora=turno==='B'?'19:00':'07:00';const t=Date.parse(`${data}T${hora}:00-03:00`);return Number.isFinite(t)?t:Number.MAX_SAFE_INTEGER;}
 function gcmbsSortPermutas(list){return [...(list||[])].sort((a,b)=>{const ap=PENDING_PERMUTA_STATUS.has(String(a?.status||a?.payload?.status||'').toUpperCase()),bp=PENDING_PERMUTA_STATUS.has(String(b?.status||b?.payload?.status||'').toUpperCase());if(ap!==bp)return ap?-1:1;if(ap&&bp){const d=gcmbsServiceTime(a)-gcmbsServiceTime(b);if(d)return d;return Number(a?.id||0)-Number(b?.id||0);}const ac=Date.parse(String(a?.processado_em||a?.created_at||a?.data||''))||Number(a?.id||0),bc=Date.parse(String(b?.processado_em||b?.created_at||b?.data||''))||Number(b?.id||0);return bc-ac;});}
+function gcmbsNetworkMessage(err){const msg=String(err?.message||err||'');if(err instanceof TypeError||/failed to fetch|networkerror|network request failed|load failed/i.test(msg))return 'Falha de comunicação com o servidor. Verifique a conexão e tente novamente. Nenhuma alteração foi confirmada.';return msg||'Falha de comunicação com o servidor.';}
 
 export class AuthenticatedProvider {
   constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}; }
 
-  async call(action,payload={},authenticated=true){
+  async endpoint(url,action,payload={},authenticated=true){
     const headers={'Content-Type':'application/json'};
     const token=localStorage.getItem('gcmbs.mobile.token');
     if(authenticated && token) headers.Authorization=`Bearer ${token}`;
-    const r=await fetch(API,{
-      method:'POST',
-      headers,
-      body:JSON.stringify({action,...payload}),
-      cache:'no-store'
-    });
+    let r;
+    try{
+      r=await fetch(url,{method:'POST',headers,body:JSON.stringify({action,...payload}),cache:'no-store'});
+    }catch(e){
+      throw new Error(gcmbsNetworkMessage(e));
+    }
     let body={};
     try{body=await r.json()}catch{}
     if(!r.ok) throw new Error(body.message||`Erro ${r.status}`);
     return body;
   }
+
+  async call(action,payload={},authenticated=true){return this.endpoint(API,action,payload,authenticated)}
 
   async login(identificador,senha,remember=false){
     const body=await this.call('login',{identificador,senha,remember},false);
@@ -84,7 +88,17 @@ export class AuthenticatedProvider {
   async entityCatalog(){return (await this.call('entity_catalog')).entities||[]}
   async entityList(entity,limit=500,offset=0){return this.call('entity_list',{entity,limit,offset})}
   async entityGet(entity,record_key){return this.call('entity_get',{entity,record_key})}
-  async entityMutate(entity,record_key,operation,data,client_change_id=''){return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id})}
+  async entityMutate(entity,record_key,operation,data,client_change_id=''){
+    if(String(entity||'').toLowerCase()==='justificativas_faltas'){
+      const op=String(operation||'UPSERT').toUpperCase();
+      const key=String(record_key||'').trim();
+      const action=op==='DELETE'?'cancel':key?'update':'create';
+      const payload=action==='cancel'?{record_key:key}:{record_key:key,...(data&&typeof data==='object'?data:{})};
+      const result=await this.endpoint(JUSTIFICATIVAS_API,action,payload,true);
+      return {...result,record_key:result.record_key||key,protected_write:true};
+    }
+    return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id});
+  }
   async quadro(data){return this.call('quadro_operacional',{data})}
   async syncStatus(){return (await this.call('sync_status')).sincronizacao||{}}
   async relatorioEscalas(){return (await this.call('relatorio_escalas')).escalas||[]}
@@ -109,7 +123,9 @@ export class AuthenticatedProvider {
   async pushCall(payload={}){
     const token=localStorage.getItem('gcmbs.mobile.token');
     if(!token) throw new Error('Sessão móvel não autenticada.');
-    const r=await fetch(PUSH_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(payload),cache:'no-store'});
+    let r;
+    try{r=await fetch(PUSH_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(payload),cache:'no-store'})}
+    catch(e){throw new Error(gcmbsNetworkMessage(e))}
     let b={};try{b=await r.json()}catch{}
     if(!r.ok) throw new Error(b.message||`Erro ${r.status}`);
     return b;
