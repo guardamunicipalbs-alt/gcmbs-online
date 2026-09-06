@@ -1,13 +1,17 @@
 {
-    "version":  "10.0.76",
-    "versionCode":  76,
-    "available":  true,
-    "apk":  "GCMBS-10.0.76.apk",
-    "sha256":  "35588BD3C715E0D7671ACD994EABE95189F22BB9A33811231679C09AE4C65ADC",
-    "sizeBytes":  4580847,
-    "signingCertificateSha256":  "0EC74415939F67EDAAE81F3D52F4385F7BFB219F60FB9D50CAA5E39F970A21AA",
-    "migrationRequired":  false,
-    "updateProcedure":  "in-place",
-    "publishedAt":  "2026-09-06T00:48:54.9646661Z",
-    "notes":  "10.0.76 Design System Institucional: modernizacao visual global Desktop/Online/App; regras de negocio e banco preservados."
+    "version":  "10.0.78",
+    "versionCode":  78,
+    "apk":  "GCMBS-10.0.78.apk",
+    "publishedAt":  "2026-09-06T17:18:05.8983597Z",
+    "sha256":  "4911EE602CF6314B7CEB7385F625F34DACC1196C010C1650F2FCAA3EAB0D65FF",
+    "sizeBytes":  6439027,
+    "notes":  [
+                  "Paridade cumulativa V102 Online/App.",
+                  "Login institucional no modelo aprovado.",
+                  "Quadro Operacional com indicadores, grafico, resumo e detalhes.",
+                  "Central de Pendencias interativa.",
+                  "Controle de Acesso com acesso rapido por GCM.",
+                  "Justificativas preservam a rota protegida.",
+                  "Atualizacao Android preserva os dados instalados."
+              ]
 }
