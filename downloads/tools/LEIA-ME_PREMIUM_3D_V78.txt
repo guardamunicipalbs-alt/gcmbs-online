@@ -1,0 +1,27 @@
+GCMBS — PREMIUM 3D V78
+
+Objetivo
+Aplicar a identidade visual aprovada em 05/09/2026 ao Desktop, Online e App:
+- azul-marinho institucional e superfícies claras;
+- botões com relevo 3D elegante, hover e pressionamento visual;
+- cards com profundidade, sombras suaves e brilho controlado;
+- sidebar moderna, ícones SVG consistentes e sem emojis no menu;
+- cabeçalho claro com contexto da página e avatar;
+- Quadro Operacional com destaque institucional, KPIs e gráfico derivado dos dados reais;
+- formulários, tabelas, modais, filtros e módulos legados no mesmo Design System;
+- responsividade específica para celular.
+
+Segurança
+A camada é visual. O instalador protege por hash o Gerador de Escala e os bancos SQLite encontrados, cria backup recuperável antes da aplicação e valida paridade entre Online, Mobile WWW e assets Android.
+
+Como aplicar no projeto local
+1. Feche o GCMBS.
+2. Execute APLICAR_GCMBS_PREMIUM_3D_V78.ps1 no PowerShell.
+3. O script procura primeiro D:\GCMBS e depois G:\GCMBS.
+4. Ao final, abra o Desktop e confira o Quadro Operacional e os demais módulos.
+
+Aplicativo Android
+O script atualiza mobile\www e mobile\android\app\src\main\assets\public. Para alterar o app já instalado no telefone, é necessário recompilar e assinar um novo APK. O instalador visual não substitui nem publica APK automaticamente.
+
+Não altera
+Banco de dados, Gerador de Escala, folha, banco de horas, permutas, eventos, extras, permissões, APIs, Edge Functions ou cálculos.
