@@ -1,6 +1,6 @@
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version 2.0
-$VisualVersion='100081'
+$VisualVersion='1000812'
 $SourceBase='https://raw.githubusercontent.com/guardamunicipalbs-alt/gcmbs-online/main'
 $Stamp=Get-Date -Format 'yyyyMMdd_HHmmss'
 
@@ -26,15 +26,15 @@ function PatchHtml([string]$Html,[string]$CssFile,[string]$JsFile){
   $T=$T -replace '<script[^>]+gcmbs-login-institucional-v81\.js[^>]*></script>\s*',''
   $CssHref=Rel (Split-Path -Parent $Html) $CssFile
   $JsSrc=Rel (Split-Path -Parent $Html) $JsFile
-  $T=$T -replace '</head>',("<link rel=`"stylesheet`" href=`"$CssHref?v=$VisualVersion`" data-gcmbs-login-v81=`"1`">`r`n</head>")
-  $T=$T -replace '</body>',("<script defer src=`"$JsSrc?v=$VisualVersion`" data-gcmbs-login-v81=`"1`"></script>`r`n</body>")
+  $T=$T -replace '</head>',("<link rel=`"stylesheet`" href=`"${CssHref}?v=${VisualVersion}`" data-gcmbs-login-v81=`"1`">`r`n</head>")
+  $T=$T -replace '</body>',("<script defer src=`"${JsSrc}?v=${VisualVersion}`" data-gcmbs-login-v81=`"1`"></script>`r`n</body>")
   if($T -ne $Original){ Set-Content -LiteralPath $Html -Value $T -Encoding UTF8; return $true }
   return $false
 }
 
 try{
   Say ('='*82) Cyan
-  Say ' GCMBS - LOGIN INSTITUCIONAL V81 - DESKTOP + ONLINE + APP ANDROID' Cyan
+  Say ' GCMBS - LOGIN INSTITUCIONAL V81 R2 - DESKTOP + ONLINE + APP ANDROID' Cyan
   Say ('='*82) Cyan
   Say 'Atualiza somente a apresentacao da tela de login. Autenticacao, regras e banco ficam preservados.' Cyan
 
@@ -68,7 +68,7 @@ try{
   $Before=@{}
   foreach($P in $Protected){ $Before[$P]=Sha $P; Say "[PROTEGIDO] $P" DarkGray }
 
-  $Backup=Join-Path $Root "backup_LOGIN_INSTITUCIONAL_V81_$Stamp"
+  $Backup=Join-Path $Root "backup_LOGIN_INSTITUCIONAL_V81_R2_$Stamp"
   EnsureDir $Backup
   $Names=@('cloud-public','mobile-www','android-public')
   for($I=0;$I -lt $WebTargets.Count;$I++){
@@ -120,9 +120,9 @@ try{
   }
   Say '[OK] Gerador de Escala e bancos SQLite preservados.' Green
 
-  $Report=Join-Path $Root "RELATORIO_LOGIN_INSTITUCIONAL_V81_$Stamp.txt"
+  $Report=Join-Path $Root "RELATORIO_LOGIN_INSTITUCIONAL_V81_R2_$Stamp.txt"
   @(
-    'GCMBS - Login Institucional v81',
+    'GCMBS - Login Institucional v81 R2',
     "Data: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')",
     "Projeto: $Root",
     'Desktop Electron: camada v81 instalada',
@@ -138,7 +138,7 @@ try{
   ) | Set-Content -LiteralPath $Report -Encoding UTF8
 
   Say ('='*82) Cyan
-  Say ' LOGIN INSTITUCIONAL V81 APLICADO AO PROJETO' Green
+  Say ' LOGIN INSTITUCIONAL V81 R2 APLICADO AO PROJETO' Green
   Say ('='*82) Cyan
   Say "Relatorio: $Report" Green
   Say 'Online/Projeto: pronto. App instalado: recompilar APK e instalar a nova versao.' Yellow
