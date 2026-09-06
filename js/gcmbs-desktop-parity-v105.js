@@ -146,7 +146,7 @@ function cleanHeader(){
   $('.online-toolbar #onlineVoltar')?.classList.add('hidden');
   const h=$('.online-toolbar h2'); if(h)h.textContent=title;
 }
-function tick(){
+function tick(){if(document.documentElement.classList.contains("gc107-clean"))return;
   if(!activeCadastro()){document.body.classList.remove('gc105-inline-editor');autoOpenedFor='';return}
   installInlineEditor();cleanHeader();rebuildTable();ensureDefaultForm();
 }

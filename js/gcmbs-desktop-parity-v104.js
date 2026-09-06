@@ -231,7 +231,7 @@
     cards.forEach(card=>card.classList.add('gc104-keep-record-card'));
   }
 
-  function organizeCadastro(){
+  function organizeCadastro(){if(document.documentElement.classList.contains("gc107-clean"))return;
     patchFriendlyTitles();
     const info=contextInfo();
     const isCadastro=info.guardas || info.equipes || info.postos || info.tipos || info.justificativas;
