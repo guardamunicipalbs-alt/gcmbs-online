@@ -68,3 +68,13 @@ setInterval(apply,900);
 
 console.info('[GCMBS] V122 controles abaixo do painel institucional ativos');
 })();
+
+/* GCMBS V129 loader — carrega a correção de Relatórios diretamente da réplica Desktop. */
+(()=>{
+  if(window.__GCMBS_V129_LOADER__)return;
+  window.__GCMBS_V129_LOADER__=true;
+  const s=document.createElement('script');
+  s.src='js/gcmbs-v129-relatorios-desktop.js?v=100129';
+  s.async=false;
+  document.head.appendChild(s);
+})();
