@@ -19,3 +19,170 @@ html.gc127-feriados-readonly #onlineRegistrosCard{
 html.gc127-feriados-readonly dialog#onlineEditor[open]{
   display:none!important;
 }
+
+/* GCMBS V128 — acabamento do Relatório de Escalas em matriz.
+   Mantém Posto e Horário separados, impede compressão excessiva das datas,
+   melhora a leitura de GCM/motorista/extra e corrige o título da rota. */
+
+/* A barra superior V124 não pode permanecer com o título da Home enquanto
+   o módulo Relatórios está visível. O :has() é suportado pelos navegadores
+   atuais usados no Online/App e funciona como proteção visual adicional. */
+html:has(main>section[data-view="relatorios"]:not(.hidden)) #gc124RouteTitle{
+  font-size:0!important;
+}
+html:has(main>section[data-view="relatorios"]:not(.hidden)) #gc124RouteTitle::after{
+  content:"Relatórios";
+  font-size:20px!important;
+  line-height:1.08!important;
+  font-weight:950!important;
+  letter-spacing:-.02em!important;
+}
+html:has(main>section[data-view="relatorios"]:not(.hidden)) #gc124RouteMeta{
+  font-size:0!important;
+}
+html:has(main>section[data-view="relatorios"]:not(.hidden)) #gc124RouteMeta::after{
+  content:"Consulta institucional de escalas · visão por posto e horário";
+  font-size:11px!important;
+  line-height:1.15!important;
+  font-weight:700!important;
+}
+
+section[data-view="relatorios"] #relatoriosLista .matrix-wrap{
+  width:100%!important;
+  overflow:auto!important;
+  overscroll-behavior-inline:contain;
+  border:1px solid #d6e3ee;
+  border-radius:12px;
+  background:#fff;
+}
+
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix{
+  width:max-content!important;
+  min-width:100%!important;
+  table-layout:auto!important;
+  border-collapse:separate!important;
+  border-spacing:0!important;
+}
+
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix th,
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix td{
+  min-width:168px!important;
+  width:168px!important;
+  max-width:210px!important;
+  padding:10px 12px!important;
+  vertical-align:top!important;
+  border-right:1px solid #d8e4ef!important;
+  border-bottom:1px solid #d8e4ef!important;
+  background:#fff!important;
+}
+
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix thead th{
+  position:sticky!important;
+  top:0!important;
+  z-index:3!important;
+  background:#eef5fb!important;
+  color:#12375c!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  font-weight:900!important;
+}
+
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .col-posto,
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .posto-linha{
+  min-width:250px!important;
+  width:250px!important;
+  max-width:250px!important;
+  position:sticky!important;
+  left:0!important;
+  z-index:2!important;
+  background:#eaf3fa!important;
+  color:#0b3a66!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix thead .col-posto{
+  z-index:5!important;
+}
+
+/* Corrige o defeito observado: "VTR 0107:00 às 19:00" e
+   "CENTRAL19:00 às 07:00" passam a ocupar linhas distintas. */
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .posto-linha b,
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .posto-linha span{
+  display:block!important;
+  white-space:normal!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .posto-linha b{
+  margin:0 0 4px!important;
+  font-size:13px!important;
+  line-height:1.25!important;
+  font-weight:950!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .posto-linha span{
+  font-size:11px!important;
+  line-height:1.25!important;
+  color:#58728c!important;
+  font-weight:750!important;
+}
+
+/* Cada GCM vira um pequeno bloco legível dentro da data, em vez de nomes e
+   etiquetas competirem pela mesma linha. */
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .gcm-linha{
+  display:block!important;
+  margin:0!important;
+  padding:7px 0!important;
+  border-bottom:1px dashed #dce7f1!important;
+  line-height:1.2!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .gcm-linha:last-child{
+  border-bottom:0!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .gcm-linha>b{
+  display:block!important;
+  margin:0 0 3px!important;
+  font-size:12px!important;
+  color:#0c355e!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .tag-driver,
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .tag-extra,
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .gc128-viatura{
+  display:inline-block!important;
+  margin:2px 4px 0 0!important;
+  white-space:normal!important;
+  max-width:100%!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .gc128-viatura{
+  border-radius:999px!important;
+  padding:4px 8px!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  background:#edf4fb!important;
+  color:#315b82!important;
+}
+
+section[data-view="relatorios"] #relatoriosLista .gc128-summary{
+  margin:2px 0 8px!important;
+}
+section[data-view="relatorios"] #relatoriosLista .gc128-help{
+  margin:0 0 10px!important;
+}
+
+@media(max-width:899px){
+  html:has(main>section[data-view="relatorios"]:not(.hidden)) #gc124RouteTitle::after{
+    font-size:15px!important;
+  }
+  html:has(main>section[data-view="relatorios"]:not(.hidden)) #gc124RouteMeta::after{
+    display:none!important;
+  }
+  section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix th,
+  section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix td{
+    min-width:148px!important;
+    width:148px!important;
+    padding:8px!important;
+  }
+  section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .col-posto,
+  section[data-view="relatorios"] #relatoriosLista .gc128-report-matrix .posto-linha{
+    min-width:190px!important;
+    width:190px!important;
+    max-width:190px!important;
+  }
+}
