@@ -31,6 +31,8 @@ const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtua
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
 const APP_VERSION='10.0.85';
 let provider=new AuthenticatedProvider();
+/* GCMBS_V126_ENTITY_EPOCH */
+let gcmbsV126EntityEpoch=0;
 let permutasEspelho=[];
 let permutaExtrasCache={mine:[],others:[]};
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
@@ -155,6 +157,11 @@ function renderNavegacao(){
 function fecharMenu(){$('mainNav')?.classList.remove('open');$('navBackdrop')?.classList.add('hidden')}
 function abrirMenu(){$('mainNav')?.classList.add('open');$('navBackdrop')?.classList.remove('hidden')}
 async function abrirModuloPrincipal(modulo){
+  /* GCMBS_V126_MODULE_RESET */
+  gcmbsV126EntityEpoch++;
+  try{if($('onlineEditor')?.open)$('onlineEditor').close()}catch{}
+  onlineEditing=null;
+  if($('onlineCampos'))$('onlineCampos').innerHTML='';
   modulo=canonicalModule(modulo);
   if(!temAcesso(modulo)){alert('Você não possui acesso a este módulo.');return;}
   const ativar=()=>document.querySelectorAll('#mainNav [data-module]').forEach(x=>x.classList.toggle('active',x.dataset.module===modulo));
@@ -653,6 +660,13 @@ function configurarCabecalhoModulo(modulo){
   if($('onlineVersao'))$('onlineVersao').textContent='Android '+APP_VERSION;
 }
 async function abrirModuloOnline(modulo){
+  /* GCMBS_V126_ONLINE_MODULE_RESET */
+  gcmbsV126EntityEpoch++;
+  try{if($('onlineEditor')?.open)$('onlineEditor').close()}catch{}
+  onlineEditing=null;
+  onlineCurrent=null;
+  onlineRecords=[];
+  if($('onlineCampos'))$('onlineCampos').innerHTML='';
   // HF10 R13:
   // A tela e o cabecalho precisam abrir ANTES da consulta ao catalogo.
   // O modulo primario pode ser consultado diretamente porque entity_list
@@ -741,7 +755,14 @@ function renderEntityTabs(){
   host.classList.toggle('hidden',itens.length<=1);host.querySelectorAll('[data-entity-tab]').forEach(b=>b.addEventListener('click',()=>abrirEntidadeOnline(b.dataset.entityTab)));
 }
 async function abrirEntidadeOnline(entity){
-  const b=await provider.entityList(entity,500,0);onlineCurrent=b.catalog;onlineRecords=b.records||[];
+  /* GCMBS_V126_ENTITY_REQUEST */
+  const gc126Epoch=++gcmbsV126EntityEpoch;
+  const gc126Modulo=onlineModuleFilter;
+  try{if($('onlineEditor')?.open)$('onlineEditor').close()}catch{}
+  onlineEditing=null;
+  if($('onlineCampos'))$('onlineCampos').innerHTML='';
+  const b=await provider.entityList(entity,500,0);
+  if(gc126Epoch!==gcmbsV126EntityEpoch || gc126Modulo!==onlineModuleFilter)return;onlineCurrent=b.catalog;onlineRecords=b.records||[];
   if(String(entity||'').toLowerCase()==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
     onlineCurrent={...onlineCurrent,can_edit:false,writable:false};
     try{if($('onlineEditor')?.open)$('onlineEditor').close()}catch{}
@@ -1113,7 +1134,7 @@ async function editarOnline(key=null){
   if(onlineCurrent?.entity==='justificativas_faltas'){
     $('onlineCampos').insertAdjacentHTML('beforeend',`<label class="full">Documento comprobatório (JPG, PNG ou PDF)<input id="onlineArquivoJustificativa" type="file" accept="image/jpeg,image/png,application/pdf"><small>${d.arquivo_nome?`Atual: ${esc(d.arquivo_nome)}`:'Opcional'}</small></label>`);
   }
-  $('onlineMsg').textContent='';$('onlineEditor').showModal();
+  $('onlineMsg').textContent='';if($('onlineEditor'))$('onlineEditor').dataset.gc126Module=String(onlineModuleFilter||'');$('onlineEditor').showModal(); /* GCMBS_V126_EDITOR_OWNER */
   if(onlineCurrent?.entity==='viaturas')await renderSubstitutasViaturaEditor();
   if(onlineCurrent?.entity==='frequencia_registros'){
     const atualizar=async()=>{const g=Number(document.querySelector('[data-online-field="guarda_id"]')?.value||0),dt=document.querySelector('[data-online-field="data"]')?.value,ts=document.querySelector('[data-online-field="tipo_servico"]'),ref=document.querySelector('[data-online-field="referencia_id"]');if(!g||!dt||!ts)return;try{const rr=await provider.frequencyServices(g,dt),sv=rr.services||[];ts.disabled=false;ts.innerHTML=sv.length?sv.map(x=>`<option value="${esc(x.tipo_servico)}" data-ref="${esc(x.referencia_id)}">${esc(x.tipo_servico==='ORDINARIO'?'Serviço ordinário':'Serviço extra')} · ${esc(x.turno||'')} · ${esc(x.referencia||'')}</option>`).join(''):'<option value="">Nenhum serviço gravado nesta data</option>';const setref=()=>{if(ref)ref.value=ts.selectedOptions[0]?.dataset.ref||''};ts.onchange=setref;setref()}catch(e){ts.innerHTML=`<option value="">${esc(e.message)}</option>`}};document.querySelector('[data-online-field="guarda_id"]')?.addEventListener('change',atualizar);document.querySelector('[data-online-field="data"]')?.addEventListener('change',atualizar);atualizar();
