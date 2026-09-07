@@ -229,13 +229,18 @@ function renderMatriz(){
 }
 function capturarERenderizar(){
   garantirControles();
+  const host=$('#relatoriosLista');
   const cards=extrairCartoes();
   if(cards.length){
     ultimoConjunto=cards;
     renderMatriz();
     return;
   }
-  const host=$('#relatoriosLista');
+  if(host?.querySelector('.empty')){
+    ultimoConjunto=[];
+    renderMatriz();
+    return;
+  }
   if(host && relatoriosVisivel() && ultimoConjunto.length && !host.querySelector('.gc128-report-matrix')){
     renderMatriz();
   }
