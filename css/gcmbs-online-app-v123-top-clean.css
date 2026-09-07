@@ -1,0 +1,83 @@
+/*
+ GCMBS V123 — limpeza superior do Quadro Operacional
+ Pedido:
+ - remover "Acesso relacionado: Guardas Equipes Postos Gerar escala";
+ - remover os atalhos "+ Gerar escala" e "+ GCM";
+ - colocar "Quadro Operacional / Painel institucional e panorama do dia"
+   na parte superior, no lugar onde ficava o Acesso relacionado;
+ - ajustar o espaço vazio resultante;
+ - preservar banner, brasão, dados, regras e Desktop.
+*/
+
+/* Remove atalhos do topo. */
+html.gc123-top-clean #gc103QuickScale,
+html.gc123-top-clean #gc103QuickGcm{
+  display:none!important;
+}
+
+/* Remove barra global antiga e a faixa interna da Home. */
+html.gc123-top-clean #gc103RelatedBar,
+html.gc123-top-clean .gc118-related{
+  display:none!important;
+}
+
+/* Se a V121 estiver ativa, evita duplicação do título no cabeçalho. */
+html.gc123-top-clean.gc123-home-active #gc121HeaderTitle{
+  display:none!important;
+}
+
+/* Como a barra superior de 48px não existe mais, evita espaço sobrando. */
+@media(min-width:900px){
+  html.gc123-top-clean #appTela main{
+    padding-top:102px!important;
+  }
+}
+
+/* Bloco do título no topo da Home, substituindo o acesso relacionado. */
+html.gc123-top-clean .gc123-title-slot{
+  display:none;
+}
+html.gc123-top-clean.gc123-home-active .gc123-title-slot{
+  display:block!important;
+  margin:0 0 12px 0!important;
+  padding:0!important;
+}
+html.gc123-top-clean.gc123-home-active .gc123-title-slot .gc118-top{
+  display:block!important;
+  margin:0!important;
+  padding:0 2px!important;
+}
+html.gc123-top-clean.gc123-home-active .gc123-title-slot .gc118-top h1{
+  margin:0!important;
+}
+html.gc123-top-clean.gc123-home-active .gc123-title-slot .gc118-top p{
+  margin-top:4px!important;
+}
+
+/* Garante que o título não apareça novamente em outro ponto da página. */
+html.gc123-top-clean.gc123-home-active .gc118-main > .gc118-top:not(.gc123-mounted){
+  display:none!important;
+}
+
+/* Encosta o conteúdo no novo título, sem criar buracos visuais. */
+html.gc123-top-clean.gc123-home-active .gc118-main{
+  padding-top:0!important;
+}
+html.gc123-top-clean.gc123-home-active .gc118-hero{
+  margin-top:0!important;
+}
+
+/* Mantém Data + Sincronizar abaixo do painel institucional (V122). */
+html.gc123-top-clean.gc123-home-active .gc122-home-controls-slot{
+  margin:12px 0 12px 0!important;
+}
+
+/* Mobile/App: o título também sobe para o topo e fica compacto. */
+@media(max-width:899px){
+  html.gc123-top-clean.gc123-home-active .gc123-title-slot{
+    margin:0 0 10px 0!important;
+  }
+  html.gc123-top-clean.gc123-home-active .gc123-title-slot .gc118-top{
+    padding:0!important;
+  }
+}
