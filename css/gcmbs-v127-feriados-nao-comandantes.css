@@ -1,0 +1,21 @@
+/* GCMBS V127 — somente Feriados em modo CONSULTA */
+html.gc127-feriados-readonly #onlineEditor{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+html.gc127-feriados-readonly #onlineNovo{
+  display:none!important;
+}
+html.gc127-feriados-readonly #onlineRegistros button,
+html.gc127-feriados-readonly #onlineRegistros .request-actions,
+html.gc127-feriados-readonly #onlineRegistros [data-online-edit],
+html.gc127-feriados-readonly #onlineRegistros [data-online-del]{
+  display:none!important;
+}
+html.gc127-feriados-readonly #onlineRegistrosCard{
+  display:block!important;
+}
+html.gc127-feriados-readonly dialog#onlineEditor[open]{
+  display:none!important;
+}

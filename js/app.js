@@ -1,5 +1,5 @@
 import './communication-workflows-v74.js?v=100085';
-import './app-core.js?v=1001263';
+import './app-core.js?v=100127';
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;
