@@ -78,3 +78,13 @@ console.info('[GCMBS] V122 controles abaixo do painel institucional ativos');
   s.async=false;
   document.head.appendChild(s);
 })();
+
+/* GCMBS V130 loader — filtro por GCM no Banco de Horas do Comando. */
+(()=>{
+  if(window.__GCMBS_V130_LOADER__)return;
+  window.__GCMBS_V130_LOADER__=true;
+  const s=document.createElement('script');
+  s.src='js/gcmbs-v130-banco-horas-filtro-comando.js?v=100130';
+  s.async=false;
+  document.head.appendChild(s);
+})();
