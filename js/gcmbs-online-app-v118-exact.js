@@ -27,8 +27,13 @@ let extrasCache={date:'',value:0,busy:false};
 function greeting(){
   const h=new Date().getHours();
   const prefix=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
-  const name=text(document.getElementById('perfilNome')?.textContent || document.getElementById('headerUsuario')?.textContent || 'GCMBS')
-    .split(/\s+/)[0].toUpperCase();
+  // O nome de guerra pode ser composto (ex.: "D. Santos", "Da Silva").
+  // Preserve o valor completo exibido pelo perfil em vez de usar apenas o primeiro termo.
+  const name=text(
+    document.getElementById('perfilNome')?.textContent ||
+    document.getElementById('headerUsuario')?.textContent ||
+    'GCMBS'
+  ).toUpperCase();
   return `${prefix}, ${name||'GCMBS'}!`;
 }
 
