@@ -1,0 +1,126 @@
+/*
+ GCMBS V124 — topo consolidado.
+ - remove + Gerar escala e + GCM definitivamente;
+ - substitui "Acesso relacionado" pelo título do módulo;
+ - na Home, a faixa mostra "Quadro Operacional / Painel institucional e panorama do dia";
+ - remove o título e acessos repetidos dentro da Home;
+ - Data + Sincronizar permanecem abaixo do painel institucional (V122).
+*/
+
+@media(min-width:900px){
+  /* Header fica apenas com sessão/usuário/senha/sair. */
+  #appTela>header .brand-head{
+    min-width:0!important;
+    width:0!important;
+    overflow:hidden!important;
+  }
+  #appTela>header .header-user{
+    margin-left:auto!important;
+  }
+
+  /* A faixa antiga agora é uma barra de título. */
+  #gc103RelatedBar.gc124-route-bar{
+    position:fixed!important;
+    left:300px!important;
+    right:0!important;
+    top:88px!important;
+    height:58px!important;
+    z-index:49!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:16px!important;
+    padding:7px 22px!important;
+    background:linear-gradient(180deg,#fbfdff,#f2f7fb)!important;
+    border-bottom:1px solid #d5e2ec!important;
+    box-shadow:0 3px 9px rgba(8,45,82,.035)!important;
+  }
+
+  #gc103RelatedBar.gc124-route-bar .gc124-route-copy{
+    min-width:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+  }
+  #gc103RelatedBar.gc124-route-bar .gc124-route-copy strong{
+    color:#102f54!important;
+    font-size:20px!important;
+    line-height:1.08!important;
+    font-weight:950!important;
+    letter-spacing:-.02em!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  #gc103RelatedBar.gc124-route-bar .gc124-route-copy small{
+    margin-top:4px!important;
+    color:#6d8299!important;
+    font-size:11px!important;
+    line-height:1.15!important;
+    font-weight:700!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  #gc103RelatedBar.gc124-route-bar .gc103-sync-state{
+    flex:0 0 auto!important;
+    margin-left:auto!important;
+    font-size:10px!important;
+    color:#72869b!important;
+    white-space:nowrap!important;
+  }
+
+  /* Header 88 + barra 58 + 12px de respiro = 158px. */
+  #appTela main{
+    padding-top:158px!important;
+  }
+}
+
+/* Home: remove tudo que passou a ser redundante com a barra de título. */
+html.gc118-exact section[data-view="inicio"].gc118-home .gc118-top,
+html.gc118-exact section[data-view="inicio"].gc118-home .gc118-related{
+  display:none!important;
+}
+
+/* Neutraliza camadas experimentais anteriores se ainda houver DOM residual. */
+#gc103QuickScale,
+#gc103QuickGcm,
+#gc121HeaderTitle,
+.gc123-title-slot{
+  display:none!important;
+}
+
+/* Data + sincronização seguem no local aprovado da V122. */
+html.gc122-controls-below-hero.gc122-home-active .gc122-home-controls-slot{
+  display:flex!important;
+  margin:12px 0 12px!important;
+}
+
+/* Mobile/App: mesma ideia, título numa barra compacta abaixo do header. */
+@media(max-width:899px){
+  #gc103RelatedBar.gc124-route-bar{
+    position:sticky!important;
+    top:64px!important;
+    left:auto!important;
+    right:auto!important;
+    min-height:48px!important;
+    height:auto!important;
+    z-index:18!important;
+    display:flex!important;
+    align-items:center!important;
+    padding:7px 11px!important;
+    background:linear-gradient(180deg,#fbfdff,#f2f7fb)!important;
+    border-bottom:1px solid #d5e2ec!important;
+  }
+  #gc103RelatedBar.gc124-route-bar .gc124-route-copy strong{
+    font-size:15px!important;
+    color:#102f54!important;
+    font-weight:900!important;
+  }
+  #gc103RelatedBar.gc124-route-bar .gc124-route-copy small{
+    display:none!important;
+  }
+  #gc103RelatedBar.gc124-route-bar .gc103-sync-state{
+    display:none!important;
+  }
+}

@@ -6,6 +6,7 @@
  * HF84 corrige mojibake e fallback do brasão institucional.
  * V102 consolida no Online/App o resultado aprovado das V84 e V90-V101 do Desktop.
  * V103 reorganiza todas as telas Online/App no mesmo padrão visual e hierarquia do Desktop.
+ * V111 elimina a duplicacao do painel analitico e mantem o Quadro de Avisos no final.
  */
 (()=>{
   'use strict';
@@ -34,12 +35,12 @@
   loadStyle('css/gcmbs-desktop-parity-v103.css?v=100103','gc103-desktop-parity');
 
   loadScript('js/gcmbs-premium-3d-v78.js?v=100080','gc78-premium');
-  loadScript('js/gcmbs-premium-3d-v79-fix.js?v=100080','gc79-refined');
+  loadScript('js/gcmbs-premium-3d-v79-fix.js?v=100111','gc79-refined');
   loadScript('js/gcmbs-premium-3d-v79-r2.js?v=100080','gc79-r2');
   loadScript('js/gcmbs-platform-parity-v80.js?v=100080','gc80-platform');
   loadScript('js/gcmbs-login-institucional-v81.js?v=100081','gc81-login');
   loadScript('js/hf83-justificativas-protected-route.js?v=100083','gc83-justificativas');
   loadScript('js/hf84-utf8-branding-fix.js?v=100084','gc84-utf8-branding');
-  loadScript('js/gcmbs-cumulative-v102.js?v=100102','gc102-cumulative');
-  loadScript('js/gcmbs-desktop-parity-v103.js?v=100110','gc103-desktop-parity');
+  loadScript('js/gcmbs-cumulative-v102.js?v=100111','gc102-cumulative');
+  loadScript('js/gcmbs-desktop-parity-v103.js?v=100124','gc103-desktop-parity');
 })();
