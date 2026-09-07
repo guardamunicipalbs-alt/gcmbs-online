@@ -60,6 +60,22 @@ const ONLINE_ENTITY_HIDE_FIELDS={
 function campoOcultoNaEntidade(nome){return ONLINE_ENTITY_HIDE_FIELDS[onlineCurrent?.entity]?.has(String(nome||'').toLowerCase())===true;}
 const onlineLabel=k=>ONLINE_LABELS[k]||String(k||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 const refData=()=>provider.references?.()||{viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[]};
+
+/* GCMBS_V125_FERIADOS_GRUPO_COMANDANTES
+   Regra: Feriados é consulta para todos os autorizados, mas cadastro/edição/exclusão
+   somente para GCM vinculado à equipe COMANDANTES. */
+function gcmbsV125FeriadosPodeEditar(){
+  const gid=Number(provider.session?.guarda_id||0);
+  if(!gid)return false;
+  const g=(refData().guardas||[]).find(x=>Number(x.id)===gid);
+  const equipe=String(g?.equipe||'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .trim().toUpperCase();
+  return equipe==='COMANDANTES';
+}
+function gcmbsV125FeriadosBloqueio(){
+  return 'Cadastro, edição e exclusão de feriados são exclusivos aos integrantes da equipe COMANDANTES. Para os demais GCMs, este módulo é somente consulta.';
+}
 function viaturaPorId(v){const x=(refData().viaturas||[]).find(r=>Number(r.id)===Number(v));return x?[x.prefixo,x.placa].filter(Boolean).join(' · '):''}
 function guardaPorId(v){const x=(refData().guardas||[]).find(r=>Number(r.id)===Number(v));return x?.nome_guerra||x?.nome_completo||''}
 function equipePorId(v){const x=(refData().equipes||[]).find(r=>Number(r.id)===Number(v));return x?.nome||''}
@@ -92,7 +108,7 @@ const ENTITY_UI={
   postos:{titulo:'Postos Operacionais',action:'Novo posto',descricao:'Prioridade operacional, efetivo mínimo/máximo, horários e funcionamento dos postos.',order:['nome','tipo','prioridade','quantidade_minima','quantidade_maxima','horario_inicio','horario_fim','funcionamento_24h','ativo','observacao'],sections:[['Identificação',['nome','tipo','ativo']],['Prioridade e efetivo',['prioridade','quantidade_minima','quantidade_maxima']],['Funcionamento',['horario_inicio','horario_fim','funcionamento_24h']],['Observações',['observacao']]]},
   tipos_escalas:{titulo:'Tipos de Escalas',action:'Novo tipo',descricao:'Jornadas e horários utilizados pelas equipes e escalas.',order:['nome','descricao','ativo'],sections:[['Tipo de escala',['nome','ativo']],['Descrição',['descricao']]]},
   escalas_extras_manuais:{titulo:'Escala Extra Manual',action:'Nova escala extra',descricao:'Efetivo adicional sincronizado com o Desktop, obedecendo às permissões do usuário.',order:['data','guarda_id','posto','horario_inicio','horario_fim','funcao','status','observacao'],sections:[['Serviço extra',['data','guarda_id','posto','horario_inicio','horario_fim','funcao','status']],['Observação',['observacao']]]},
-  feriados:{titulo:'Feriados',action:'Novo feriado',descricao:'Calendário institucional de feriados utilizado nos cálculos do sistema.',order:['data','nome','observacao'],sections:[['Feriado',['data','nome']],['Observação',['observacao']]]},
+  feriados:{titulo:'Feriados',action:'Novo feriado',descricao:'Calendário institucional. GCMs fora da equipe COMANDANTES possuem acesso somente para consulta.',order:['data','nome','observacao'],sections:[['Feriado',['data','nome']],['Observação',['observacao']]]},
   justificativas_faltas:{titulo:'Justificativa de Faltas',action:'Nova justificativa',descricao:'Justificativa de faltas e documentos do próprio GCM, conforme permissão.',order:['guarda_id','data_inicial','quantidade_dias','data_final','tipo_servico','motivo','observacao','status'],sections:[['Período e serviço',['guarda_id','data_inicial','quantidade_dias','data_final','tipo_servico']],['Justificativa',['motivo','observacao','status']]]},
   eventos_extras:{titulo:'Serviço Extra por Evento',action:'Novo evento',descricao:'Eventos extraordinários, local e período operacional.',order:['nome','data','horario_inicio','horario_fim','local','observacao','status'],sections:[['Evento',['nome','status']],['Data, horário e local',['data','horario_inicio','horario_fim','local']],['Observação',['observacao']]]},
   folha_pagamento_config:{titulo:'Folha de Pagamento',action:'Nova configuração',descricao:'Parâmetros e configurações da folha de pagamento autorizados ao perfil atual.'},
@@ -725,7 +741,12 @@ function renderEntityTabs(){
   host.classList.toggle('hidden',itens.length<=1);host.querySelectorAll('[data-entity-tab]').forEach(b=>b.addEventListener('click',()=>abrirEntidadeOnline(b.dataset.entityTab)));
 }
 async function abrirEntidadeOnline(entity){
-  const b=await provider.entityList(entity,500,0);onlineCurrent=b.catalog;onlineRecords=b.records||[];const cfg=uiEntity();
+  const b=await provider.entityList(entity,500,0);onlineCurrent=b.catalog;onlineRecords=b.records||[];
+  if(String(entity||'').toLowerCase()==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
+    onlineCurrent={...onlineCurrent,can_edit:false,writable:false};
+    try{if($('onlineEditor')?.open)$('onlineEditor').close()}catch{}
+  }
+  const cfg=uiEntity();
   $('onlineTitulo').textContent=cfg.titulo||onlineCurrent.titulo;if($('onlineDescricao'))$('onlineDescricao').textContent=cfg.descricao||'Dados sincronizados com o GCMBS Desktop.';
   $('onlineNovo').textContent=cfg.action||'Novo registro';$('onlineNovo').classList.toggle('hidden',!onlineCurrent.can_edit);
   if($('onlineTotal'))$('onlineTotal').textContent=String(onlineRecords.length);
@@ -1080,6 +1101,9 @@ async function salvarSubstituicoesViatura(principalId,selecionadas){
   }
 }
 async function editarOnline(key=null){
+  if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
+    alert(gcmbsV125FeriadosBloqueio());return;
+  }
   onlineEditing=key?onlineRecords.find(r=>String(r.record_key)===String(key)):null;const d=onlineEditing?.data||{},cfg=uiEntity();
   $('onlineEditorTitulo').textContent=(onlineEditing?'Editar ':'Novo ')+(cfg.titulo||onlineCurrent?.titulo||'registro');
   const cols=orderedColumns(),map=new Map(cols.map(c=>[c.name,c]));let html='';
@@ -1097,6 +1121,7 @@ async function editarOnline(key=null){
 }
 async function salvarOnline(){
   try{
+    if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())throw new Error(gcmbsV125FeriadosBloqueio());
     const d={...(onlineEditing?.data||{})};
     const substitutasSelecionadas=onlineCurrent.entity==='viaturas'?coletarSubstitutasViaturaEditor():[];
     document.querySelectorAll('[data-online-field]').forEach(i=>{let v=i.value;const c=onlineCurrent.columns.find(x=>x.name===i.dataset.onlineField);if(/INT|REAL|NUM/i.test(String(c?.type||''))&&v!=='')v=Number(v);d[i.dataset.onlineField]=v});
@@ -1141,6 +1166,9 @@ async function salvarOnline(){
   }catch(e){$('onlineMsg').textContent=e.message}
 }
 async function excluirOnline(key){
+  if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
+    alert(gcmbsV125FeriadosBloqueio());return;
+  }
   if(!confirm('Excluir este registro online?'))return;
   try{const r=onlineRecords.find(x=>String(x.record_key)===String(key));await provider.entityMutate(onlineCurrent.entity,key,'DELETE',r?.data||{});await abrirEntidadeOnline(onlineCurrent.entity)}catch(e){alert(e.message)}
 }
