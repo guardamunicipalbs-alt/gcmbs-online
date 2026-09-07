@@ -1,0 +1,353 @@
+/*
+ GCMBS V118 — ONLINE + APP NO PADRÃO EXATO DO DESKTOP APROVADO
+ Escopo: #appTela. O login institucional existente não é alterado.
+ O brasão/escudo não é recriado: o banner usa uma cópia exata do asset do Desktop.
+*/
+html.gc118-exact{
+  --gc118-bg:#eef4fa;
+  --gc118-panel:#ffffff;
+  --gc118-panel2:#f8fbfe;
+  --gc118-line:#d3e1ee;
+  --gc118-line2:#c6d9e9;
+  --gc118-ink:#0f2e50;
+  --gc118-text:#244768;
+  --gc118-muted:#6c8299;
+  --gc118-blue:#0d65d1;
+  --gc118-blue2:#3198f4;
+  --gc118-green:#18ad76;
+  --gc118-gold:#e4aa20;
+  --gc118-red:#e94e4b;
+  --gc118-purple:#7942d8;
+  --gc118-shadow:0 2px 0 #d5e2ec,0 9px 20px rgba(7,42,77,.08);
+  --gc118-shadow-lg:0 3px 0 #c3d6e6,0 16px 34px rgba(6,43,82,.14);
+}
+
+/* ---------- SISTEMA ONLINE / APP: linguagem visual global ---------- */
+html.gc118-exact #appTela,
+html.gc118-exact #appTela main{
+  background:linear-gradient(180deg,#f7fafc 0%,var(--gc118-bg) 100%)!important;
+  color:var(--gc118-ink)!important;
+  font-family:"Segoe UI Variable","Segoe UI",Arial,sans-serif!important;
+}
+html.gc118-exact #appTela header{
+  background:rgba(255,255,255,.96)!important;
+  border-bottom:1px solid var(--gc118-line)!important;
+  box-shadow:0 3px 13px rgba(10,42,75,.06)!important;
+  backdrop-filter:blur(12px);
+}
+html.gc118-exact #appTela header h1{color:var(--gc118-ink)!important;font-weight:900!important}
+html.gc118-exact #appTela header p,
+html.gc118-exact #appTela .muted{color:var(--gc118-muted)!important}
+
+html.gc118-exact #appTela .desktop-nav{
+  background:linear-gradient(180deg,#0b2c53 0%,#071f3b 100%)!important;
+  border-right:1px solid rgba(255,255,255,.08)!important;
+  box-shadow:8px 0 25px rgba(3,21,42,.12)!important;
+}
+html.gc118-exact #appTela .desktop-nav .nav-brand strong,
+html.gc118-exact #appTela .desktop-nav .nav-brand small,
+html.gc118-exact #appTela .desktop-nav button,
+html.gc118-exact #appTela .desktop-nav .nav-group-title{color:#edf6ff!important}
+html.gc118-exact #appTela .desktop-nav button{
+  border-radius:14px!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+  background:rgba(255,255,255,.035)!important;
+  font-size:14px!important;
+  min-height:46px!important;
+}
+html.gc118-exact #appTela .desktop-nav button:hover{background:rgba(255,255,255,.08)!important}
+html.gc118-exact #appTela .desktop-nav button.active{
+  background:linear-gradient(180deg,#1578f1,#0c5fc9)!important;
+  border-color:#2b8cff!important;
+  color:#fff!important;
+  box-shadow:0 4px 0 rgba(3,63,136,.45),0 10px 22px rgba(10,92,194,.30)!important;
+}
+
+html.gc118-exact #appTela .desktop-page-head{
+  border:1px solid var(--gc118-line)!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#fff,#f8fbfe)!important;
+  box-shadow:var(--gc118-shadow)!important;
+  padding:15px 17px!important;
+}
+html.gc118-exact #appTela .desktop-page-head h1{
+  color:var(--gc118-ink)!important;font-size:26px!important;line-height:1.1!important;
+  font-weight:900!important;letter-spacing:-.02em!important;
+}
+html.gc118-exact #appTela .desktop-page-head p{font-size:14px!important;line-height:1.4!important}
+
+html.gc118-exact #appTela .card:not(.hero),
+html.gc118-exact #appTela .module-card,
+html.gc118-exact #appTela .record-card,
+html.gc118-exact #appTela .form-section,
+html.gc118-exact #appTela dialog .card{
+  border:1px solid var(--gc118-line)!important;
+  border-radius:20px!important;
+  background:linear-gradient(180deg,#fff,#fbfdff)!important;
+  box-shadow:var(--gc118-shadow)!important;
+}
+html.gc118-exact #appTela button,
+html.gc118-exact #appTela .btn,
+html.gc118-exact #appTela a.primary,
+html.gc118-exact #appTela a.secondary{
+  border-radius:14px!important;
+  font-size:14px!important;
+  font-weight:800!important;
+}
+html.gc118-exact #appTela button.secondary,
+html.gc118-exact #appTela .secondary,
+html.gc118-exact #appTela button.mini{
+  border:1px solid #c8dbea!important;
+  background:linear-gradient(180deg,#fff,#eff5fa)!important;
+  color:var(--gc118-ink)!important;
+  box-shadow:0 2px 0 #cddbe6,0 6px 13px rgba(8,46,83,.07)!important;
+}
+html.gc118-exact #appTela button.primary,
+html.gc118-exact #appTela .primary{
+  border:1px solid #0756b0!important;
+  background:linear-gradient(180deg,#278df1,#0d65d1)!important;
+  color:#fff!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 0 #074b99,0 8px 17px rgba(13,101,209,.20)!important;
+}
+html.gc118-exact #appTela input,
+html.gc118-exact #appTela select,
+html.gc118-exact #appTela textarea{
+  border:1px solid #bfd2e3!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  color:var(--gc118-ink)!important;
+  font-size:14px!important;
+  min-height:42px;
+}
+html.gc118-exact #appTela textarea{line-height:1.45!important}
+html.gc118-exact #appTela table{
+  border-radius:15px!important;
+  overflow:hidden!important;
+  border:1px solid var(--gc118-line)!important;
+}
+html.gc118-exact #appTela th{
+  background:#edf5fb!important;color:#20496d!important;font-size:13px!important;
+}
+html.gc118-exact #appTela td{font-size:13px!important}
+html.gc118-exact #appTela .notice{
+  border-radius:15px!important;border:1px solid #d2e1ed!important;
+  background:linear-gradient(180deg,#fbfdff,#f4f8fc)!important;color:#54718c!important;
+}
+
+/* ---------- O HOME É RECONSTRUÍDO: os blocos antigos ficam só como fonte de dados ---------- */
+html.gc118-exact section[data-view="inicio"].gc118-home > :not(.gc118-main):not(.gc118-source-stash){
+  display:none!important;
+}
+html.gc118-exact .gc118-source-stash{
+  position:absolute!important;
+  width:1px!important;height:1px!important;
+  overflow:hidden!important;clip:rect(0 0 0 0)!important;
+  clip-path:inset(50%)!important;
+  white-space:nowrap!important;
+  opacity:0!important;pointer-events:none!important;
+}
+html.gc118-exact .gc118-main{
+  display:block!important;
+  max-width:1500px!important;
+  margin:0 auto!important;
+  padding:14px 16px 22px!important;
+}
+html.gc118-exact .gc118-top{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin:0 0 12px;padding:0 3px;
+}
+html.gc118-exact .gc118-title h1{
+  margin:0 0 3px;color:var(--gc118-ink);
+  font-size:27px;line-height:1.05;font-weight:900;letter-spacing:-.025em;
+}
+html.gc118-exact .gc118-title p{margin:0;color:#7188a0;font-size:13px}
+html.gc118-exact .gc118-related{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 12px;
+}
+html.gc118-exact .gc118-related-label{font-size:13px;font-weight:800;color:#345574;margin-right:2px}
+html.gc118-exact .gc118-quick{
+  min-height:40px;padding:0 16px;border:1px solid #c8dbea;border-radius:13px;
+  background:linear-gradient(180deg,#fff,#eff5fa);color:var(--gc118-ink);
+  box-shadow:0 2px 0 #ccdbe7,0 7px 14px rgba(8,46,83,.06);font-weight:800;cursor:pointer;
+}
+html.gc118-exact .gc118-controls{
+  display:flex;justify-content:flex-end;align-items:end;gap:9px;margin:0 0 10px;
+}
+html.gc118-exact .gc118-controls label{
+  display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#496985;
+}
+html.gc118-exact .gc118-date{
+  height:42px;min-width:185px;padding:0 12px!important;
+}
+html.gc118-exact .gc118-sync{
+  height:42px;padding:0 18px!important;border-radius:13px!important;
+}
+
+/* ---------- HERO EXATO DO DESKTOP: mesma imagem, copiada do src/ui/assets ---------- */
+html.gc118-exact .gc118-hero{
+  position:relative;overflow:hidden;isolation:isolate;
+  min-height:171px;margin:0 0 12px;border-radius:22px;
+  border:1px solid #0a5aaa;
+  background:linear-gradient(120deg,#041d3a 0%,#083c72 55%,#075b9e 100%);
+  box-shadow:var(--gc118-shadow-lg);
+}
+html.gc118-exact .gc118-hero::after{
+  content:"";position:absolute;right:0;top:0;bottom:0;width:64%;
+  background:url('../assets/gcmbs-dashboard-hero-v118.png') right center/auto 100% no-repeat;
+  z-index:-2;
+}
+html.gc118-exact .gc118-hero::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(90deg,rgba(3,24,49,.98) 0%,rgba(4,39,76,.95) 37%,rgba(5,45,83,.50) 62%,rgba(5,45,83,.04) 100%);
+}
+html.gc118-exact .gc118-hero-copy{
+  max-width:55%;padding:22px 25px;color:#fff;
+}
+html.gc118-exact .gc118-kicker{
+  font-size:11px;letter-spacing:.19em;text-transform:uppercase;
+  color:#b7d5f1;font-weight:900;
+}
+html.gc118-exact .gc118-hero h2{
+  margin:7px 0 7px;color:#fff!important;font-size:30px!important;
+  line-height:1.05;font-weight:900;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.20);
+}
+html.gc118-exact .gc118-hero p{
+  max-width:600px;margin:0;color:#edf5fb!important;font-size:14px!important;line-height:1.42;
+}
+html.gc118-exact .gc118-gold{
+  width:58px;height:4px;margin:13px 0 8px;border-radius:99px;background:#f3bd35;
+}
+html.gc118-exact .gc118-hero em{font-size:12px;color:#f3f7fb;letter-spacing:.035em}
+
+/* ---------- PAINÉIS COMPACTOS EM DUAS LINHAS ---------- */
+html.gc118-exact .gc118-section{
+  margin:0 0 12px;padding:12px 13px 13px;
+  border:1px solid var(--gc118-line);border-radius:19px;
+  background:linear-gradient(180deg,#fff,#fbfdff);box-shadow:var(--gc118-shadow);
+}
+html.gc118-exact .gc118-section-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 9px;
+}
+html.gc118-exact .gc118-section-head strong{
+  color:var(--gc118-ink);font-size:18px;line-height:1.15;font-weight:900;
+}
+html.gc118-exact .gc118-section-head span{color:#7890a6;font-size:12px}
+html.gc118-exact .gc118-grid{display:grid;gap:10px}
+html.gc118-exact .gc118-grid.effective{grid-template-columns:repeat(4,minmax(0,1fr))}
+html.gc118-exact .gc118-grid.fleet{grid-template-columns:repeat(5,minmax(0,1fr))}
+html.gc118-exact .gc118-metric{
+  appearance:none;position:relative;overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"label value" "sub value";align-items:center;
+  column-gap:10px;row-gap:3px;min-width:0;min-height:67px;padding:10px 13px 10px 16px;
+  text-align:left;border:1px solid var(--gc118-line2);border-radius:15px;
+  background:linear-gradient(180deg,#fff,#f6faff);box-shadow:var(--gc118-shadow);
+  color:var(--gc118-ink);cursor:pointer;
+}
+html.gc118-exact .gc118-metric::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:linear-gradient(180deg,var(--gc118-blue2),var(--gc118-blue));
+}
+html.gc118-exact .gc118-metric.red::before{background:linear-gradient(180deg,#ff817e,var(--gc118-red))}
+html.gc118-exact .gc118-metric.gold::before{background:linear-gradient(180deg,#f6cf63,var(--gc118-gold))}
+html.gc118-exact .gc118-metric.green::before{background:linear-gradient(180deg,#3dd297,var(--gc118-green))}
+html.gc118-exact .gc118-metric.orange::before{background:linear-gradient(180deg,#ffad6b,#ef7738)}
+html.gc118-exact .gc118-metric-label{
+  grid-area:label;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:14px;font-weight:800;color:#315473;
+}
+html.gc118-exact .gc118-metric-value{
+  grid-area:value;font-size:24px;line-height:1;font-weight:900;color:#0d2d4f;
+}
+html.gc118-exact .gc118-metric small{
+  grid-area:sub;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:11.5px;color:#7188a0;
+}
+html.gc118-exact .gc118-metric:hover{transform:translateY(-1px);box-shadow:0 3px 0 #cadbe8,0 12px 22px rgba(8,46,83,.10)}
+
+/* ---------- DISTRIBUIÇÃO + AVISOS ---------- */
+html.gc118-exact .gc118-bottom{
+  display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,.9fr);gap:12px;align-items:stretch;
+}
+html.gc118-exact .gc118-chart,
+html.gc118-exact .gc118-notices{
+  min-width:0;padding:13px 14px;border:1px solid var(--gc118-line);border-radius:19px;
+  background:linear-gradient(180deg,#fff,#fbfdff);box-shadow:var(--gc118-shadow);
+}
+html.gc118-exact .gc118-bars{
+  display:flex;align-items:end;gap:15px;height:154px;padding:12px 9px 2px;
+  border-top:1px solid #e4edf4;
+  background:repeating-linear-gradient(to top,transparent 0,transparent 29px,rgba(92,132,166,.09) 30px);
+}
+html.gc118-exact .gc118-bar-col{
+  flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;
+  border-radius:10px;cursor:pointer;
+}
+html.gc118-exact .gc118-bar-col:hover{background:rgba(13,101,209,.04)}
+html.gc118-exact .gc118-bar-col b{font-size:17px;color:#173b5c}
+html.gc118-exact .gc118-bar-col small{font-size:13px;color:#5e7890}
+html.gc118-exact .gc118-bar{
+  width:min(64px,68%);min-height:4px;border-radius:10px 10px 2px 2px;
+  background:linear-gradient(180deg,#3d9cff,#0d65d1);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 0 #0a51a8,0 8px 15px rgba(10,85,173,.17);
+}
+html.gc118-exact .gc118-bar.green{background:linear-gradient(180deg,#36c792,#139b69);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 0 #0f7d56,0 8px 15px rgba(21,156,110,.16)}
+html.gc118-exact .gc118-bar.purple{background:linear-gradient(180deg,#a171f2,#7442d3);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 0 #5d33ac,0 8px 15px rgba(116,67,213,.16)}
+html.gc118-exact .gc118-bar.red{background:linear-gradient(180deg,#fa7670,#df4743);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 0 #b53734,0 8px 15px rgba(223,72,68,.16)}
+
+html.gc118-exact .gc118-notice-body{
+  min-height:128px;padding:13px 2px 8px;color:#58718b;font-size:14px;line-height:1.45;
+}
+html.gc118-exact .gc118-notice-body .notice-board-list{
+  display:grid!important;gap:8px!important;
+}
+html.gc118-exact .gc118-notice-actions{
+  padding-top:10px;border-top:1px solid #e5edf4;
+}
+html.gc118-exact .gc118-notice-actions button{width:100%;min-height:43px;text-align:left;padding:0 14px!important}
+
+/* ---------- MOBILE: MESMA IDENTIDADE, NÃO UMA SEGUNDA INTERFACE ---------- */
+@media(max-width:1050px){
+  html.gc118-exact .gc118-grid.fleet{grid-template-columns:repeat(3,minmax(0,1fr))}
+  html.gc118-exact .gc118-bottom{grid-template-columns:1fr}
+  html.gc118-exact .gc118-hero-copy{max-width:68%}
+  html.gc118-exact .gc118-hero::after{width:60%}
+}
+@media(max-width:720px){
+  html.gc118-exact .gc118-main{padding:10px 10px calc(24px + env(safe-area-inset-bottom))}
+  html.gc118-exact .gc118-top{align-items:flex-start}
+  html.gc118-exact .gc118-title h1{font-size:24px}
+  html.gc118-exact .gc118-related{gap:7px}
+  html.gc118-exact .gc118-related-label{width:100%}
+  html.gc118-exact .gc118-quick{min-height:38px;padding:0 13px;font-size:13px}
+  html.gc118-exact .gc118-controls{display:grid;grid-template-columns:1fr auto;align-items:end}
+  html.gc118-exact .gc118-controls label{display:grid;gap:4px}
+  html.gc118-exact .gc118-date{min-width:0;width:100%}
+  html.gc118-exact .gc118-hero{min-height:168px;border-radius:20px}
+  html.gc118-exact .gc118-hero-copy{max-width:78%;padding:19px 18px}
+  html.gc118-exact .gc118-hero::after{width:100%;opacity:.42}
+  html.gc118-exact .gc118-hero::before{background:linear-gradient(90deg,rgba(3,24,49,.98),rgba(4,39,76,.87) 58%,rgba(5,45,83,.45))}
+  html.gc118-exact .gc118-hero h2{font-size:26px!important}
+  html.gc118-exact .gc118-hero p{font-size:13px!important}
+  html.gc118-exact .gc118-section{padding:11px}
+  html.gc118-exact .gc118-grid.effective,
+  html.gc118-exact .gc118-grid.fleet{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  html.gc118-exact .gc118-metric{min-height:78px;display:block;padding:11px 11px 9px 15px}
+  html.gc118-exact .gc118-metric-label{display:block;font-size:13px}
+  html.gc118-exact .gc118-metric-value{display:block;margin:6px 0 4px;font-size:24px}
+  html.gc118-exact .gc118-metric small{display:block;font-size:11px;white-space:normal}
+  html.gc118-exact .gc118-section-head strong{font-size:17px}
+  html.gc118-exact .gc118-bars{height:143px;gap:7px;padding-left:3px;padding-right:3px}
+  html.gc118-exact .gc118-bar{width:min(48px,72%)}
+  html.gc118-exact .gc118-bar-col b{font-size:16px}
+  html.gc118-exact .gc118-bar-col small{font-size:11.5px;text-align:center}
+  html.gc118-exact #appTela .desktop-page-head h1{font-size:23px!important}
+}
+@media(max-width:420px){
+  html.gc118-exact .gc118-main{padding-left:8px;padding-right:8px}
+  html.gc118-exact .gc118-controls{grid-template-columns:1fr}
+  html.gc118-exact .gc118-sync{width:100%}
+  html.gc118-exact .gc118-hero-copy{max-width:92%}
+  html.gc118-exact .gc118-grid.effective,
+  html.gc118-exact .gc118-grid.fleet{grid-template-columns:1fr 1fr}
+}
