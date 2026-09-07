@@ -1,0 +1,83 @@
+/*
+ GCMBS V122 — move Data + Sincronizar para abaixo do painel institucional
+ Escopo:
+ - somente Home / Quadro Operacional;
+ - move o bloco de controles para logo abaixo do banner institucional;
+ - mantém cabeçalho simplificado da V121;
+ - não altera dados, regras, brasão, banner ou Desktop.
+*/
+
+html.gc122-controls-below-hero .gc122-home-controls-slot{
+  display:none;
+}
+
+html.gc122-controls-below-hero.gc122-home-active .gc122-home-controls-slot{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:flex-end!important;
+  gap:12px!important;
+  margin:12px 0 12px 0!important;
+  width:100%!important;
+}
+
+/* Garante que o bloco movido fique limpo e alinhado. */
+html.gc122-controls-below-hero.gc122-home-active .gc122-home-controls-slot .gc118-controls{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:flex-end!important;
+  gap:12px!important;
+  width:auto!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+/* Remove espaço antigo reservado para os controles na parte superior do conteúdo. */
+html.gc122-controls-below-hero.gc122-home-active .gc118-main > .gc118-controls{
+  margin-top:0!important;
+}
+
+/* Evita que o placeholder antigo crie espaço vazio quando o bloco for movido. */
+html.gc122-controls-below-hero.gc122-home-active .gc122-controls-anchor{
+  display:none!important;
+}
+
+/* Controles continuam compactos e legíveis. */
+html.gc122-controls-below-hero.gc122-home-active .gc118-date-group{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  white-space:nowrap!important;
+}
+html.gc122-controls-below-hero.gc122-home-active .gc118-date-group label{
+  font-weight:800!important;
+  color:#26476b!important;
+}
+html.gc122-controls-below-hero.gc122-home-active .gc118-date,
+html.gc122-controls-below-hero.gc122-home-active .gc118-sync{
+  margin:0!important;
+}
+
+/* Mobile / app: abaixo do banner, em coluna e largura total. */
+@media(max-width:899px){
+  html.gc122-controls-below-hero.gc122-home-active .gc122-home-controls-slot{
+    justify-content:stretch!important;
+    align-items:stretch!important;
+    margin:10px 0 12px 0!important;
+  }
+  html.gc122-controls-below-hero.gc122-home-active .gc122-home-controls-slot .gc118-controls{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  html.gc122-controls-below-hero.gc122-home-active .gc118-date-group{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:auto 1fr!important;
+    align-items:center!important;
+    gap:8px!important;
+  }
+  html.gc122-controls-below-hero.gc122-home-active .gc118-sync{
+    width:100%!important;
+  }
+}
