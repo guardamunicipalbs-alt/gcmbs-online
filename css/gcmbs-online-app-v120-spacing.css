@@ -1,0 +1,18 @@
+/*
+ GCMBS V120 — corrige o excesso de espaço acima do cabeçalho do Quadro Operacional.
+ Causa: a V103 reserva 154px no topo do <main> para header (88px) + barra Acesso relacionado (48px).
+ Na Home, a V119 oculta a barra global duplicada, mas o espaço de 48px continuava reservado.
+ V120 reduz somente a Home desktop para 102px = header 88px + margem útil 14px.
+*/
+@media(min-width:900px){
+  html.gc119-polish.gc119-home-active #appTela main{
+    padding-top:102px!important;
+  }
+}
+
+/* Mantém uma pequena respiração entre cabeçalho fixo e título, sem colar os blocos. */
+@media(min-width:900px){
+  html.gc119-polish.gc119-home-active .gc118-main{
+    padding-top:12px!important;
+  }
+}
