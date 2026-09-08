@@ -3,7 +3,7 @@ import './v62-sync-ui.js?v=100110';
 import './v58-ui.js?v=100110';
 import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100076';
 
-const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v131';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
 const JUSTIFICATIVAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-justificativas-v68';
 
@@ -69,8 +69,7 @@ export class AuthenticatedProvider {
     const body=await this.call('data');
     this.data=body;
     try{this.refs=await this.call('references')}catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
-    // v74: a ação data é montada pela réplica integral canônica do Desktop.
-    // Não há mais substituição parcial por módulo no cliente.
+    // v132: a nuvem é a fonte canônica operacional; o Desktop mantém uma réplica SQLite offline sincronizada.
     return this;
   }
 
@@ -97,7 +96,7 @@ export class AuthenticatedProvider {
       const result=await this.endpoint(JUSTIFICATIVAS_API,action,payload,true);
       return {...result,record_key:result.record_key||key,protected_write:true};
     }
-    return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id});
+    return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id,device_id:'gcmbs-online-app'});
   }
   async quadro(data){return this.call('quadro_operacional',{data})}
   async syncStatus(){return (await this.call('sync_status')).sincronizacao||{}}
