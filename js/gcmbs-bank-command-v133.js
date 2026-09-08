@@ -1,5 +1,4 @@
-import { AuthenticatedProvider } from './data-provider.js?v=100133';
-
+const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v131';
 const BANK_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-bank-command-v133';
 const TYPES=[
   ['CREDITO_SERVICO_EXTRA','Crédito por Serviço Extra','CREDITO'],
@@ -13,9 +12,19 @@ const TYPES=[
   ['TRANSFERENCIA_COMPETENCIA_SEGUINTE','Transferência para competência seguinte','DEBITO']
 ];
 const TYPE_MAP=new Map(TYPES.map(x=>[x[0],x]));
-let mounted=false,provider=null,feriados=new Set();
+let mounted=false,refs={guardas:[]},feriados=new Set();
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const token=()=>localStorage.getItem('gcmbs.mobile.token')||'';
+async function post(url,action,payload={}){
+  const t=token();if(!t)throw new Error('Sessão não autenticada.');
+  let r;
+  try{r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({action,...payload}),cache:'no-store'})}
+  catch{throw new Error('Falha de comunicação com o servidor. Verifique a conexão e tente novamente.')}
+  let b={};try{b=await r.json()}catch{}
+  if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);
+  return b;
+}
 function localDate(){
   const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Fortaleza',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
   const get=t=>parts.find(x=>x.type===t)?.value||'';return `${get('year')}-${get('month')}-${get('day')}`;
@@ -24,7 +33,6 @@ function competenceOf(date){return /^\d{4}-\d{2}/.test(date)?date.slice(0,7):loc
 function isSunday(date){return /^\d{4}-\d{2}-\d{2}$/.test(date)&&new Date(`${date}T12:00:00-03:00`).getDay()===0}
 function classFor(date){return isSunday(date)||feriados.has(date)?'100':'50'}
 function activeGuards(){
-  const refs=provider?.references?.()||{};
   const list=Array.isArray(refs.guardas)?refs.guardas:[];
   return list.filter(g=>Number(g.id||g.guarda_id||0)>0&&g.ativo!==false&&Number(g.ativo??1)!==0)
     .sort((a,b)=>String(a.nome_guerra||a.nome_completo||'').localeCompare(String(b.nome_guerra||b.nome_completo||''),'pt-BR'));
@@ -34,17 +42,18 @@ function updateAutoFields(){
   if($('bcmdNatureza'))$('bcmdNatureza').value=info?.[2]||'CREDITO';
   if($('bcmdClasse'))$('bcmdClasse').value=classFor(date);
 }
-async function loadHolidays(){
+async function loadContext(){
+  await post(BANK_API,'health');
+  const r=await post(API,'references');refs=r.references||r||{};
   try{
-    const r=await provider.entityList('feriados',500,0);
-    const rows=Array.isArray(r?.records)?r.records:[];
+    const h=await post(API,'entity_list',{entity:'feriados',limit:500,offset:0});
+    const rows=Array.isArray(h?.records)?h.records:[];
     feriados=new Set(rows.filter(x=>!x.deleted).map(x=>String(x?.data?.data||'').slice(0,10)).filter(Boolean));
   }catch{feriados=new Set()}
 }
 function renderCard(){
   const marker=$('bancoGestaoCard');if(!marker||$('bancoComandoMovV133'))return false;
-  const today=localDate(),comp=$('bhCompetenciaFiltro')?.value||competenceOf(today);
-  const guards=activeGuards();
+  const today=localDate(),comp=$('bhCompetenciaFiltro')?.value||competenceOf(today),guards=activeGuards();
   const card=document.createElement('div');card.id='bancoComandoMovV133';card.className='card';
   card.innerHTML=`
     <div class="toolbar"><div><h2>Movimentação do Comando</h2><p class="muted">Lançamento direto por Comandante/Subcomandante. A nuvem registra imediatamente e o Desktop recebe a réplica quando estiver conectado.</p></div><span class="badge">Nuvem canônica</span></div>
@@ -65,48 +74,28 @@ function renderCard(){
   $('bcmdTipo').addEventListener('change',updateAutoFields);
   $('bcmdData').addEventListener('change',updateAutoFields);
   $('formBancoComandoV133').addEventListener('submit',submitMovement);
-  updateAutoFields();
-  return true;
+  updateAutoFields();return true;
 }
 async function submitMovement(e){
   e.preventDefault();
   const btn=$('bcmdSalvar'),msg=$('bcmdMsg');if(!btn||btn.disabled)return;
   const horas=Number($('bcmdHoras').value||0),minutos=Math.round(horas*60);
-  const movement={
-    guarda_id:Number($('bcmdGcm').value||0),
-    competencia:$('bcmdComp').value,
-    data_fato:$('bcmdData').value,
-    tipo:$('bcmdTipo').value,
-    natureza:$('bcmdNatureza').value,
-    classe:$('bcmdClasse').value,
-    minutos,
-    motivo:$('bcmdMotivo').value.trim(),
-    observacao:$('bcmdObs').value.trim()
-  };
+  const movement={guarda_id:Number($('bcmdGcm').value||0),competencia:$('bcmdComp').value,data_fato:$('bcmdData').value,tipo:$('bcmdTipo').value,natureza:$('bcmdNatureza').value,classe:$('bcmdClasse').value,minutos,motivo:$('bcmdMotivo').value.trim(),observacao:$('bcmdObs').value.trim()};
   if(!movement.guarda_id){msg.textContent='Selecione o GCM.';return}
   if(!movement.competencia||!movement.data_fato){msg.textContent='Informe competência e data do fato.';return}
   if(!Number.isInteger(minutos)||minutos<=0){msg.textContent='Informe uma quantidade de horas válida.';return}
   btn.disabled=true;btn.textContent='Registrando...';msg.textContent='';
   try{
-    const r=await provider.endpoint(BANK_API,'create',{
-      movement,
-      client_change_id:`bank-command-v133:${crypto.randomUUID()}`,
-      device_id:'bank-command-v133-online'
-    },true);
+    const r=await post(BANK_API,'create',{movement,client_change_id:`bank-command-v133:${crypto.randomUUID()}`,device_id:'bank-command-v133-online'});
     msg.textContent=`✓ ${r.message||'Movimentação registrada.'} Classe aplicada: ${r.movement?.classe||movement.classe}%.`;
     $('bcmdHoras').value='';$('bcmdMotivo').value='';$('bcmdObs').value='';
-    try{document.getElementById('syncAgoraOnline')?.click()}catch{}
+    setTimeout(()=>{try{$('syncAgoraOnline')?.click()}catch{}},250);
   }catch(err){msg.textContent=String(err?.message||err||'Falha ao registrar movimentação.')}
   finally{btn.disabled=false;btn.textContent='Registrar movimentação'}
 }
 async function tryMount(){
-  if(mounted||!localStorage.getItem('gcmbs.mobile.token'))return;
-  try{
-    const p=new AuthenticatedProvider(),s=await p.restore();
-    if(!s||!p.gestor())return;
-    provider=p;await loadHolidays();
-    if(renderCard())mounted=true;
-  }catch{}
+  if(mounted||!token())return;
+  try{await loadContext();if(renderCard())mounted=true}catch{}
 }
 function boot(){
   tryMount();
