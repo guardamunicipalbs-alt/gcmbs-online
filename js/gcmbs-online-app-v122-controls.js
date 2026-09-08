@@ -88,3 +88,19 @@ console.info('[GCMBS] V122 controles abaixo do painel institucional ativos');
   s.async=false;
   document.head.appendChild(s);
 })();
+
+/* GCMBS V131 loader — Login Desktop aprovado adaptado para Online + App Android. */
+(()=>{
+  if(window.__GCMBS_V131_LOADER__)return;
+  window.__GCMBS_V131_LOADER__=true;
+
+  const css=document.createElement('link');
+  css.rel='stylesheet';
+  css.href='css/gcmbs-v131-login-mobile-online.css?v=100131';
+  document.head.appendChild(css);
+
+  const s=document.createElement('script');
+  s.src='js/gcmbs-v131-login-mobile-online.js?v=100131';
+  s.async=false;
+  document.head.appendChild(s);
+})();
