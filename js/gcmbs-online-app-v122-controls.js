@@ -104,3 +104,27 @@ console.info('[GCMBS] V122 controles abaixo do painel institucional ativos');
   s.async=false;
   document.head.appendChild(s);
 })();
+
+/* GCMBS V132 loader — arte aprovada do Login para Online + App. Desktop permanece intacto. */
+(()=>{
+  if(window.__GCMBS_V132_LOADER__)return;
+  window.__GCMBS_V132_LOADER__=true;
+  const files=[
+    'js/gcmbs-v132-hero-chunk-0.js?v=100132',
+    'js/gcmbs-v132-hero-chunk-1.js?v=100132',
+    'js/gcmbs-v132-hero-chunk-2.js?v=100132',
+    'js/gcmbs-v132-hero-chunk-3.js?v=100132',
+    'js/gcmbs-v132-login-hero.js?v=100132'
+  ];
+  let i=0;
+  const next=()=>{
+    if(i>=files.length)return;
+    const s=document.createElement('script');
+    s.src=files[i++];
+    s.async=false;
+    s.onload=next;
+    s.onerror=()=>console.error('[GCMBS V132] falha ao carregar',s.src);
+    document.head.appendChild(s);
+  };
+  next();
+})();
