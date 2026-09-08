@@ -128,3 +128,13 @@ console.info('[GCMBS] V122 controles abaixo do painel institucional ativos');
   };
   next();
 })();
+
+/* GCMBS V133 loader — correção direta e independente da imagem aprovada do login. */
+(()=>{
+  if(window.__GCMBS_V133_LOGIN_HERO_FIX__)return;
+  window.__GCMBS_V133_LOGIN_HERO_FIX__=true;
+  const css=document.createElement('link');
+  css.rel='stylesheet';
+  css.href='css/gcmbs-v133-login-hero-fix.css?v=100133';
+  document.head.appendChild(css);
+})();
