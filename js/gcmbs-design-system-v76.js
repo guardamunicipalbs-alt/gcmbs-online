@@ -7,6 +7,7 @@
  * V102 consolida no Online/App o resultado aprovado das V84 e V90-V101 do Desktop.
  * V103 reorganiza todas as telas Online/App no mesmo padrão visual e hierarquia do Desktop.
  * V111 elimina a duplicacao do painel analitico e mantem o Quadro de Avisos no final.
+ * V134 libera documento comprobatório de Justificativa para qualquer formato de arquivo.
  */
 (()=>{
   'use strict';
@@ -40,6 +41,7 @@
   loadScript('js/gcmbs-platform-parity-v80.js?v=100080','gc80-platform');
   loadScript('js/gcmbs-login-institucional-v81.js?v=100081','gc81-login');
   loadScript('js/hf83-justificativas-protected-route.js?v=100083','gc83-justificativas');
+  loadScript('js/gcmbs-justificativas-any-file-v134.js?v=100134','gc134-justificativas-any-file');
   loadScript('js/hf84-utf8-branding-fix.js?v=100084','gc84-utf8-branding');
   loadScript('js/gcmbs-cumulative-v102.js?v=100111','gc102-cumulative');
   loadScript('js/gcmbs-desktop-parity-v103.js?v=100124','gc103-desktop-parity');
