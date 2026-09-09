@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100102-paridade-cumulativa';
+const VERSION='gcmbs-online-100085-v135-occ-team-explicit';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -15,10 +15,10 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.85');
+    headers.set('x-gcmbs-version','10.0.85-v135');
     headers.set('x-gcmbs-visual','paridade-cumulativa-v102');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] Paridade cumulativa V102 ativa',VERSION);
+console.info('[GCMBS SW] Hotfix V135 de composição de ocorrência ativo',VERSION);
