@@ -196,3 +196,13 @@ console.info('[GCMBS] V122 controles abaixo do painel institucional ativos');
   [80,180,400,800,1500].forEach(ms=>setTimeout(()=>{conectar();limparSelecaoAutomatica();},ms));
   console.info('[GCMBS] V135 composição de ocorrência exige seleção explícita');
 })();
+
+/* GCMBS V137 loader — check-list de viaturas detalhado e retrocompatível. */
+(()=>{
+  if(window.__GCMBS_V137_CHECKLIST_LOADER__)return;
+  window.__GCMBS_V137_CHECKLIST_LOADER__=true;
+  const s=document.createElement('script');
+  s.src='js/gcmbs-v137-checklist-detalhado.js?v=100137';
+  s.async=false;
+  document.head.appendChild(s);
+})();
