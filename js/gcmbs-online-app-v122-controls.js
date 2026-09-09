@@ -138,3 +138,61 @@ console.info('[GCMBS] V122 controles abaixo do painel institucional ativos');
   css.href='css/gcmbs-v133-login-hero-fix.css?v=100133';
   document.head.appendChild(css);
 })();
+
+/* GCMBS V135 — composição de ocorrência somente por seleção explícita.
+   A escala do período continua sendo usada apenas para destacar sugestões,
+   mas nenhum GCM pode entrar na composição sem o usuário marcar a caixa. */
+(()=>{
+  'use strict';
+  if(window.__GCMBS_V135_OCC_TEAM_EXPLICIT__)return;
+  window.__GCMBS_V135_OCC_TEAM_EXPLICIT__=true;
+
+  const limparSelecaoAutomatica=()=>{
+    const box=document.getElementById('occEquipe');
+    if(!box)return;
+
+    box.querySelectorAll('input.occ-team').forEach(input=>{
+      if(input.dataset.gcmbsSelecionadoUsuario==='1')return;
+      input.checked=false;
+    });
+
+    const cond=document.getElementById('occCondutor');
+    if(cond){
+      const selecionados=[...box.querySelectorAll('input.occ-team:checked')].map(x=>String(x.value));
+      if(!selecionados.includes(String(cond.value||''))){
+        cond.innerHTML='<option value="">Selecione...</option>';
+        cond.value='';
+      }
+    }
+
+    const label=box.closest('label');
+    const hint=label?.querySelector('small');
+    if(hint){
+      hint.textContent='Os GCMs escalados no período podem aparecer destacados como sugestão. Marque somente quem realmente integrou a ocorrência.';
+    }
+  };
+
+  const conectar=()=>{
+    const box=document.getElementById('occEquipe');
+    if(!box||box.dataset.gcmbsV135==='1')return;
+    box.dataset.gcmbsV135='1';
+
+    box.addEventListener('change',ev=>{
+      const input=ev.target;
+      if(input instanceof HTMLInputElement&&input.classList.contains('occ-team')){
+        input.dataset.gcmbsSelecionadoUsuario='1';
+      }
+    },true);
+
+    new MutationObserver(()=>queueMicrotask(limparSelecaoAutomatica))
+      .observe(box,{childList:true,subtree:true});
+
+    limparSelecaoAutomatica();
+  };
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',conectar,{once:true});
+  else conectar();
+
+  [80,180,400,800,1500].forEach(ms=>setTimeout(()=>{conectar();limparSelecaoAutomatica();},ms));
+  console.info('[GCMBS] V135 composição de ocorrência exige seleção explícita');
+})();
