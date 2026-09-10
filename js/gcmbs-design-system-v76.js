@@ -8,6 +8,7 @@
  * V103 reorganiza todas as telas Online/App no mesmo padrão visual e hierarquia do Desktop.
  * V111 elimina a duplicacao do painel analitico e mantem o Quadro de Avisos no final.
  * V134 libera documento comprobatório de Justificativa para qualquer formato de arquivo.
+ * V137 integra Banco de Horas do Comando, filtro individual e auditoria mobile.
  */
 (()=>{
   'use strict';
@@ -45,4 +46,7 @@
   loadScript('js/hf84-utf8-branding-fix.js?v=100084','gc84-utf8-branding');
   loadScript('js/gcmbs-cumulative-v102.js?v=100111','gc102-cumulative');
   loadScript('js/gcmbs-desktop-parity-v103.js?v=100124','gc103-desktop-parity');
+  loadScript('js/gcmbs-bank-command-v133.js?v=100137','gc133-bank-command');
+  loadScript('js/gcmbs-bank-filter-v136.js?v=100137','gc136-bank-filter');
+  loadScript('js/gcmbs-bank-mobile-fixes-v137.js?v=100137','gc137-bank-mobile-fixes');
 })();
