@@ -1,0 +1,20 @@
+/* GCMBS V140 — fallback do hero institucional no Online/App.
+   Se a arte V133 falhar, a composicao textual/brasao V131 permanece visivel. */
+html body #loginTela.gc131-login .gc131-login-visual{
+ background-color:#062a57!important;
+ background-image:url('../assets/gcmbs-login-hero-v133.webp'),linear-gradient(180deg,rgba(2,19,42,.12),rgba(2,19,42,.72)),url('../assets/gcmbs-dashboard-hero-v118.png')!important;
+ background-position:center center,center center,center center!important;
+ background-size:cover,cover,cover!important;
+ background-repeat:no-repeat!important;
+}
+html body #loginTela.gc131-login.gc140-hero-fallback .gc131-brand-lockup,
+html body #loginTela.gc131-login.gc140-hero-fallback .gc131-city-mark,
+html body #loginTela.gc131-login.gc140-hero-fallback .gc131-quote,
+html body #loginTela.gc131-login.gc140-hero-fallback .gc131-visual-shade{display:flex!important}
+html body #loginTela.gc131-login.gc140-hero-fallback .gc131-visual-shade{display:block!important}
+@media(max-width:899px){
+ html body #loginTela.gc131-login .gc131-login-visual{background-position:center center!important}
+ html body #loginTela.gc131-login.gc140-hero-fallback .gc131-brand-lockup{width:72%!important;margin:0 auto!important;transform:scale(.72)}
+ html body #loginTela.gc131-login.gc140-hero-fallback .gc131-city-mark{right:18px!important;top:18px!important}
+ html body #loginTela.gc131-login.gc140-hero-fallback .gc131-quote{display:none!important}
+}
