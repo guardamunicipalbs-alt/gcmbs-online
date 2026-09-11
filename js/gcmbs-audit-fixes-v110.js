@@ -1,26 +1,26 @@
-/* GCMBS V110/V151 - auditoria, sincronização e correções cumulativas. */
+/* GCMBS V110/V152 - auditoria, sincronização e correções cumulativas. */
 (()=>{
 'use strict';
-const VERSION='10.0.151';
+const VERSION='10.0.152';
 const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v131';
 const $=id=>document.getElementById(id);
 
 function loadCorrections(){
   const mods=[
-    './gcmbs-permuta-admin-fixes-v141.js?v=100151',
-    './gcmbs-v147-final-reconciliation.js?v=100151',
-    './gcmbs-permuta-flow-v148.js?v=100151',
-    './gcmbs-bank-filter-v136.js?v=100151',
-    './gcmbs-permuta-cancel-v150.js?v=100151'
+    './gcmbs-permuta-admin-fixes-v141.js?v=100152',
+    './gcmbs-v147-final-reconciliation.js?v=100152',
+    './gcmbs-permuta-flow-v148.js?v=100152',
+    './gcmbs-bank-filter-v136.js?v=100152',
+    './gcmbs-permuta-cancel-v150.js?v=100152'
   ];
-  for(const src of mods)import(src).catch(e=>console.warn('[GCMBS V151] Falha ao carregar',src,e?.message||e));
+  for(const src of mods)import(src).catch(e=>console.warn('[GCMBS V152] Falha ao carregar',src,e?.message||e));
 }
 
 function stampVersion(){
   const v=$('onlineVersao');
-  if(v&&v.textContent!==`Online/App ${VERSION} · V151`)v.textContent=`Online/App ${VERSION} · V151`;
+  if(v&&v.textContent!==`Online/App ${VERSION} · V152`)v.textContent=`Online/App ${VERSION} · V152`;
   const state=$('gc103SyncState');
-  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent||'').includes(VERSION))state.textContent=`Online · ${VERSION} · V151`;
+  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent||'').includes(VERSION))state.textContent=`Online · ${VERSION} · V152`;
   document.documentElement.dataset.gcmbsVersion=VERSION;
 }
 async function requestSync(){
@@ -55,5 +55,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 let dedupeTimer=0;new MutationObserver(()=>{clearTimeout(dedupeTimer);dedupeTimer=setTimeout(removeDuplicateDashboard,40);}).observe(document.documentElement,{childList:true,subtree:true});
 document.addEventListener('click',e=>{if(e.target.closest?.('#mainNav [data-module],#menuToggle'))setTimeout(init,80)},true);
 window.addEventListener('pageshow',()=>setTimeout(init,0));
-console.info('[GCMBS] V151 Banco de Horas canônico e Permutas ativas');
+console.info('[GCMBS] V152 Banco de Horas canônico e Permutas com cancelamento no mesmo dia');
 })();
