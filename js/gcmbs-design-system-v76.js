@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * V147: paridade produção Online/App + reconciliação de pendências do Comando.
+ * V151: paridade produção Online/App + tipo de serviço no Quadro Operacional.
  */
 (()=>{
   'use strict';
@@ -43,4 +43,5 @@
   loadScript('js/gcmbs-command-pending-v143.js?v=100147','gc143-command-pending');
   loadScript('js/gcmbs-v145-production-parity.js?v=100147','gc145-production-parity');
   loadScript('js/gcmbs-v147-final-reconciliation.js?v=100147','gc147-final-reconciliation');
+  loadScript('js/gcmbs-quadro-tipo-servico-v151.js?v=100151','gc151-quadro-tipo-servico');
 })();
