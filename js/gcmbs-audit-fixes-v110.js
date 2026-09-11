@@ -1,15 +1,27 @@
-/* GCMBS V110 - auditoria: sincronizacao, botoes e quadro consolidado. */
+/* GCMBS V110/V148 - auditoria: sincronizacao, botoes, quadro e correcoes cumulativas. */
 (()=>{
 'use strict';
-const VERSION='10.0.85';
-const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const VERSION='10.0.148';
+const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v131';
 const $=id=>document.getElementById(id);
+
+// V148: estas camadas existiam no repositorio, mas nao estavam sendo carregadas
+// pela pagina principal. Ativamos as correcoes cumulativas de Permutas/Pendencias.
+function loadCorrections(){
+  const mods=[
+    './gcmbs-permuta-admin-fixes-v141.js?v=100148',
+    './gcmbs-v147-final-reconciliation.js?v=100148',
+    './gcmbs-permuta-flow-v148.js?v=100148'
+  ];
+  for(const src of mods)import(src).catch(e=>console.warn('[GCMBS V148] Falha ao carregar',src,e?.message||e));
+}
 
 function stampVersion(){
   const v=$('onlineVersao');
-  if(v&&v.textContent!==`Online/App ${VERSION} · V110`)v.textContent=`Online/App ${VERSION} · V110`;
+  if(v&&v.textContent!==`Online/App ${VERSION} · V148`)v.textContent=`Online/App ${VERSION} · V148`;
   const state=$('gc103SyncState');
-  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent||'').includes(VERSION))state.textContent=`Online · ${VERSION} · V110`;
+  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent||'').includes(VERSION))state.textContent=`Online · ${VERSION} · V148`;
+  document.documentElement.dataset.gcmbsVersion=VERSION;
 }
 async function requestSync(){
   const token=localStorage.getItem('gcmbs.mobile.token');
@@ -34,7 +46,7 @@ function ensureSync(){
       btn.textContent='Atualizando dados...';
       dispatchRefresh();
       setTimeout(dispatchRefresh,5000);
-      alert(r.message||'Sincronização solicitada ao Desktop. Os dados serão recarregados automaticamente.');
+      alert(r.message||'Sincronização solicitada. Os dados serão recarregados automaticamente.');
       setTimeout(()=>{btn.textContent=old;btn.disabled=false;},6000);
     }catch(e){
       alert('Não foi possível solicitar a sincronização: '+(e?.message||e));
@@ -51,7 +63,7 @@ function removeDuplicateDashboard(){
   if(!view)return;
   view.querySelectorAll('.gc102-analytics').forEach(el=>el.remove());
 }
-function init(){stampVersion();ensureSync();removeDuplicateDashboard();}
+function init(){loadCorrections();stampVersion();ensureSync();removeDuplicateDashboard();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 [100,350,700,1200,1800,3000].forEach(ms=>setTimeout(init,ms));
 let dedupeTimer=0;
@@ -61,5 +73,5 @@ new MutationObserver(()=>{
 }).observe(document.documentElement,{childList:true,subtree:true});
 document.addEventListener('click',e=>{if(e.target.closest?.('#mainNav [data-module],#menuToggle'))setTimeout(init,80)},true);
 window.addEventListener('pageshow',()=>setTimeout(init,0));
-console.info('[GCMBS] V110 auditoria: sincronização, botões e Quadro sem duplicação ativos');
+console.info('[GCMBS] V148 auditoria e correcoes cumulativas ativas');
 })();
