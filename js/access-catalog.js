@@ -1,4 +1,5 @@
 import './sync-button-hotfix-v62.js?v=100076';
+import './gcmbs-password-reset-v144.js?v=100144';
 import {MODULES} from './communication-contract.js?v=100076';
 
 // v74: o runtime canônico não carrega hotfixes opcionais fora do manifesto.
