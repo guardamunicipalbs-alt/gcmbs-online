@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100154-hf152';
+const VERSION='gcmbs-online-100155-hf155';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{

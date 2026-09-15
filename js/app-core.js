@@ -26,7 +26,7 @@ async function verificarAtualizacaoApp(){
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'}).slice(0,7);
-const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia||p.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
+const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia||x?.competencia||p.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
 const APP_VERSION='10.0.85';
@@ -1390,6 +1390,6 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100154',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100155',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

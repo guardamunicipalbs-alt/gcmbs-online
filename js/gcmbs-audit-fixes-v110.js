@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const VERSION='10.0.85';
-const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-request-sync-v62';
 const $=id=>document.getElementById(id);
 
 function stampVersion(){

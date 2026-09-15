@@ -2,7 +2,7 @@
 // Frota: estado operacional derivado de manutencoes abertas + sincronizacao manual consolidada.
 // Nao altera registros; somente ajusta disponibilidade/apresentacao e usa as rotas oficiais existentes.
 const R18_FLEET='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
-const R18_SYNC='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const R18_SYNC='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-request-sync-v62';
 const R18_QUADRO='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 let r18Fleet=null,r18FleetTs=0,r18Loading=false,r18Frame=0;
 
