@@ -25,8 +25,45 @@ function commandPending(r){
 }
 function bankOrder(){if(!isCommand())return;const cards=[...document.querySelectorAll('[data-view="banco"] .card,#bancoGestaoCard .card,#bancoGestaoCard')];const byTitle=t=>cards.find(c=>norm(c.querySelector('h1,h2,h3')?.textContent).includes(norm(t)));const cmd=$('bancoComandoMovV133')||byTitle('Movimentação do Comando'),req=byTitle('Solicitações de correção'),mov=byTitle('Movimentações da competência');if(cmd&&req&&cmd.parentNode===req.parentNode)req.parentNode.insertBefore(cmd,req);if(req&&mov&&req.parentNode===mov.parentNode)mov.parentNode.insertBefore(req,mov);document.querySelectorAll('[data-view="banco"] .card').forEach(c=>{const h=norm(c.querySelector('h1,h2,h3')?.textContent);if(h==='SOLICITAR CORRECAO')c.classList.add('hidden')})}
 function go(label){const n=norm(label);const candidates=[...document.querySelectorAll('button,a,[role="button"]')];const el=candidates.find(x=>norm(x.textContent).includes(n));el?.click()}
+function escPend(v){
+  return String(v??'').replace(/[&<>"']/g,ch=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[ch]));
+}
+function dataBrPend(v){
+  const s=String(v||'').slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return '-';
+  const p=s.split('-');
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+function detalheHoras(r){
+  const p=r?.payload||{};
+  const nome=escPend(r?.nome_guerra||'GCM');
+  const data=dataBrPend(p.data_servico);
+  const min=Math.max(0,Number(p.minutos_solicitados||0));
+  const h=Math.floor(min/60);
+  const m=min%60;
+  const horas=m?`${h}h${String(m).padStart(2,'0')}`:`${h}h00`;
+  const classe=escPend(String(p.classe||'50')+'%');
+  const desc=escPend(String(p.descricao||'').trim());
+
+  return `Solicitação #${r.id} · ${nome} · ${data} · ${horas} · ${classe}${desc?' · '+desc:''}`;
+}
+function detalhePermuta(r){
+  const p=r?.payload||{};
+  const nome=escPend(r?.nome_guerra||'GCM');
+  const data=dataBrPend(p.data);
+  const turno=escPend(String(p.turno||'-'));
+  const posto=escPend(String(p.posto_nome||'').trim());
+
+  return `Solicitação #${r.id} · ${nome} · ${data} · turno ${turno}${posto?' · '+posto:''}`;
+}
 function mount(items){let box=$('gcmbsCommandPendingV143');if(!box){box=document.createElement('section');box.id='gcmbsCommandPendingV143';box.className='card';box.style.cssText='margin:14px 18px;padding:16px;border-radius:16px';const app=$('appTela')||document.body;app.prepend(box)}const rows=items.slice(0,12).map(x=>`<button type="button" data-v143-go="${x.go}" style="display:block;width:100%;text-align:left;margin:7px 0;padding:10px;border-radius:10px"><strong>${x.title}</strong><br><small>${x.text}</small></button>`).join('');box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><h2 style="margin:0">Pendências do Comando</h2><small>Itens que aguardam avaliação ou ciência administrativa.</small></div><span class="badge">${items.length}</span></div>${rows||'<p class="muted">Nenhuma pendência administrativa no momento.</p>'}`;box.querySelectorAll('[data-v143-go]').forEach(b=>b.onclick=()=>go(b.dataset.v143Go))}
-async function refresh(){bankOrder();if(!isCommand()){$('gcmbsCommandPendingV143')?.remove();return}const d=await data();if(!d)return;const out=[];for(const r of (d.action_requests||[])){if(!commandPending(r))continue;const t=norm(r.tipo);if(t==='PERMUTA')out.push({title:'Permuta aguardando avaliação',text:`Solicitação #${r.id}`,go:'Permutas'});else if(t==='BANCO_HORAS_CORRECAO')out.push({title:'Correção de horas aguardando avaliação',text:`Solicitação #${r.id}`,go:'Banco de Horas'})}const requestsById=new Map(
+async function refresh(){bankOrder();if(!isCommand()){$('gcmbsCommandPendingV143')?.remove();return}const d=await data();if(!d)return;const out=[];for(const r of (d.action_requests||[])){if(!commandPending(r))continue;const t=norm(r.tipo);if(t==='PERMUTA')out.push({title:'Permuta aguardando avaliação',text:detalhePermuta(r),go:'Permutas'});else if(t==='BANCO_HORAS_CORRECAO')out.push({title:'Correção de horas aguardando avaliação',text:detalheHoras(r),go:'Banco de Horas'})}const requestsById=new Map(
   (d.action_requests||[]).map(r=>[Number(r.id),r])
 );
 
