@@ -26,7 +26,7 @@ async function verificarAtualizacaoApp(){
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'}).slice(0,7);
-const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia||x?.competencia||p.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
+const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia_pagamento||x?.competencia_pagamento||p.competencia||x?.competencia||p.competencia_origem||x?.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
 const APP_VERSION='10.0.85';
@@ -172,6 +172,53 @@ function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.
 function meusExtras(){return provider.extras()}
 function minhasPermutas(){return provider.permutas()}
 function meuBanco(){return provider.bancoHoras().filter(x=>String(x.status||'ATIVO').toUpperCase()==='ATIVO')}
+
+/* GCMBS_HF158_R2_BANK_GCM_FILTER
+   O filtro do GCM precisa fazer parte do render principal.
+   Assim nenhum refresh da tela volta a mostrar outros servidores. */
+function bancoGcmFiltroId(){
+  if(!provider.gestor())return 0;
+  return Number($('bhGcmFiltroV136')?.value||0);
+}
+
+function filtraGcmBanco(lista){
+  const gid=bancoGcmFiltroId();
+  if(!gid)return lista||[];
+
+  return (lista||[]).filter(x=>
+    Number(
+      x?.guarda_id ||
+      x?.payload?.guarda_id ||
+      0
+    )===gid
+  );
+}
+
+function bancoGcmFiltroNome(){
+  const el=$('bhGcmFiltroV136');
+  if(!el||!bancoGcmFiltroId())return '';
+  return String(el.selectedOptions?.[0]?.textContent||'').trim();
+}
+
+/*
+  O seletor é criado dinamicamente pelo V136.
+  Delegação garante que o app-core responda ao filtro mesmo
+  quando o elemento ainda não existia no carregamento inicial.
+*/
+if(!window.__GCMBS_HF158_R2_BANK_FILTER__){
+  window.__GCMBS_HF158_R2_BANK_FILTER__=true;
+
+  document.addEventListener('change',ev=>{
+    const alvo=ev.target;
+
+    if(alvo?.id==='bhGcmFiltroV136'){
+      queueMicrotask(()=>{
+        renderBanco();
+        renderBancoGestao();
+      });
+    }
+  });
+}
 
 function renderPerfil(){
   const s=provider.session||{};
@@ -604,9 +651,271 @@ async function excluirPermutaComando(id){const motivo=prompt('Informe o motivo d
 function resetPermutaForm(){permutaEditingId=null;if($('pmModalidade'))$('pmModalidade').value='ASSUNCAO';$('pmTitulo').textContent='Nova solicitação de permuta';$('pmEnviar').textContent='Enviar solicitação';$('pmCancelarEdicao').classList.add('hidden');$('pmData').value='';$('pmTurno').value='A';$('pmExtra').value='0';$('pmSubstituto').value='';if($('pmExtraData'))$('pmExtraData').value='';$('pmObs').value='';$('pmTermo').checked=false;atualizarModoPermuta();}
 async function editarPermutaSolicitacao(id){const x=provider.actionRequests().find(r=>Number(r.id)===id&&String(r.tipo).toUpperCase()==='PERMUTA');if(!x||!x.editable)return;const q=x.payload||{};permutaEditingId=id;$('pmTitulo').textContent='Editar solicitação de permuta';$('pmEnviar').textContent='Salvar alteração';$('pmCancelarEdicao').classList.remove('hidden');$('pmData').value=q.data||'';$('pmTurno').value=q.turno||'A';$('pmExtra').value=String(Number(q.servico_extra||0));$('pmObs').value=q.observacao||'';$('pmTermo').checked=!!q.concordou_termo;await atualizarSubstituidosPermuta();$('pmSubstituto').value=String(q.substituido_id||q.substituto_id||'');$('permutaCard').scrollIntoView({behavior:'smooth',block:'start'});}
 async function cancelarPermutaSolicitacao(id){if(!confirm('Excluir/cancelar esta solicitação de permuta enquanto ainda está pendente?'))return;try{await provider.cancelPermutaRequest(id);renderTudo(false);setView('permutas')}catch(e){alert(e.message)}}
+let bancoFolhaResumoHF158R2Seq=0;
+
+async function renderBancoFolhaResumoHF158R2(historico=[]){
+  const lista=$('listaBanco');
+  const card=lista?.closest('.card');
+
+  if(!lista||!card)return;
+
+  let box=$('bhResumoFolhaHF158R2');
+
+  if(!box){
+    box=document.createElement('div');
+    box.id='bhResumoFolhaHF158R2';
+    box.className='notice';
+    lista.parentNode.insertBefore(box,lista);
+  }
+
+  const gid=bancoGcmFiltroId();
+  const comp=String($('bhCompetenciaFiltro')?.value||'');
+
+  if(!provider.gestor()||!gid||!comp){
+    box.classList.add('hidden');
+    return;
+  }
+
+  box.classList.remove('hidden');
+
+  const seq=++bancoFolhaResumoHF158R2Seq;
+
+  box.innerHTML=
+    '<strong>Conferência da folha</strong><br>' +
+    '<span>Consultando dados registrados no fechamento...</span>';
+
+  try{
+    const [arredRes,bancoFolhaRes]=await Promise.all([
+      provider.entityList(
+        'folha_pagamento_arredondamentos',
+        500,
+        0
+      ),
+      provider.entityList(
+        'folha_pagamento_banco_horas',
+        500,
+        0
+      )
+    ]);
+
+    if(seq!==bancoFolhaResumoHF158R2Seq)return;
+
+    const arred=(arredRes.records||[])
+      .map(r=>r.data||{})
+      .filter(x=>
+        Number(x.guarda_id)===gid &&
+        String(x.competencia||'')===comp
+      );
+
+    const transfTodos=(bancoFolhaRes.records||[])
+      .map(r=>r.data||{})
+      .filter(x=>Number(x.guarda_id)===gid);
+
+    // Entrada: somente transporte explicitamente registrado para
+    // a competencia selecionada. Nao representa a folha anterior inteira.
+    const transfEntrada=transfTodos.filter(x=>
+      String(x.destino_competencia||'')===comp
+    );
+
+    // Saida: somente excedente explicitamente destinado a outra competencia.
+    const transfSaida=transfTodos.filter(x=>
+      String(x.origem_competencia||'')===comp
+    );
+
+    const somaClasse=classe=>
+      arred
+        .filter(x=>String(x.classe||'50')===String(classe))
+        .reduce(
+          (s,x)=>s+Number(
+            x.horas_calculo ??
+            x.horas_base ??
+            0
+          ),
+          0
+        );
+
+    const folha50=somaClasse('50');
+    const folha100=somaClasse('100');
+
+    const entrada50=transfEntrada.reduce(
+      (s,x)=>s+Number(x.horas_50||0),
+      0
+    );
+
+    const entrada100=transfEntrada.reduce(
+      (s,x)=>s+Number(x.horas_100||0),
+      0
+    );
+
+    const saida50=transfSaida.reduce(
+      (s,x)=>s+Number(x.horas_50||0),
+      0
+    );
+
+    const saida100=transfSaida.reduce(
+      (s,x)=>s+Number(x.horas_100||0),
+      0
+    );
+
+    const origensEntrada=[
+      ...new Set(
+        transfEntrada
+          .map(x=>String(x.origem_competencia||''))
+          .filter(Boolean)
+      )
+    ].sort();
+
+    const destinosSaida=[
+      ...new Set(
+        transfSaida
+          .map(x=>String(x.destino_competencia||''))
+          .filter(Boolean)
+      )
+    ].sort();
+
+    // Movimentos ativos cuja competencia de pagamento e a atual,
+    // mas cuja data real pertence a uma competencia anterior.
+    // Estes valores ja fazem parte do Banco atual; aqui sao apenas
+    // identificados para auditoria e NAO sao somados novamente.
+    const anterioresAtivos=(historico||[]).filter(x=>{
+      const st=String(x.status||'ATIVO').toUpperCase();
+
+      if(st!=='ATIVO')return false;
+
+      const origem=String(x.data_fato||'').slice(0,7);
+
+      return origem && origem<comp;
+    });
+
+    const anterior50=anterioresAtivos
+      .filter(x=>
+        String(x.natureza||'CREDITO').toUpperCase()==='CREDITO' &&
+        String(x.classe||'50')==='50'
+      )
+      .reduce((s,x)=>s+Math.abs(Number(x.minutos||0)),0);
+
+    const anterior100=anterioresAtivos
+      .filter(x=>
+        String(x.natureza||'CREDITO').toUpperCase()==='CREDITO' &&
+        String(x.classe||'50')==='100'
+      )
+      .reduce((s,x)=>s+Math.abs(Number(x.minutos||0)),0);
+
+    const anteriorDebitos=anterioresAtivos
+      .filter(x=>
+        String(x.natureza||'').toUpperCase()==='DEBITO'
+      )
+      .reduce((s,x)=>s+Math.abs(Number(x.minutos||0)),0);
+
+    const competenciasOrigem=[
+      ...new Set(
+        anterioresAtivos
+          .map(x=>String(x.data_fato||'').slice(0,7))
+          .filter(Boolean)
+      )
+    ].sort();
+
+    const nome=bancoGcmFiltroNome()||'GCM';
+
+    box.innerHTML=`
+      <strong>
+        Conferência da folha — ${esc(nome)} · ${esc(comp)}
+      </strong>
+
+      <div style="margin-top:7px">
+        Último cálculo registrado na folha (informativo):
+        <b>50% ${horas(Math.round(folha50*60))}</b>
+        ·
+        <b>100% ${horas(Math.round(folha100*60))}</b>
+      </div>
+
+      <div style="margin-top:5px">
+        Fatos de competência anterior contabilizados nesta competência:
+        <b>50% ${horas(anterior50)}</b>
+        ·
+        <b>100% ${horas(anterior100)}</b>
+        ·
+        <b>Débitos ${horas(anteriorDebitos)}</b>
+        ${competenciasOrigem.length
+          ? ` · origem ${esc(competenciasOrigem.join(', '))}`
+          : ''
+        }
+      </div>
+
+      <div style="margin-top:5px">
+        Transporte automático recebido pela folha:
+        <b>50% ${horas(Math.round(entrada50*60))}</b>
+        ·
+        <b>100% ${horas(Math.round(entrada100*60))}</b>
+        ${origensEntrada.length
+          ? ` · origem ${esc(origensEntrada.join(', '))}`
+          : ''
+        }
+      </div>
+
+      <div style="margin-top:5px">
+        Excedente transferido para competência seguinte:
+        <b>50% ${horas(Math.round(saida50*60))}</b>
+        ·
+        <b>100% ${horas(Math.round(saida100*60))}</b>
+        ${destinosSaida.length
+          ? ` · destino ${esc(destinosSaida.join(', '))}`
+          : ''
+        }
+      </div>
+
+      <small style="display:block;margin-top:7px">
+        A base da folha é apenas uma referência do último cálculo
+        registrado e não altera os cards do Banco de Horas.
+        Fatos de competências anteriores aparecem acima somente para
+        indicar em qual competência serão contabilizados, sem importar
+        novamente valores já pagos. Registros EXCLUÍDOS ou ESTORNADOS
+        permanecem visíveis apenas para auditoria e não entram nos totais.
+        A confirmação do pagamento financeiro permanece dependente
+        da informação do RH/financeiro.
+      </small>
+    `;
+  }
+  catch(e){
+    if(seq!==bancoFolhaResumoHF158R2Seq)return;
+
+    box.innerHTML=`
+      <strong>Conferência da folha</strong><br>
+      <span>
+        O resumo da folha não pôde ser carregado.
+        O histórico completo da competência permanece disponível abaixo.
+      </span>
+    `;
+  }
+}
 function renderBanco(){
-  const b=filtraCompetencia(meuBanco(),'bhCompetenciaFiltro'),gestor=provider.gestor();let c50=0,c100=0,d=0;
-  if($('tituloBanco')) $('tituloBanco').textContent=gestor?'Banco de horas autorizado':'Meu banco de horas';
+  const historico=filtraGcmBanco(
+    filtraCompetencia(
+      provider.bancoHoras(),
+      'bhCompetenciaFiltro'
+    )
+  )
+  .slice()
+  .sort((a,b)=>
+    String(b.data_fato||'').localeCompare(String(a.data_fato||'')) ||
+    Number(b.desktop_id||0)-Number(a.desktop_id||0)
+  );
+
+  // Cards superiores representam apenas o saldo vigente.
+  // Estornos permanecem no histórico, mas não entram nos totais.
+  const b=historico.filter(
+    x=>String(x.status||'ATIVO').toUpperCase()==='ATIVO'
+  );
+
+  const gestor=provider.gestor();
+  let c50=0,c100=0,d=0;
+  if($('tituloBanco')){
+    const nomeFiltro=gestor?bancoGcmFiltroNome():'';
+
+    $('tituloBanco').textContent=gestor
+      ? (nomeFiltro?`Banco de horas — ${nomeFiltro}`:'Banco de horas autorizado')
+      : 'Meu banco de horas';
+  }
   for(const x of b){
     const nat=String(x.natureza||'CREDITO').toUpperCase();
     const min=Math.abs(Number(x.minutos||0));
@@ -620,16 +929,84 @@ function renderBanco(){
     else c50+=min;
   }
   $('bh50').textContent=horas(c50);$('bh100').textContent=horas(c100);$('bhDeb').textContent=horas(d);$('bhSaldo').textContent=horas(c50+c100-d);
-  $('listaBanco').innerHTML=b.slice(0,40).map(x=>`<div class="item"><small>${fmt(x.data_fato)} · ${esc(x.classe||'50')}%${gestor&&x.nome_guerra?' · '+esc(x.nome_guerra):''}</small><strong>${esc(x.tipo||x.origem||'Movimentação')}</strong><span>${String(x.natureza).toUpperCase()==='DEBITO'?'-':'+'}${horas(x.minutos)}</span></div>`).join('')||'<div class="empty">Sem movimentações.</div>';
+  const listaHistorico=$('listaBanco');
 
-  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro');
+  if(listaHistorico){
+    const cardHistorico=listaHistorico.closest('.card');
+    const tituloHistorico=cardHistorico?.querySelector('h2');
+
+    if(tituloHistorico){
+      tituloHistorico.textContent='Histórico da competência';
+    }
+
+    listaHistorico.innerHTML=historico.length
+      ? historico.slice(0,120).map(x=>{
+          const st=String(x.status||'ATIVO').toUpperCase();
+          const nat=String(x.natureza||'CREDITO').toUpperCase();
+          const min=Math.abs(Number(x.minutos||0));
+          const tipo=String(x.tipo||x.origem||'Movimentação');
+          const origem=String(x.origem||'');
+          const motivo=String(x.motivo||'');
+
+          const folha=/FOLHA|PAGAMENTO|INDENIZA/i.test(
+            `${tipo} ${origem} ${motivo}`
+          );
+
+          const situacao=
+            st==='ESTORNADO'
+              ? 'ESTORNADO · NÃO CONTABILIZADO'
+              : st==='EXCLUIDO'
+                ? 'EXCLUÍDO · NÃO CONTABILIZADO'
+                : st!=='ATIVO'
+                  ? `${st} · NÃO CONTABILIZADO`
+                  : folha
+                    ? 'FOLHA / PAGAMENTO'
+                    : nat==='DEBITO'
+                      ? 'DÉBITO ATIVO'
+                      : 'CRÉDITO ATIVO';
+
+          const sinal=nat==='DEBITO'?'-':'+';
+
+          return `
+            <div class="item" data-bank-history-status="${esc(st)}">
+              <small>
+                ${fmt(x.data_fato)}
+                · ${esc(x.classe||'50')}%
+                ${gestor&&x.nome_guerra?' · '+esc(x.nome_guerra):''}
+              </small>
+
+              <strong>${esc(tipo)}</strong>
+
+              <span>
+                ${sinal}${horas(min)}
+                · ${esc(situacao)}
+              </span>
+
+              ${origem
+                ? `<small>Origem: ${esc(origem)}</small>`
+                : ''
+              }
+
+              ${motivo
+                ? `<small>Motivo: ${esc(motivo)}</small>`
+                : ''
+              }
+            </div>
+          `;
+        }).join('')
+      : '<div class="empty">Nenhuma movimentação registrada nesta competência.</div>';
+  }
+
+  const req=filtraGcmBanco(filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro'));
   const lr=$('listaCorrecoes');if(lr)lr.innerHTML=req.length?req.map(x=>{const p=x.payload||{},min=Number(p.minutos_solicitados||0),status=String(x.status||'PENDENTE').toUpperCase();return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(p.data_servico||'')} · ${horas(min)}</small><strong>${esc(status)} · Solicitação #${x.id}</strong><span>${esc(p.descricao||'Solicitação de correção')}</span>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de correção enviada.</div>';
+
+  renderBancoFolhaResumoHF158R2(historico);
 }
 
 function renderBancoGestao(){
   const card=$('bancoGestaoCard'),el=$('listaBancoGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('banco_horas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
-  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro');
-  el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Solicitação #${x.id} · Competência ${esc(p.competencia||'-')} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
+  const req=filtraGcmBanco(filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro'));
+  el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Solicitação #${x.id} · Pagamento ${esc(p.competencia_pagamento||p.competencia||'-')}${(()=>{const o=String(p.competencia_origem||p.data_servico||'').slice(0,7),pg=String(p.competencia_pagamento||p.competencia||'');return o&&o!==pg?` · Origem ${esc(o)}`:''})()} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
   el.querySelectorAll('[data-cmd-bh-ok]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhOk),'APROVADA'));
   el.querySelectorAll('[data-cmd-bh-no]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhNo),'RECUSADA'));
 }
@@ -1215,7 +1592,18 @@ async function enviarBancoCorrecao(ev){
   btn.disabled=true;msg.textContent='Enviando...';
   try{
     const comp=$('bcComp').value,data=$('bcData').value,classe=$('bcClasse').value,descricao=$('bcDescricao').value;
-    const r=await provider.requestBankCorrection({competencia:comp,data_servico:data,minutos_solicitados:total,classe,tipo_correcao:'HORAS_NAO_LANCADAS',descricao});
+    const origem=String(data||'').slice(0,7);
+
+    const r=await provider.requestBankCorrection({
+      competencia:comp,
+      competencia_pagamento:comp,
+      competencia_origem:origem,
+      data_servico:data,
+      minutos_solicitados:total,
+      classe,
+      tipo_correcao:'HORAS_NAO_LANCADAS',
+      descricao
+    });
     msg.textContent=`Solicitação enviada com sucesso${r?.request?.id?' · protocolo #'+r.request.id:''}. Aguardando análise do Comando.`;msg.classList.add('success');
     $('bcComp').value='';$('bcData').value='';$('bcHoras').value='0';$('bcMinutos').value='0';$('bcClasse').value='50';$('bcDescricao').value='';
     renderTudo(false);setView('banco');
@@ -1463,6 +1851,6 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100159',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100160',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

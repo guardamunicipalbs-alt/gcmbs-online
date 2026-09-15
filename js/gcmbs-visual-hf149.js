@@ -1,12 +1,12 @@
-/* GCMBS Online 10.0.159 - HF158 R1 / Android 10.0.147 - HF149 */
+/* GCMBS Online 10.0.160 - HF158 R2 / Android 10.0.147 - HF149 */
 (()=>{
 'use strict';
 
 if(window.__GCMBS_VISUAL_HF149_R3__) return;
 window.__GCMBS_VISUAL_HF149_R3__=true;
 
-const ONLINE_VERSION='10.0.159';
-const ONLINE_HF='HF158 R1';
+const ONLINE_VERSION='10.0.160';
+const ONLINE_HF='HF158 R2';
 const ANDROID_VERSION='10.0.147';
 const ANDROID_HF='HF149';
 

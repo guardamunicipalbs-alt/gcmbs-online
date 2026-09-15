@@ -33,7 +33,7 @@
   loadScript('js/gcmbs-v131-login-mobile-online.js?v=100147','gc131-login-mobile');
   loadScript('js/gcmbs-login-hero-fallback-v140.js?v=100147','gc140-login-fallback');
   loadScript('js/gcmbs-bank-command-v133.js?v=100147','gc133-bank-command');
-  loadScript('js/gcmbs-bank-filter-v136.js?v=100154','gc136-bank-filter');
+  loadScript('js/gcmbs-bank-filter-v136.js?v=100160','gc136-bank-filter');
   loadScript('js/gcmbs-permuta-confirm-v136.js?v=100154','gc136-permuta-confirm');
   loadScript('js/gcmbs-dashboard-dedupe-v136.js?v=100147','gc136-dashboard-dedupe');
   loadScript('js/gcmbs-bank-mobile-fixes-v137.js?v=100154','gc137-bank-mobile-fixes');
@@ -47,5 +47,5 @@
 
 import('./gcmbs-quadro-contagem-v149.js?v=100154')
   .catch(err=>console.warn('[GCMBS V149] falha ao carregar contagem do Quadro',err));
-import('./gcmbs-visual-hf149.js?v=100159')
+import('./gcmbs-visual-hf149.js?v=100160')
   .catch(err=>console.warn('[GCMBS HF149] falha no ajuste visual',err));

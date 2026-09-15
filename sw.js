@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100159-hf158r1';
+const VERSION='gcmbs-online-100160-hf158r2';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -15,7 +15,7 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.159');
+    headers.set('x-gcmbs-version','10.0.160');
     headers.set('x-gcmbs-visual','paridade-cumulativa-v102');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
