@@ -1,8 +1,8 @@
 /* GCMBS V110 - auditoria: sincronizacao e botoes consolidados. */
 (()=>{
 'use strict';
-const VERSION='10.0.85';
-const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-request-sync-v62';
+const VERSION='10.0.147';
+const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-request-sync-v156';
 const $=id=>document.getElementById(id);
 
 function stampVersion(){

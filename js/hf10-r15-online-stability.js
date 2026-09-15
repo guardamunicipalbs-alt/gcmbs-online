@@ -246,7 +246,7 @@ window.addEventListener('pageshow',()=>setTimeout(r15Init,0));
 
 // HF10 R16.4: carregar o detalhe canonico do Quadro tambem a partir da camada R15.
 // Usa a mesma URL do Service Worker para que o modulo seja avaliado uma unica vez.
-import('./hf10-r16-3-quadro-modal.js?v=100076')
+import('./hf10-r16-3-quadro-modal.js?v=100156')
   .catch(err=>console.warn('[GCMBS] HF10 R16.4 falha ao carregar detalhe do Quadro',err));
 
 console.info('[GCMBS] HF82 R2 estabilidade consolidada carregada',HF10_R15);

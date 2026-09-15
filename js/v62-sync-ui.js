@@ -1,7 +1,7 @@
 const BASE='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/';
-const QUADRO=BASE+'gcmbs-quadro-v62';
+const QUADRO=BASE+'gcmbs-sync-status-v156';
 const API=BASE+'gcmbs-communication-gateway-v74';
-const REQUEST_SYNC=BASE+'gcmbs-request-sync-v62';
+const REQUEST_SYNC=BASE+'gcmbs-request-sync-v156';
 
 const _fetch=window.fetch.bind(window);
 
@@ -284,7 +284,7 @@ async function atualizarBadge(){
         s.pendentes||0
       )} · Erros recentes: ${Number(
         s.erros_recentes||0
-      )} · GCMBS Online/App 10.0.85`;
+      )} · GCMBS Online/App 10.0.147`;
 
     e.style.color=
       Number(s.erros_recentes||0)

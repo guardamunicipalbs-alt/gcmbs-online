@@ -2,8 +2,8 @@
 // Frota: estado operacional derivado de manutencoes abertas + sincronizacao manual consolidada.
 // Nao altera registros; somente ajusta disponibilidade/apresentacao e usa as rotas oficiais existentes.
 const R18_FLEET='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
-const R18_SYNC='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-request-sync-v62';
-const R18_QUADRO='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const R18_SYNC='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-request-sync-v156';
+const R18_QUADRO='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-sync-status-v156';
 let r18Fleet=null,r18FleetTs=0,r18Loading=false,r18Frame=0;
 
 const r18Token=()=>localStorage.getItem('gcmbs.mobile.token')||'';
@@ -68,7 +68,7 @@ function r18PatchCards(){
 }
 function r18PatchSyncVersion(){
   const e=document.getElementById('syncStatus');
-  if(e&&/10\.0\.(?:62|68|69)/.test(String(e.title||'')))e.title=String(e.title).replace(/10\.0\.(?:62|68|69)/g,'10.0.85');
+  if(e&&/10\.0\.(?:62|68|69)/.test(String(e.title||'')))e.title=String(e.title).replace(/10\.0\.(?:62|68|69)/g,'10.0.147');
 }
 async function r18AtualizarBadge(){
   const e=document.getElementById('syncStatus');if(!e||!r18Token())return;

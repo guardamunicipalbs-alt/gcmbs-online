@@ -1265,7 +1265,54 @@ function renderCentralPendencias(){
   const host=$('pendenciasLista');if(!host)return;
   const finais=new Set(['APROVADA','RECUSADA','REPROVADA','NEGADA','CANCELADA','CONCLUIDA']);
   const req=(provider.actionRequests()||[]).filter(x=>!finais.has(String(x.status||'PENDENTE').toUpperCase()));
-  const notif=(provider.notifications()||[]).filter(x=>!x.lida_em);
+  const allRequestsHF156=provider.actionRequests()||[];
+  const requestsByIdHF156=new Map(
+    allRequestsHF156
+      .map(x=>[Number(x.id||0),x])
+      .filter(x=>x[0])
+  );
+
+  const gcmbsNotifSeenHF156=new Set();
+
+  const notif=(provider.notifications()||[]).filter(x=>{
+    if(x.lida_em)return false;
+
+    const tipo=String(x.tipo||'').trim().toUpperCase();
+    const refTipo=String(x.referencia_tipo||'').trim().toUpperCase();
+    const refId=Number(x.referencia_id||0);
+
+    /*
+     * A solicitacao real de Banco de Horas e a fonte canonica.
+     * O aviso PENDENCIA_COMANDO nao cria outro cartao do mesmo fato.
+     */
+    if(
+      tipo==='PENDENCIA_COMANDO' &&
+      refTipo==='BANCO_HORAS_CORRECAO' &&
+      refId &&
+      requestsByIdHF156.has(refId)
+    ){
+      return false;
+    }
+
+    /*
+     * Consolidar notificacoes semanticamente repetidas apenas
+     * na exibicao da Central, sem excluir ou marcar como lidas.
+     */
+    const chave=[
+      tipo,
+      refTipo,
+      refId,
+      String(x.titulo||'').trim(),
+      String(x.mensagem||'').trim()
+    ].join('|');
+
+    if(gcmbsNotifSeenHF156.has(chave)){
+      return false;
+    }
+
+    gcmbsNotifSeenHF156.add(chave);
+    return true;
+  });
   const refs=new Set(req.map(x=>Number(x.desktop_referencia_id||0)).filter(Boolean));
   const espelho=provider.gestor()?(provider.permutas()||[]).filter(x=>String(x.status||'').toUpperCase()==='PENDENTE'&&!refs.has(Number(x.id||x.desktop_id||0))):[];
   const itens=[
@@ -1390,6 +1437,6 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100155',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100156',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

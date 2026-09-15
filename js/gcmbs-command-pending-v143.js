@@ -40,6 +40,10 @@ for(const n of (d.notifications||[])){
   const rt=norm(n.referencia_tipo);
   const refId=Number(n.referencia_id||0);
   const req=refId ? requestsById.get(refId) : null;
+  const activeBankPending=(d.action_requests||[]).some(r=>
+    norm(r.tipo)==='BANCO_HORAS_CORRECAO' && commandPending(r)
+  );
+  if(rt.includes('BANCO')&&(req||activeBankPending))continue;
 
   /*
     Notificação antiga não pode recriar uma pendência

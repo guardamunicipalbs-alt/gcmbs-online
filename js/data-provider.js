@@ -1,5 +1,5 @@
 import './login-security.js?v=100076';
-import './v62-sync-ui.js?v=100110';
+import './v62-sync-ui.js?v=100156';
 import './v58-ui.js?v=100110';
 import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100076';
 
