@@ -1,17 +1,17 @@
 {
-    "version":  "10.0.85",
-    "versionCode":  85,
-    "apk":  "GCMBS-10.0.85.apk",
-    "publishedAt":  "2026-09-06T21:06:18.2368298Z",
-    "sha256":  "8553C8249F3641808A8B31E96CD21616BBF67B5CB36B7682C3B22C3FCBE335B7",
-    "sizeBytes":  6464427,
+    "version":  "10.0.148",
+    "versionCode":  148,
+    "apk":  "GCMBS-10.0.148.apk",
+    "publishedAt":  "2026-09-15T20:23:16.3297667Z",
+    "sha256":  "9D4A26A5B4F0C2125F9F847A5DDF9AD40410E245F567435DDF3490049671B18F",
+    "sizeBytes":  5642293,
     "notes":  [
-                  "V110 corrige o contrato ES Module do Desktop com ponte classica compativel.",
-                  "Dashboard Desktop protegido contra elementos dinamicos ausentes.",
-                  "Sincronizar agora consolidado em um unico botao canonico e com recarga integral dos dados.",
-                  "Imprimir compacto corrigido para a tela real de Escalas.",
-                  "V104 e V105 deixam de ser carregadas; V107/V108 permanece como estrutura canonica dos cadastros.",
-                  "Rotulos de versao consolidados em 10.0.85.",
-                  "Gerador de Escala e bancos SQLite preservados."
+                  "Android 10.0.148 · HF160.",
+                  "Banco de Horas do Comando com filtro por GCM e tratamento de competência de origem e pagamento.",
+                  "Permutas aguardando recebimento pelo Desktop permanecem fora da fila de decisão do Comando.",
+                  "Central de Pendências reconciliada sem excluir ou marcar notificações automaticamente.",
+                  "Identificação interna, registro de versão do push e loaders de cache corrigidos.",
+                  "Cache final Android 100161.",
+                  "Atualização sobre o aplicativo existente, preservando os dados locais."
               ]
 }

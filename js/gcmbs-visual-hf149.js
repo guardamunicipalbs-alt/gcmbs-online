@@ -1,4 +1,4 @@
-/* GCMBS Online 10.0.160 - HF158 R2 / Android 10.0.147 - HF149 */
+/* GCMBS Online 10.0.160 - HF158 R2 / Android 10.0.148 - HF160 */
 (()=>{
 'use strict';
 
@@ -7,8 +7,8 @@ window.__GCMBS_VISUAL_HF149_R3__=true;
 
 const ONLINE_VERSION='10.0.160';
 const ONLINE_HF='HF158 R2';
-const ANDROID_VERSION='10.0.147';
-const ANDROID_HF='HF149';
+const ANDROID_VERSION='10.0.148';
+const ANDROID_HF='HF160';
 
 function nativeAndroid(){
   try{

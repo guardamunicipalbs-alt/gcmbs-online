@@ -14,7 +14,7 @@ export async function configurarPushNativo(provider){
       try{
         const deviceKey='gcmbs.mobile.deviceId';
         if(!localStorage.getItem(deviceKey)) localStorage.setItem(deviceKey,crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`);
-        await provider.registerPushToken(token.value,{platform:'android',device_id:localStorage.getItem(deviceKey)||'',app_version:'10.0.85'});
+        await provider.registerPushToken(token.value,{platform:'android',device_id:localStorage.getItem(deviceKey)||'',app_version:'10.0.148'});
         localStorage.setItem('gcmbs.mobile.pushToken',token.value);
       }catch(e){console.error('[GCMBS PUSH] Falha ao registrar token:',e);}
     });
