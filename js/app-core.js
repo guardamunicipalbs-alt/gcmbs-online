@@ -608,12 +608,18 @@ function renderBanco(){
   const b=filtraCompetencia(meuBanco(),'bhCompetenciaFiltro'),gestor=provider.gestor();let c50=0,c100=0,d=0;
   if($('tituloBanco')) $('tituloBanco').textContent=gestor?'Banco de horas autorizado':'Meu banco de horas';
   for(const x of b){
-    const sign=String(x.natureza).toUpperCase()==='DEBITO'?-1:1;
-    const m=sign*Number(x.minutos||0);
-    if(sign<0)d+=Number(x.minutos||0);
-    if(String(x.classe)==='100')c100+=m; else c50+=m;
+    const nat=String(x.natureza||'CREDITO').toUpperCase();
+    const min=Math.abs(Number(x.minutos||0));
+
+    if(nat==='DEBITO'){
+      d+=min;
+      continue;
+    }
+
+    if(String(x.classe)==='100')c100+=min;
+    else c50+=min;
   }
-  $('bh50').textContent=horas(c50);$('bh100').textContent=horas(c100);$('bhDeb').textContent=horas(d);$('bhSaldo').textContent=horas(c50+c100);
+  $('bh50').textContent=horas(c50);$('bh100').textContent=horas(c100);$('bhDeb').textContent=horas(d);$('bhSaldo').textContent=horas(c50+c100-d);
   $('listaBanco').innerHTML=b.slice(0,40).map(x=>`<div class="item"><small>${fmt(x.data_fato)} · ${esc(x.classe||'50')}%${gestor&&x.nome_guerra?' · '+esc(x.nome_guerra):''}</small><strong>${esc(x.tipo||x.origem||'Movimentação')}</strong><span>${String(x.natureza).toUpperCase()==='DEBITO'?'-':'+'}${horas(x.minutos)}</span></div>`).join('')||'<div class="empty">Sem movimentações.</div>';
 
   const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro');
@@ -623,7 +629,7 @@ function renderBanco(){
 function renderBancoGestao(){
   const card=$('bancoGestaoCard'),el=$('listaBancoGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('banco_horas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
   const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro');
-  el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Competência ${esc(p.competencia||'-')} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
+  el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Competência ${esc(p.competencia||'-')} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
   el.querySelectorAll('[data-cmd-bh-ok]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhOk),'APROVADA'));
   el.querySelectorAll('[data-cmd-bh-no]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhNo),'RECUSADA'));
 }
@@ -1384,6 +1390,6 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100085',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100154',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

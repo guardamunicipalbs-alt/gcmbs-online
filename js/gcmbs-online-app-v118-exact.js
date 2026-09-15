@@ -27,13 +27,8 @@ let extrasCache={date:'',value:0,busy:false};
 function greeting(){
   const h=new Date().getHours();
   const prefix=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
-  // O nome de guerra pode ser composto (ex.: "D. Santos", "Da Silva").
-  // Preserve o valor completo exibido pelo perfil em vez de usar apenas o primeiro termo.
-  const name=text(
-    document.getElementById('perfilNome')?.textContent ||
-    document.getElementById('headerUsuario')?.textContent ||
-    'GCMBS'
-  ).toUpperCase();
+  const name=text(document.getElementById('perfilNome')?.textContent || document.getElementById('headerUsuario')?.textContent || 'GCMBS')
+    .split(/\s+/)[0].toUpperCase();
   return `${prefix}, ${name||'GCMBS'}!`;
 }
 
@@ -51,6 +46,32 @@ async function api(action,payload={}){
   return b;
 }
 
+async function apiExtrasEvento(data){
+  const token=localStorage.getItem('gcmbs.mobile.token');
+
+  if(!token){
+    throw new Error('Sessão não autenticada.');
+  }
+
+  const r=await fetch('https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-extras-v68',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+token
+    },
+    body:JSON.stringify({data:data}),
+    cache:'no-store'
+  });
+
+  let b={};
+  try{b=await r.json()}catch{}
+
+  if(!r.ok){
+    throw new Error((b&&b.message)?b.message:('HTTP '+r.status));
+  }
+
+  return b;
+}
 async function loadPostosTotal(){
   if(Number.isFinite(refsCache.postos))return refsCache.postos;
   try{
@@ -68,7 +89,7 @@ async function loadExtras(date){
   if(extrasCache.busy)return extrasCache.value;
   extrasCache.busy=true;
   try{
-    const b=await api('extras_evento',{data:date});
+    const b=await apiExtrasEvento(date);
     const all=[
       ...(Array.isArray(b?.extrasA)?b.extrasA:[]),
       ...(Array.isArray(b?.extrasB)?b.extrasB:[])

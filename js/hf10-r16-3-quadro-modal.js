@@ -2,7 +2,7 @@
 // O contador e o detalhe A/B representam os mesmos GCMs: ordinarios + extras
 // ativos, com cada GCM contado uma unica vez por turno.
 const R163_QUADRO_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
-const R163_EXTRAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const R163_EXTRAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-quadro-extras-v68';
 
 const r163Esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r163Fmt=v=>{const m=String(v||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(v||'');};
@@ -23,7 +23,7 @@ async function r163Call(url,payload){
 }
 
 const r163Quadro=data=>r163Call(R163_QUADRO_API,{action:'quadro_operacional',data});
-const r163Extras=data=>r163Call(R163_EXTRAS_API,{action:'extras_evento',data});
+const r163Extras=data=>r163Call(R163_EXTRAS_API,{data});
 const r163EhEvento=x=>String(x?.origem||'').toUpperCase()==='EVENTO_EXTRA'||/extra\s+por\s+evento/i.test(String(x?.complemento||''));
 
 

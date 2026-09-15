@@ -1,4 +1,4 @@
-/* GCMBS Premium 3D v79 — limpeza de heranças v77 e composição do dashboard aprovado. */
+/* GCMBS Premium 3D v79/V111 — limpeza de heranças v77, composicao do dashboard aprovado e Quadro de Avisos fixado como ultimo bloco. */
 (()=>{
   'use strict';
   const root=document.documentElement;
@@ -51,7 +51,7 @@
     if(fleet&&fleet.parentElement!==details)details.appendChild(fleet);
     const notice=$('#qAviso');if(notice&&!notice.classList.contains('gc79-alert-slot')){notice.classList.add('gc79-alert-slot');details.appendChild(notice)}
     if(posts)posts.classList.add('gc79-hidden-section');
-    const avisos=$('#quadroAvisosHome');if(avisos&&avisos.previousElementSibling!==details)details.after(avisos);
+    const avisos=$('#quadroAvisosHome');if(avisos&&avisos.parentElement===home&&home.lastElementChild!==avisos)home.appendChild(avisos);
   }
   function ensureTopbar(){const ctx=$('.gc78-topbar-context');if(ctx)ctx.style.display='flex'}
   function apply(){cleanupLegacy();normalizeNav();compose();ensureTopbar()}

@@ -1,0 +1,180 @@
+/* GCMBS 10.0.147 - HF149-R3 - guarda visual definitivo */
+(()=>{
+'use strict';
+
+if(window.__GCMBS_VISUAL_HF149_R3__) return;
+window.__GCMBS_VISUAL_HF149_R3__=true;
+
+const VERSION='10.0.147';
+const HF='HF149';
+
+function nativeAndroid(){
+  try{
+    return Boolean(
+      globalThis.Capacitor?.isNativePlatform?.() ||
+      globalThis.Capacitor?.getPlatform?.()==='android'
+    );
+  }catch{
+    return false;
+  }
+}
+
+function versaoPrincipal(){
+  return nativeAndroid()
+    ? `Android · ${VERSION} · ${HF}`
+    : `Online · ${VERSION} · ${HF}`;
+}
+
+function textoVersao(v){
+  const s=String(v||'').trim();
+
+  return (
+    /10\.0\.\d+/.test(s) &&
+    /^(?:Online|Offline|Android|Online\/App)(?:\s*[·-]\s*(?:Online|Offline|Android))?/i.test(s)
+  );
+}
+
+function corrigirVersaoPrincipal(){
+
+  const el=document.getElementById('onlineVersao');
+
+  if(el){
+    const correto=versaoPrincipal();
+
+    if(el.textContent!==correto){
+      el.textContent=correto;
+    }
+  }
+
+  document.documentElement.dataset.gcmbsVersion=VERSION;
+}
+
+function corrigirEstados(){
+
+  const candidatos=[
+    ...document.querySelectorAll('small,span')
+  ];
+
+  for(const el of candidatos){
+
+    if(el.children.length) continue;
+
+    const atual=String(el.textContent||'').trim();
+
+    if(!textoVersao(atual)) continue;
+
+    /*
+      onlineVersao já é tratado separadamente.
+    */
+    if(el.id==='onlineVersao') continue;
+
+    let estado='Online';
+
+    if(/^Offline/i.test(atual)){
+      estado='Offline';
+    }
+    else if(/^Android/i.test(atual)){
+      estado='Android';
+    }
+
+    const correto=`${estado} · ${VERSION} · ${HF}`;
+
+    if(atual!==correto){
+      el.textContent=correto;
+    }
+  }
+}
+
+function corrigirCardAtualizacao(){
+
+  const card=document.getElementById('appAtualizacaoCard');
+
+  if(!card) return;
+
+  const negritos=[...card.querySelectorAll('b,strong')];
+
+  for(const el of negritos){
+
+    const t=String(el.textContent||'').trim();
+
+    if(/^10\.0\.\d+$/.test(t) && t!==VERSION){
+      el.textContent=VERSION;
+    }
+  }
+}
+
+function corrigirFecharModal(){
+
+  const modal=document.getElementById('quadroModal');
+
+  if(!modal) return;
+
+  const botoes=[...modal.querySelectorAll('button')];
+
+  for(const b of botoes){
+
+    const txt=String(b.textContent||'').trim();
+
+    if(
+      txt==='Ã' ||
+      txt==='Ã—' ||
+      txt==='Â×' ||
+      txt==='×' ||
+      /^(?:Ã.|Â.)$/.test(txt)
+    ){
+      if(txt!=='×'){
+        b.textContent='×';
+      }
+
+      b.setAttribute('aria-label','Fechar');
+      b.setAttribute('title','Fechar');
+      break;
+    }
+  }
+}
+
+function aplicar(){
+  corrigirVersaoPrincipal();
+  corrigirEstados();
+  corrigirCardAtualizacao();
+  corrigirFecharModal();
+}
+
+function iniciar(){
+
+  aplicar();
+
+  let ocupado=false;
+
+  new MutationObserver(()=>{
+
+    if(ocupado) return;
+
+    ocupado=true;
+
+    queueMicrotask(()=>{
+      ocupado=false;
+      aplicar();
+    });
+
+  }).observe(document.documentElement,{
+    childList:true,
+    subtree:true,
+    characterData:true
+  });
+
+  /*
+    Camadas legadas possuem timers próprios.
+    Esta verificação garante o estado final sem alterar
+    os contratos ou módulos antigos.
+  */
+  setInterval(aplicar,1000);
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',iniciar,{once:true});
+}else{
+  iniciar();
+}
+
+})();

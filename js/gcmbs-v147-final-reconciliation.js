@@ -1,20 +1,48 @@
-/* GCMBS V154 — reconciliação final de pendências, Banco do Comando e versão. */
+/* GCMBS V147 â€” reconciliaÃ§Ã£o final de pendÃªncias, Banco do Comando e versÃ£o. */
 (()=>{'use strict';
-if(window.__GCMBS_V154_FINAL_RECONCILIATION__)return;window.__GCMBS_V154_FINAL_RECONCILIATION__=true;
-const VERSION='10.0.154';
-const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+if(window.__GCMBS_V147_FINAL_RECONCILIATION__)return;window.__GCMBS_V147_FINAL_RECONCILIATION__=true;
+const VERSION='10.0.147';
+const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v131';
 const $=id=>document.getElementById(id);
 const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
 const token=()=>localStorage.getItem('gcmbs.mobile.token')||'';
 const isCommand=()=>/COMANDANTE|SUBCOMANDANTE/.test(norm($('perfilCargo')?.textContent||document.body?.dataset?.perfil||document.documentElement?.dataset?.perfil||''));
-const pending=s=>['PENDENTE','PENDENTE_DESKTOP','AGUARDANDO_ACEITE','ACEITE_PENDENTE_DESKTOP','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP'].includes(norm(s));
+const pending=s=>['PENDENTE','PENDENTE_DESKTOP','AGUARDANDO_ACEITE','ACEITE_PENDENTE_DESKTOP','CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP'].includes(norm(s));
+function commandPending(r){
+  const st=norm(r?.status);
+  const tipo=norm(r?.tipo);
+
+  if(tipo==='PERMUTA'){
+    return st==='PENDENTE';
+  }
+
+  if(tipo==='BANCO_HORAS_CORRECAO'){
+    return ['PENDENTE','PENDENTE_DESKTOP'].includes(st);
+  }
+
+  return pending(st);
+}
 async function data(){const t=token();if(!t)return null;try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${t}`},body:JSON.stringify({action:'data'}),cache:'no-store'});return r.ok?await r.json():null}catch{return null}}
-function versionLabels(){document.documentElement.dataset.gcmbsVersion=VERSION;document.querySelectorAll('[id*=Versao],[class*=version],[class*=versao],#appAtualizacaoCard').forEach(el=>{if(el.children.length&&el.id!=='appAtualizacaoCard')return;const t=el.textContent||'';if(/10\.0\.(85|145|146|147|148|149|150|151|152|153)/.test(t))el.textContent=t.replace(/10\.0\.(85|145|146|147|148|149|150|151|152|153)/g,VERSION)});}
+function versionLabels(){document.documentElement.dataset.gcmbsVersion=VERSION;document.querySelectorAll('[id*=Versao],[class*=version],[class*=versao],#appAtualizacaoCard').forEach(el=>{if(el.children.length&&el.id!=='appAtualizacaoCard')return;const t=el.textContent||'';if(/10\.0\.(85|145|146)/.test(t))el.textContent=t.replace(/10\.0\.(85|145|146)/g,VERSION)});}
 function title(c){return norm(c?.querySelector('h1,h2,h3,strong')?.textContent||'')}
 function bankOrder(){if(!isCommand())return;const view=document.querySelector('[data-view="banco"]');if(!view)return;const cards=[...view.querySelectorAll('.card')];const cmd=$('bancoComandoMovV133')||cards.find(c=>title(c).includes('MOVIMENTACAO DO COMANDO'));const req=$('bancoGestaoCard')||cards.find(c=>title(c).includes('SOLICITACOES DE CORRECAO'));const mov=$('listaBanco')?.closest('.card')||cards.find(c=>title(c).includes('MOVIMENTACOES DA COMPETENCIA'));if(cmd&&req&&mov&&cmd.parentNode===req.parentNode&&req.parentNode===mov.parentNode){const p=cmd.parentNode;p.insertBefore(cmd,req);p.insertBefore(req,mov)}const personal=$('formBancoCorrecao')?.closest('.card')||cards.find(c=>title(c)==='SOLICITAR CORRECAO');personal?.classList.add('hidden');}
+function protectRegisteredDecisions(){
+ document.querySelectorAll('[data-view="banco"] .record-card,[data-view="banco"] .item,[data-view="permutas"] .record-card').forEach(card=>{
+  const txt=norm(card.textContent||'');
+  if(!txt.includes('DECISAO REGISTRADA')&&!txt.includes('AGUARDANDO SINCRONIZACAO'))return;
+
+  card.querySelectorAll(
+   '[data-cmd-bh-ok],[data-cmd-bh-no],[data-cmd-pm-ok],[data-cmd-pm-no],[data-cmd-mirror-ok],[data-cmd-mirror-no]'
+  ).forEach(b=>{
+   b.disabled=true;
+   b.setAttribute('aria-disabled','true');
+   b.style.display='none';
+  });
+ });
+}
 function go(label){const n=norm(label);[...document.querySelectorAll('button,a,[role="button"]')].find(x=>norm(x.textContent).includes(n))?.click()}
-function mount(items){let box=$('gcmbsCommandPendingV143');if(!box){box=document.createElement('section');box.id='gcmbsCommandPendingV143';box.className='card';box.style.cssText='margin:14px 18px;padding:16px;border-radius:16px';($('appTela')||document.body).prepend(box)}const rows=items.slice(0,12).map(x=>`<button type="button" data-v154-go="${x.go}" style="display:block;width:100%;text-align:left;margin:7px 0;padding:10px;border-radius:10px"><strong>${x.title}</strong><br><small>${x.text}</small></button>`).join('');box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><h2 style="margin:0">Pendências do Comando</h2><small>Somente itens que ainda exigem avaliação ou ciência administrativa.</small></div><span class="badge">${items.length}</span></div>${rows||'<p class="muted">Nenhuma pendência administrativa no momento.</p>'}`;box.querySelectorAll('[data-v154-go]').forEach(b=>b.onclick=()=>go(b.dataset.v154Go))}
-async function refresh(){versionLabels();bankOrder();if(!isCommand())return void $('gcmbsCommandPendingV143')?.remove();const d=await data();if(!d)return;const actions=(d.action_requests||[]);const activeIds=new Set(actions.filter(r=>pending(r.status)).map(r=>String(r.id)));const out=[];for(const r of actions){if(!pending(r.status))continue;const t=norm(r.tipo);if(t==='PERMUTA')out.push({title:'Permuta aguardando avaliação',text:`Solicitação #${r.id}`,go:'Permutas'});if(t==='BANCO_HORAS_CORRECAO')out.push({title:'Correção de horas aguardando avaliação',text:`Solicitação #${r.id}`,go:'Banco de Horas'})}for(const n of (d.notifications||[])){if(n.lida_em||norm(n.tipo)!=='PENDENCIA_COMANDO')continue;const rid=String(n.referencia_id||'');const rt=norm(n.referencia_tipo);if((rt.includes('BANCO')||rt.includes('PERMUTA'))&&rid&&!activeIds.has(rid))continue;out.push({title:n.titulo||'Pendência do Comando',text:n.mensagem||'',go:rt.includes('PERMUTA')?'Permutas':rt.includes('BANCO')?'Banco de Horas':rt.includes('JUSTIFICATIVA')?'Justificativa de Faltas':'Notificações'})}const seen=new Set();mount(out.filter(x=>{const k=x.title+'|'+x.text;if(seen.has(k))return false;seen.add(k);return true}))}
-function boot(){refresh();let q=false;new MutationObserver(()=>{if(q)return;q=true;requestAnimationFrame(()=>{q=false;versionLabels();bankOrder()})}).observe(document.documentElement,{childList:true,subtree:true});setInterval(refresh,15000)}
+function mount(items){let box=$('gcmbsCommandPendingV143');if(!box){box=document.createElement('section');box.id='gcmbsCommandPendingV143';box.className='card';box.style.cssText='margin:14px 18px;padding:16px;border-radius:16px';($('appTela')||document.body).prepend(box)}const rows=items.slice(0,12).map(x=>`<button type="button" data-v147-go="${x.go}" style="display:block;width:100%;text-align:left;margin:7px 0;padding:10px;border-radius:10px"><strong>${x.title}</strong><br><small>${x.text}</small></button>`).join('');box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><h2 style="margin:0">PendÃªncias do Comando</h2><small>Somente itens que ainda exigem avaliaÃ§Ã£o ou ciÃªncia administrativa.</small></div><span class="badge">${items.length}</span></div>${rows||'<p class="muted">Nenhuma pendÃªncia administrativa no momento.</p>'}`;box.querySelectorAll('[data-v147-go]').forEach(b=>b.onclick=()=>go(b.dataset.v147Go))}
+async function refresh(){versionLabels();bankOrder();protectRegisteredDecisions();if(!isCommand())return void $('gcmbsCommandPendingV143')?.remove();const d=await data();if(!d)return;const actions=(d.action_requests||[]);const activeIds=new Set(actions.filter(r=>commandPending(r)).map(r=>String(r.id)));const out=[];for(const r of actions){if(!commandPending(r))continue;const t=norm(r.tipo);if(t==='PERMUTA')out.push({key:`A:${r.id}`,title:'Permuta aguardando avaliaÃ§Ã£o',text:`SolicitaÃ§Ã£o #${r.id}`,go:'Permutas'});if(t==='BANCO_HORAS_CORRECAO')out.push({key:`A:${r.id}`,title:'CorreÃ§Ã£o de horas aguardando avaliaÃ§Ã£o',text:`SolicitaÃ§Ã£o #${r.id}`,go:'Banco de Horas'})}for(const n of (d.notifications||[])){if(n.lida_em||norm(n.tipo)!=='PENDENCIA_COMANDO')continue;const rid=String(n.referencia_id||'');const rt=norm(n.referencia_tipo);if((rt.includes('BANCO')||rt.includes('PERMUTA'))&&rid&&!activeIds.has(rid))continue;out.push({key:`N:${n.dedupe_key||n.id}`,title:n.titulo||'PendÃªncia do Comando',text:n.mensagem||'',go:rt.includes('PERMUTA')?'Permutas':rt.includes('BANCO')?'Banco de Horas':rt.includes('JUSTIFICATIVA')?'Justificativa de Faltas':'NotificaÃ§Ãµes'})}const seen=new Set();mount(out.filter(x=>{const k=x.title+'|'+x.text;if(seen.has(k))return false;seen.add(k);return true}))}
+function boot(){protectRegisteredDecisions();refresh();let q=false;new MutationObserver(()=>{if(q)return;q=true;requestAnimationFrame(()=>{q=false;versionLabels();bankOrder();protectRegisteredDecisions()})}).observe(document.documentElement,{childList:true,subtree:true});setInterval(refresh,15000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

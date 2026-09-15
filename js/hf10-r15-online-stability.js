@@ -233,7 +233,7 @@ if(!window.__gcmbsR15RefreshTriggerGuard){
 function r15Stamp(){
   r15EnsureListObserver();
   const v=document.getElementById('onlineVersao');
-  if(v)v.textContent='Online/App 10.0.85';
+  if(v)v.textContent='Online · 10.0.147 · HF149';
 }
 function r15Init(){r15Stamp();r15ScheduleSearch();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',r15Init,{once:true});else r15Init();

@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * V151: paridade produção Online/App + tipo de serviço no Quadro Operacional.
+ * V147: paridade produção Online/App + reconciliação de pendências do Comando.
  */
 (()=>{
   'use strict';
@@ -25,23 +25,27 @@
   loadScript('js/gcmbs-premium-3d-v79-r2.js?v=100080','gc79-r2');
   loadScript('js/gcmbs-platform-parity-v80.js?v=100080','gc80-platform');
   loadScript('js/gcmbs-login-institucional-v81.js?v=100081','gc81-login');
-  loadScript('js/hf83-justificativas-protected-route.js?v=100083','gc83-justificativas');
-  loadScript('js/gcmbs-justificativas-any-file-v134.js?v=100147','gc134-justificativas-any-file');
+  loadScript('js/hf83-justificativas-protected-route.js?v=100154','gc83-justificativas');
+  loadScript('js/gcmbs-justificativas-any-file-v134.js?v=100154','gc134-justificativas-any-file');
   loadScript('js/hf84-utf8-branding-fix.js?v=100084','gc84-utf8-branding');
   loadScript('js/gcmbs-cumulative-v102.js?v=100111','gc102-cumulative');
   loadScript('js/gcmbs-desktop-parity-v103.js?v=100124','gc103-desktop-parity');
   loadScript('js/gcmbs-v131-login-mobile-online.js?v=100147','gc131-login-mobile');
   loadScript('js/gcmbs-login-hero-fallback-v140.js?v=100147','gc140-login-fallback');
   loadScript('js/gcmbs-bank-command-v133.js?v=100147','gc133-bank-command');
-  loadScript('js/gcmbs-bank-filter-v136.js?v=100147','gc136-bank-filter');
-  loadScript('js/gcmbs-permuta-confirm-v136.js?v=100147','gc136-permuta-confirm');
+  loadScript('js/gcmbs-bank-filter-v136.js?v=100154','gc136-bank-filter');
+  loadScript('js/gcmbs-permuta-confirm-v136.js?v=100154','gc136-permuta-confirm');
   loadScript('js/gcmbs-dashboard-dedupe-v136.js?v=100147','gc136-dashboard-dedupe');
-  loadScript('js/gcmbs-bank-mobile-fixes-v137.js?v=100147','gc137-bank-mobile-fixes');
+  loadScript('js/gcmbs-bank-mobile-fixes-v137.js?v=100154','gc137-bank-mobile-fixes');
   loadScript('js/gcmbs-mobile-permissions-v140.js?v=100147','gc140-mobile-permissions');
-  loadScript('js/gcmbs-permuta-admin-fixes-v141.js?v=100147','gc141-permuta-admin');
+  loadScript('js/gcmbs-permuta-admin-fixes-v141.js?v=100154','gc141-permuta-admin');
   loadScript('js/gcmbs-online-sync-v142.js?v=100147','gc142-online-sync');
-  loadScript('js/gcmbs-command-pending-v143.js?v=100147','gc143-command-pending');
+  loadScript('js/gcmbs-command-pending-v143.js?v=100154','gc143-command-pending');
   loadScript('js/gcmbs-v145-production-parity.js?v=100147','gc145-production-parity');
-  loadScript('js/gcmbs-v147-final-reconciliation.js?v=100147','gc147-final-reconciliation');
-  loadScript('js/gcmbs-quadro-tipo-servico-v151.js?v=100151','gc151-quadro-tipo-servico');
+  loadScript('js/gcmbs-v147-final-reconciliation.js?v=100154','gc147-final-reconciliation');
 })();
+
+import('./gcmbs-quadro-contagem-v149.js?v=100154')
+  .catch(err=>console.warn('[GCMBS V149] falha ao carregar contagem do Quadro',err));
+import('./gcmbs-visual-hf149.js?v=100154')
+  .catch(err=>console.warn('[GCMBS HF149] falha no ajuste visual',err));

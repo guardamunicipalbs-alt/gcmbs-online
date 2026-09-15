@@ -30,7 +30,7 @@ function versionLabel(){
   // A versão binária continua 10.0.85 até a geração do novo APK.
   // Aqui atualizamos somente a identificação da camada visual.
   const ov=$('#onlineVersao');
-  if(ov && /10\.0\.85/.test(txt(ov))) ov.textContent='Online/App 10.0.85 · V119';
+  if(ov && /10\.0\.85/.test(txt(ov))) ov.textContent='Online · 10.0.147 · HF149';
 
   const state=$('#gc103SyncState');
   if(state && !homeActive()){

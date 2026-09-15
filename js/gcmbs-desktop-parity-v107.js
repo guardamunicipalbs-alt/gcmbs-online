@@ -175,11 +175,11 @@ function buildList(){
   }finally{rebuilding=false}
 }
 function version(){
-  const ov=$('#onlineVersao');if(ov)ov.textContent='Online/App 10.0.85 · V110';
+  const ov=$('#onlineVersao');if(ov)ov.textContent='Online · 10.0.147 · HF149';
   $$('small,span').forEach(el=>{
     if(el.children.length)return;
     const s=txt(el);
-    if(/^Online\s*(?:\/App)?\s*[-·]?\s*10\.0\.\d+(?:\s*[-·]\s*V\d+)?$/i.test(s))el.textContent='Online · 10.0.85 · V110';
+    if(/^Online\s*(?:\/App)?\s*[-·]?\s*10\.0\.\d+(?:\s*[-·]\s*V\d+)?$/i.test(s))el.textContent='Online · 10.0.147 · HF149';
   });
 }
 function tick(){
