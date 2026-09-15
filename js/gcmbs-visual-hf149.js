@@ -1,12 +1,14 @@
-/* GCMBS 10.0.147 - HF149-R3 - guarda visual definitivo */
+/* GCMBS Online 10.0.159 - HF158 R1 / Android 10.0.147 - HF149 */
 (()=>{
 'use strict';
 
 if(window.__GCMBS_VISUAL_HF149_R3__) return;
 window.__GCMBS_VISUAL_HF149_R3__=true;
 
-const VERSION='10.0.147';
-const HF='HF149';
+const ONLINE_VERSION='10.0.159';
+const ONLINE_HF='HF158 R1';
+const ANDROID_VERSION='10.0.147';
+const ANDROID_HF='HF149';
 
 function nativeAndroid(){
   try{
@@ -21,8 +23,8 @@ function nativeAndroid(){
 
 function versaoPrincipal(){
   return nativeAndroid()
-    ? `Android · ${VERSION} · ${HF}`
-    : `Online · ${VERSION} · ${HF}`;
+    ? `Android · ${ANDROID_VERSION} · ${ANDROID_HF}`
+    : `Online · ${ONLINE_VERSION} · ${ONLINE_HF}`;
 }
 
 function textoVersao(v){
@@ -46,7 +48,7 @@ function corrigirVersaoPrincipal(){
     }
   }
 
-  document.documentElement.dataset.gcmbsVersion=VERSION;
+  document.documentElement.dataset.gcmbsVersion=nativeAndroid()?ANDROID_VERSION:ONLINE_VERSION;
 }
 
 function corrigirEstados(){
@@ -77,7 +79,9 @@ function corrigirEstados(){
       estado='Android';
     }
 
-    const correto=`${estado} · ${VERSION} · ${HF}`;
+    const versao=estado==='Android'?ANDROID_VERSION:ONLINE_VERSION;
+    const hf=estado==='Android'?ANDROID_HF:ONLINE_HF;
+    const correto=`${estado} · ${versao} · ${hf}`;
 
     if(atual!==correto){
       el.textContent=correto;
@@ -97,8 +101,8 @@ function corrigirCardAtualizacao(){
 
     const t=String(el.textContent||'').trim();
 
-    if(/^10\.0\.\d+$/.test(t) && t!==VERSION){
-      el.textContent=VERSION;
+    if(/^10\.0\.\d+$/.test(t) && t!==ANDROID_VERSION){
+      el.textContent=ANDROID_VERSION;
     }
   }
 }

@@ -11,8 +11,11 @@ const pending=s=>['PENDENTE','PENDENTE_DESKTOP','AGUARDANDO_ACEITE','ACEITE_PEND
 function commandPending(r){
   const st=norm(r?.status);
   const tipo=norm(r?.tipo);
+  const stOriginal=norm(r?.status_original||r?.status);
+  const desktopRecebido=Number(r?.desktop_referencia_id||0)>0;
 
   if(tipo==='PERMUTA'){
+    if(stOriginal==='PENDENTE_DESKTOP'&&!desktopRecebido)return false;
     return st==='PENDENTE';
   }
 

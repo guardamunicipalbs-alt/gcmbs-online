@@ -1267,8 +1267,17 @@ function renderCentralPendencias(){
   const gcmbsRequestOperacionalHF158=x=>{
     const tipo=String(x?.tipo||'').trim().toUpperCase();
     const status=String(x?.status||'PENDENTE').trim().toUpperCase();
+    const statusOriginal=String(x?.status_original||x?.status||'PENDENTE').trim().toUpperCase();
+    const desktopRecebido=Number(x?.desktop_referencia_id||0)>0;
 
+    /*
+     * O gateway pode apresentar PENDENTE_DESKTOP como PENDENTE
+     * para compatibilidade visual. Para a Central operacional,
+     * uma permuta so entra depois que saiu da fila de envio
+     * ao Desktop ou quando ja possui referencia Desktop.
+     */
     if(tipo==='PERMUTA'){
+      if(statusOriginal==='PENDENTE_DESKTOP'&&!desktopRecebido)return false;
       return status==='PENDENTE';
     }
 
@@ -1454,6 +1463,6 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100158',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100159',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);

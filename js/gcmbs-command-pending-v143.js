@@ -10,10 +10,13 @@ const pending=s=>['PENDENTE','PENDENTE_DESKTOP','AGUARDANDO_ACEITE','ACEITE_PEND
 function commandPending(r){
   const tipo=norm(r?.tipo);
   const status=norm(r?.status);
+  const statusOriginal=norm(r?.status_original||r?.status);
+  const desktopRecebido=Number(r?.desktop_referencia_id||0)>0;
 
-  // Permuta só é decisão do Comando quando chegou ao estado PENDENTE.
-  // PENDENTE_DESKTOP = ainda aguardando recebimento/consolidação Desktop.
+  // O gateway pode converter PENDENTE_DESKTOP em PENDENTE
+  // apenas para apresentacao. A fila do Comando usa o estado real.
   if(tipo==='PERMUTA'){
+    if(statusOriginal==='PENDENTE_DESKTOP'&&!desktopRecebido)return false;
     return status==='PENDENTE';
   }
 
