@@ -1,0 +1,1 @@
+Desktop e App: pendente de implementacao e homologacao. Ver ROADMAP_PARIDADE_DESKTOP_ANDROID_V162.md. Nao editar dados de folha nem APK nesta etapa.
