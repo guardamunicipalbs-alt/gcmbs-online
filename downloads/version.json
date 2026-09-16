@@ -1,17 +1,17 @@
 {
-    "version":  "10.0.148",
-    "versionCode":  148,
-    "apk":  "GCMBS-10.0.148.apk",
-    "publishedAt":  "2026-09-15T20:23:16.3297667Z",
-    "sha256":  "9D4A26A5B4F0C2125F9F847A5DDF9AD40410E245F567435DDF3490049671B18F",
-    "sizeBytes":  5642293,
+    "version":  "10.0.149",
+    "versionCode":  149,
+    "apk":  "GCMBS-10.0.149.apk",
+    "publishedAt":  "2026-09-16T00:46:08.9307833Z",
+    "sha256":  "DC36C27FFCB4093F37087CA83C76F845720D7C6ACA585903014BD440AB6B31DC",
+    "sizeBytes":  5659712,
     "notes":  [
-                  "Android 10.0.148 · HF160.",
-                  "Banco de Horas do Comando com filtro por GCM e tratamento de competência de origem e pagamento.",
-                  "Permutas aguardando recebimento pelo Desktop permanecem fora da fila de decisão do Comando.",
-                  "Central de Pendências reconciliada sem excluir ou marcar notificações automaticamente.",
-                  "Identificação interna, registro de versão do push e loaders de cache corrigidos.",
-                  "Cache final Android 100161.",
+                  "Android 10.0.149 · HF161 R1.",
+                  "Paridade do Online, Mobile WWW e assets Android reconciliada.",
+                  "Carregamento das correções de reset administrativo de senha, pendências, fluxo e cancelamento de permutas.",
+                  "Quadro Operacional mantém a contagem V149 e inclui identificação visual de serviço Ordinário/Extra.",
+                  "Fluxo Online autoritativo V160 incluído no pacote.",
+                  "Versão exibida no aplicativo corrigida para 10.0.149.",
                   "Atualização sobre o aplicativo existente, preservando os dados locais."
               ]
 }
