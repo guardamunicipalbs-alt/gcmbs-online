@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * V147: paridade produção Online/App + reconciliação de pendências do Comando.
+ * V161: ativa correções pendentes já publicadas no repositório para Online/App.
  */
 (()=>{
   'use strict';
@@ -41,8 +41,14 @@
   loadScript('js/gcmbs-permuta-admin-fixes-v141.js?v=100154','gc141-permuta-admin');
   loadScript('js/gcmbs-online-sync-v142.js?v=100147','gc142-online-sync');
   loadScript('js/gcmbs-command-pending-v143.js?v=100159','gc143-command-pending');
+  loadScript('js/gcmbs-password-reset-v144.js?v=100161','gc144-password-reset');
   loadScript('js/gcmbs-v145-production-parity.js?v=100147','gc145-production-parity');
+  loadScript('js/gcmbs-v146-final-pending-fixes.js?v=100161','gc146-final-pending');
   loadScript('js/gcmbs-v147-final-reconciliation.js?v=100159','gc147-final-reconciliation');
+  loadScript('js/gcmbs-permuta-flow-v148.js?v=100161','gc148-permuta-flow');
+  loadScript('js/gcmbs-permuta-cancel-v150.js?v=100161','gc150-permuta-cancel');
+  loadScript('js/gcmbs-quadro-tipo-servico-v151.js?v=100161','gc151-quadro-tipo');
+  loadScript('js/gcmbs-online-authoritative-v160.js?v=100161','gc160-online-authoritative');
 })();
 
 import('./gcmbs-quadro-contagem-v149.js?v=100154')
