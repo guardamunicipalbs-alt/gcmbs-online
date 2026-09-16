@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * V164: botoes do Banco de Horas corrigidos; preserva apuracao e credito existente.
+ * V165: reconstrução dos botões de decisão afetados por controladores legados.
  */
 (()=>{
   'use strict';
@@ -50,7 +50,7 @@
   loadScript('js/gcmbs-quadro-tipo-servico-v151.js?v=100161','gc151-quadro-tipo');
   loadScript('js/gcmbs-online-authoritative-v160.js?v=100161','gc160-online-authoritative');
   loadScript('js/gcmbs-bank-audit-v162.js?v=100162','gc162-bank-audit');
-  loadScript('js/gcmbs-bank-actions-v164.js?v=100164','gc164-bank-actions');
+  loadScript('js/gcmbs-bank-controls-v165.js?v=100165','gc165-bank-controls');
 })();
 
 import('./gcmbs-quadro-contagem-v149.js?v=100154')
