@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * V165: reconstrução dos botões de decisão afetados por controladores legados.
+ * V166: aprovações e correções pelo painel isolado; evita interceptadores legados.
  */
 (()=>{
   'use strict';
@@ -51,6 +51,7 @@
   loadScript('js/gcmbs-online-authoritative-v160.js?v=100161','gc160-online-authoritative');
   loadScript('js/gcmbs-bank-audit-v162.js?v=100162','gc162-bank-audit');
   loadScript('js/gcmbs-bank-controls-v165.js?v=100165','gc165-bank-controls');
+  loadScript('js/gcmbs-bank-safe-entry-v166.js?v=100166','gc166-bank-safe-entry');
 })();
 
 import('./gcmbs-quadro-contagem-v149.js?v=100154')
