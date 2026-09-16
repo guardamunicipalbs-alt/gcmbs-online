@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * V161: ativa correções pendentes já publicadas no repositório para Online/App.
+ * V162: trilha auditavel do Banco de Horas e decisoes online seguras.
  */
 (()=>{
   'use strict';
@@ -49,6 +49,7 @@
   loadScript('js/gcmbs-permuta-cancel-v150.js?v=100161','gc150-permuta-cancel');
   loadScript('js/gcmbs-quadro-tipo-servico-v151.js?v=100161','gc151-quadro-tipo');
   loadScript('js/gcmbs-online-authoritative-v160.js?v=100161','gc160-online-authoritative');
+  loadScript('js/gcmbs-bank-audit-v162.js?v=100162','gc162-bank-audit');
 })();
 
 import('./gcmbs-quadro-contagem-v149.js?v=100154')
