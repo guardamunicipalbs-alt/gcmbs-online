@@ -1,6 +1,6 @@
 /*
  * GCMBS — Bootstrap visual institucional.
- * V162: trilha auditavel do Banco de Horas e decisoes online seguras.
+ * V163: Aprovar e Corrigir separados, edicao justificada e seguranca de decisao.
  */
 (()=>{
   'use strict';
@@ -50,6 +50,7 @@
   loadScript('js/gcmbs-quadro-tipo-servico-v151.js?v=100161','gc151-quadro-tipo');
   loadScript('js/gcmbs-online-authoritative-v160.js?v=100161','gc160-online-authoritative');
   loadScript('js/gcmbs-bank-audit-v162.js?v=100162','gc162-bank-audit');
+  loadScript('js/gcmbs-bank-decision-split-v163.js?v=100163','gc163-bank-decision-split');
 })();
 
 import('./gcmbs-quadro-contagem-v149.js?v=100154')
