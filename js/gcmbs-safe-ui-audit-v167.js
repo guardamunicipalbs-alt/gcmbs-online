@@ -6,11 +6,11 @@
   'use strict';
   if (window.__GCMBS_SAFE_UI_AUDIT_V167__) return;
   window.__GCMBS_SAFE_UI_AUDIT_V167__ = true;
-  if (window.Capacitor?.isNativePlatform?.()) return;
+  if (/^(capacitor|file):/i.test(location.protocol) || window.Capacitor?.isNativePlatform?.()) return;
 
   const $ = selector => document.querySelector(selector);
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const normalize = value => String(value ?? '').normalize('NFD')
     .replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 
