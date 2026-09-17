@@ -2,6 +2,7 @@
 import './gcmbs-safe-ui-audit-v167.js?v=100167';
 import './gcmbs-relatorios-cards-print-v168.js?v=100168';
 import './gcmbs-bank-advanced-v169.js?v=100169';
+import './gcmbs-justificativas-filtro-impressao-v170.js?v=100170';
 (()=>{
 'use strict';
 const VERSION='10.0.147';
