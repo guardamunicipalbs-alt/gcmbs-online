@@ -1,4 +1,6 @@
 /* GCMBS V110 - auditoria: sincronizacao e botoes consolidados. */
+import './gcmbs-safe-ui-audit-v167.js?v=100167';
+import './gcmbs-relatorios-cards-print-v168.js?v=100168';
 (()=>{
 'use strict';
 const VERSION='10.0.147';
@@ -39,7 +41,8 @@ function ensureSync(){
       setTimeout(()=>{btn.textContent=old;btn.disabled=false;},6000);
     }catch(e){
       alert('Não foi possível solicitar a sincronização: '+(e?.message||e));
-      btn.textContent=old;btn.disabled=false;
+      btn.textContent=old;
+      btn.disabled=false;
     }
   },true);
 }
