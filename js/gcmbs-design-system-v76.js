@@ -52,6 +52,7 @@
   loadScript('js/gcmbs-bank-audit-v162.js?v=100162','gc162-bank-audit');
   loadScript('js/gcmbs-bank-controls-v165.js?v=100165','gc165-bank-controls');
   loadScript('js/gcmbs-bank-safe-entry-v166.js?v=100166','gc166-bank-safe-entry');
+  loadScript('js/gcmbs-relatorios-motoristas-v161.js?v=100161','gc161-relatorios-motoristas');
 })();
 
 import('./gcmbs-quadro-contagem-v149.js?v=100154')
