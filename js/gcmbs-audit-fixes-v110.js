@@ -1,4 +1,5 @@
 /* GCMBS V110 - auditoria: sincronizacao e botoes consolidados. */
+import './gcmbs-safe-ui-audit-v167.js?v=100167';
 (()=>{
 'use strict';
 const VERSION='10.0.147';
@@ -9,7 +10,7 @@ function stampVersion(){
   const v=$('onlineVersao');
   if(v&&v.textContent!==`Online/App ${VERSION} · V110`)v.textContent=`Online/App ${VERSION} · V110`;
   const state=$('gc103SyncState');
-  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent||'').includes(VERSION))state.textContent=`Online · ${VERSION} · V110`;
+  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent).includes(VERSION))state.textContent=`Online · ${VERSION} · V110`;
 }
 async function requestSync(){
   const token=localStorage.getItem('gcmbs.mobile.token');
@@ -39,7 +40,8 @@ function ensureSync(){
       setTimeout(()=>{btn.textContent=old;btn.disabled=false;},6000);
     }catch(e){
       alert('Não foi possível solicitar a sincronização: '+(e?.message||e));
-      btn.textContent=old;btn.disabled=false;
+      btn.textContent=old;
+      btn.disabled=false;
     }
   },true);
 }
