@@ -10,7 +10,7 @@ function stampVersion(){
   const v=$('onlineVersao');
   if(v&&v.textContent!==`Online/App ${VERSION} · V110`)v.textContent=`Online/App ${VERSION} · V110`;
   const state=$('gc103SyncState');
-  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent).includes(VERSION))state.textContent=`Online · ${VERSION} · V110`;
+  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent||'').includes(VERSION))state.textContent=`Online · ${VERSION} · V110`;
 }
 async function requestSync(){
   const token=localStorage.getItem('gcmbs.mobile.token');
