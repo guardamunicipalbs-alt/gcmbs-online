@@ -3,6 +3,7 @@ import './gcmbs-safe-ui-audit-v167.js?v=100167';
 import './gcmbs-relatorios-cards-print-v168.js?v=100168';
 import './gcmbs-bank-advanced-v169.js?v=100169';
 import './gcmbs-justificativas-filtro-impressao-v170.js?v=100170';
+import './gcmbs-justificativas-tabela-filtro-v171.js?v=100171';
 (()=>{
 'use strict';
 const VERSION='10.0.147';
@@ -13,7 +14,7 @@ function stampVersion(){
   const v=$('onlineVersao');
   if(v&&v.textContent!==`Online/App ${VERSION} · V110`)v.textContent=`Online/App ${VERSION} · V110`;
   const state=$('gc103SyncState');
-  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent||'').includes(VERSION))state.textContent=`Online · ${VERSION} · V110`;
+  if(state&&/Online/.test(String(state.textContent||''))&&!String(state.textContent).includes(VERSION))state.textContent=`Online · ${VERSION} · V110`;
 }
 async function requestSync(){
   const token=localStorage.getItem('gcmbs.mobile.token');
