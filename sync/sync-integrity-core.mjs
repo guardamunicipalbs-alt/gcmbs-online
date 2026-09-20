@@ -30,9 +30,9 @@ function index(rows,label) {
   }
   return result;
 }
-// Backup salvo não é checkpoint. Exige run OK, concluído e hash compatível.
+// Um backup não é checkpoint. Exige RUN concluído, sem conflitos, aplicação verificada e hash.
 export function successfulBaseline(backups,runs,clientName) {
-  const eligible=backups.filter(b => b.client_name===clientName && runs.some(r => r.client_name===clientName && r.snapshot_id===b.snapshot_id && r.status==='OK' && !!r.completed_at && (!r.content_hash || !b.snapshot_sha256 || r.content_hash===b.snapshot_sha256)));
+  const eligible=backups.filter(b => b.client_name===clientName && runs.some(r => r.client_name===clientName && r.snapshot_id===b.snapshot_id && r.status==='OK' && r.applied_verified===true && Number(r.conflict_count ?? 0)===0 && !!r.completed_at && (!r.content_hash || !b.snapshot_sha256 || r.content_hash===b.snapshot_sha256)));
   return eligible.sort((a,b) => Date.parse(b.created_at)-Date.parse(a.created_at))[0] ?? null;
 }
 const equivalent=(a,b) => fingerprint(a)===fingerprint(b);
@@ -41,9 +41,9 @@ const identityFields=['guarda_id','competencia','data_fato','natureza','classe',
 function bankIdentityCompatible(local,cloud) {
   if(local.entity!=='banco_horas_movimentacoes')return true;
   const a=local.data??{},b=cloud.data??{};
-  return identityFields.every(field => a[field]===undefined || b[field]===undefined || String(a[field])===String(b[field]));
+  return ['guarda_id','competencia','minutos'].every(field=>a[field]!==undefined&&b[field]!==undefined) && identityFields.every(field=>String(a[field]??'')===String(b[field]??''));
 }
-/** Plano apenas: banco deve efetuar compare-and-swap antes de gravar. */
+/** Plano somente leitura: no banco é obrigatório compare-and-swap transacional. */
 export function reconcile({previous=[],current=[],cloud=[],tombstoneHistory=[],pendingKeys=[]}) {
   const prev=index(previous,'previous'),local=index(current,'current'),remote=index(cloud,'cloud');
   const deleted=new Set(tombstoneHistory.map(x => typeof x==='string'?x:key(x)));
@@ -53,7 +53,7 @@ export function reconcile({previous=[],current=[],cloud=[],tombstoneHistory=[],p
     const old=prev.get(id),live=remote.get(id),explicitlyDeleted=incoming.deleted===true;
     if(explicitlyDeleted) {
       if(!live||live.deleted){plan.noops.push(id);continue;}
-      if(!old||!equivalent(live,old)){plan.conflicts.push({id,reason:'unsafe-explicit-delete'});continue;}
+      if(!old||!equivalent(live,old)||!bankIdentityCompatible(incoming,live)){plan.conflicts.push({id,reason:'unsafe-explicit-delete'});continue;}
       plan.deletes.push({id,expectedRevision:live.revision,changeId:changeId('DELETE',incoming,live.revision)});continue;
     }
     if(!live) {
@@ -72,7 +72,7 @@ export function reconcile({previous=[],current=[],cloud=[],tombstoneHistory=[],p
   for(const [id] of remote)if(!local.has(id)&&!prev.has(id))plan.cloudOnly.push({id,reason:'remote-only'});
   return plan;
 }
-// Não declarar sincronização total sem confirmação efetiva das três plataformas.
+// HTTP 200 nunca prova sincronização total sem validação das três plataformas.
 export function completenessGate({runStatus,localCommitted,pending,conflicts,ackErrors,mismatches,webVerified,androidVerified}) {
   return runStatus==='OK' && localCommitted===true && pending===0 && conflicts===0 && ackErrors===0 && mismatches===0 && webVerified===true && androidVerified===true;
 }
