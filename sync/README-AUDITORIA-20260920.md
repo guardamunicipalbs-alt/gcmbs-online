@@ -10,16 +10,18 @@ O código publicado em `gcmbs-sync-v131` v4 escolhe o backup mais recente sem ve
 
 ## Alteração nesta branch
 
-`sync-integrity-core.mjs` é um núcleo determinístico, **sem I/O**, que: escolhe baseline apenas com run concluído `OK` e hash consistente; reconcilia todo o snapshot contra a réplica para recuperar também registros antigos ainda ausentes; gera IDs idempotentes; impede ressurreição de tombstones e exclusão por mera ausência; exige ancestral/revisão para atualizações e exclusões; marca colisões de identidade do Banco de Horas como conflitos; desconsidera `atualizado_em` exclusivamente na comparação semântica das tabelas técnicas da Folha; e impede status global `OK` sem confirmação das três plataformas. Testes em `sync/tests` via `node --test sync/tests/*.test.mjs`.
+`sync-integrity-core.mjs` é um núcleo determinístico, **sem I/O**, que: só admite baseline com run `OK`, hash, zero conflitos e prova explícita de aplicação (`applied_verified=true`); compara snapshot completo com a réplica para detectar ausências antigas; gera chaves idempotentes; bloqueia tombstones e exclusão por mera ausência; exige ancestral/revisão para atualizações e exclusões; protege a identidade completa do Banco de Horas; ignora `atualizado_em` apenas na comparação semântica das tabelas técnicas da Folha; impede sinalização global `OK` sem as três plataformas. Testes: `node --test sync/tests/*.test.mjs` (11 casos).
 
-**Importante: esta branch ainda NÃO integra o núcleo à Edge Function ativa, ao Desktop nem ao Android. Não declara correção aplicada ou sincronização concluída.** Integração precisa ser preparada sobre o código-fonte integral do Desktop (`MobileFullMirrorService`) e Edge, preservando credenciais e dados, e submetida à validação.
+**Importante: a coluna `applied_verified` ainda não existe em `private.gcmbs_sync_runs`. É uma pré-condição futura para permitir um checkpoint; sem evidência explícita, o núcleo retorna `null`.** Não preencher retroativamente com base em status HTTP ou backup salvo; a verificação deve ser transacional, pós-commit, por revisão/identidade e com relatório de diferenças.
+
+**Esta branch ainda NÃO integra o núcleo à Edge Function ativa, ao Desktop nem ao Android. Não declara correção aplicada ou sincronização concluída.** Integração precisa do código-fonte integral do Desktop (`MobileFullMirrorService`) e Edge, preservando credenciais e dados.
 
 ## Critérios obrigatórios antes do deploy
 
-1. Fazer SELECT de baseline casado com `gcmbs_sync_runs.status='OK'`, `completed_at IS NOT NULL` e hash. Não transformar backup de erro nem snapshot salvo em checkpoint. Persistir checkpoint de aplicação somente após commit.
-2. Preparar mudanças por comparação do snapshot atual inteiro com `mobile_entity_records`, incluindo ausências de snapshots anteriores. Aplicar `INSERT ... ON CONFLICT DO NOTHING` com verificação de identidade; `UPDATE/DELETE` com `WHERE revision=base_revision` e confirmação de contagem. Não deletar por ausência; somente tombstones explícitos autenticados.
-3. Para Banco de Horas, validar identidade completa (GCM, competência, data, natureza, classe, minutos, status/revisão), evitar IDs 718–726 colididos; preservar transferências, cancelamentos, auditoria e saldo histórico.
-4. No Desktop, persistir cada operação em transação SQLite e ACK apenas após commit efetivo. Erro/retry/conflito devem preservar o comando na fila; não marcar aplicado por status HTTP 200.
-5. Recalcular saldo/folha em competência de setembro e comparar Online, Desktop e Android; validar consultas pendentes, escalas históricas e todos os módulos do catálogo. Encerrar apenas com zero diferenças justificadas, zero conflitos abertos/ACKs com erro e confirmação de leitura/escrita por plataforma.
+1. Criar indicador de checkpoint de aplicação verificado por registro e snapshot; selecionar baseline apenas por `status='OK'`, `completed_at IS NOT NULL`, `conflict_count=0`, `applied_verified=true` e hash. Nunca usar backup salvo ou execução com erro como checkpoint.
+2. Comparar snapshot atual inteiro com `mobile_entity_records`, incluindo ausências antigas. Inserir com idempotência e verificação de identidade; atualizar/excluir por `WHERE revision=base_revision` e checar linhas afetadas. Só aceitar tombstones explícitos autenticados; nunca ausência como exclusão.
+3. Banco de Horas: validar GCM, competência, data, natureza, classe, minutos, status e revisão, inclusive IDs 718–726; preservar transportes, cancelamentos e auditoria.
+4. Desktop: aplicar operação individual em transação SQLite e ACK somente após commit. Preservar fila para ERRO, retry e CONFLITO; HTTP 200 não prova gravação local.
+5. Recalcular saldo e Folha de setembro; comparar Desktop, Online e Android, solicitações pendentes, escalas históricas e todas as entidades. Concluir somente com diferenças justificadas zero, conflitos abertos zero, ACKs com erro zero e comprovação de três plataformas.
 
-**Nenhum dado foi alterado na execução desta auditoria. Não reativar Syncthing nem implantar automaticamente esta branch.**
+**Nenhum dado real foi alterado por esta auditoria. Não reativar Syncthing nem implantar automaticamente esta branch.**
