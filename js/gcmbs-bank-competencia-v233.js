@@ -33,7 +33,7 @@ function nota(){const el=$('bhSaldo')?.closest('.card');if(!el)return null;let p
 function render(){if(!ultimo||!visivel())return;const e=escopo();if(`${e.comp}|${e.guarda}|${e.token}`!==assinatura)return;
   let r;try{r=calcularCompetenciaIntegral(ultimo,e.comp,e.guarda)}catch(err){const p=nota();if(p)p.textContent=`Conferência indisponível: ${err.message}`;return}
   for(const [id,min] of [['bh50',r.credito50],['bh100',r.credito100],['bhDeb',r.debito],['bhSaldo',r.saldo]]){const el=$(id);if(el)el.textContent=horas(min)}
-  const p=nota();if(p)p.textContent=`Competência integral ${e.comp}: ${r.quantidade} movimentações ativas contabilizadas, independentemente da data do serviço.${r.previstos?` ${r.previstos} lançamento(s) de serviço futuro incluído(s) (${horas(r.horasPrevistas)}), identificados como PREVISTOS no histórico.`:''} Saldo informativo: não confirma realização do serviço nem pagamento.`;
+  const p=nota();if(p)p.textContent=`Competência integral ${e.comp}: ${r.quantidade} movimentações ativas contabilizadas, independentemente da data do serviço.${r.previstos?` ${r.previstos} lançamento(s) de serviço futuro incluído(s) (${horas(r.horasPrevistas)}), identificados neste resumo como PREVISTOS.`:''} Saldo informativo: não confirma realização do serviço nem pagamento.`;
 }
 async function atualizar(){if(!visivel())return;const e=escopo();if(!e.token||!/^\d{4}-\d{2}$/.test(e.comp))return;
   const sig=`${e.comp}|${e.guarda}|${e.token}`;if(carregando)return;
@@ -45,8 +45,8 @@ async function atualizar(){if(!visivel())return;const e=escopo();if(!e.token||!/
     // Valide antes de tocar nos indicadores; se a API falhar, não substitua o valor exibido por zero.
     calcularCompetenciaIntegral(body.banco_horas,e.comp,e.guarda);
     ultimo=body.banco_horas;assinatura=sig;render();
-  }catch(err){const p=nota();if(p)p.textContent='Não foi possível conferir a competência integral na nuvem. Os valores existentes foram preservados.'}
-  finally{carregando=false}
+  }catch(err){if(seq===pedido){const p=nota();if(p)p.textContent='Não foi possível conferir a competência integral na nuvem. Os valores existentes foram preservados.'}}
+  finally{carregando=false;if(seq!==pedido&&visivel())setTimeout(atualizar,0)}
 }
 function iniciar(){
   const f=$('bhCompetenciaFiltro');if(!f)return;
