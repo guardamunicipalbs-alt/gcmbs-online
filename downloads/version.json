@@ -1,17 +1,14 @@
 {
-    "version":  "10.0.149",
-    "versionCode":  149,
-    "apk":  "GCMBS-10.0.149.apk",
-    "publishedAt":  "2026-09-16T00:46:08.9307833Z",
-    "sha256":  "DC36C27FFCB4093F37087CA83C76F845720D7C6ACA585903014BD440AB6B31DC",
-    "sizeBytes":  5659712,
+    "version":  "10.0.151",
+    "versionCode":  151,
+    "apk":  "GCMBS-10.0.151.apk",
+    "publishedAt":  "2026-09-22T15:22:15.5854344Z",
+    "sha256":  "A64437E41D7A178FD55538056C51AC6522CAD45587DD439A246BB3848E09F695",
+    "sizeBytes":  5663991,
     "notes":  [
-                  "Android 10.0.149 · HF161 R1.",
-                  "Paridade do Online, Mobile WWW e assets Android reconciliada.",
-                  "Carregamento das correções de reset administrativo de senha, pendências, fluxo e cancelamento de permutas.",
-                  "Quadro Operacional mantém a contagem V149 e inclui identificação visual de serviço Ordinário/Extra.",
-                  "Fluxo Online autoritativo V160 incluído no pacote.",
-                  "Versão exibida no aplicativo corrigida para 10.0.149.",
-                  "Atualização sobre o aplicativo existente, preservando os dados locais."
+                  "Android 10.0.151: competencia integral do Banco de Horas como no Desktop.",
+                  "Inclui servicos previstos no mes, identificados como previstos, sem confirma-los como realizados ou pagos.",
+                  "Exclui estornos e exclusoes; nao altera movimentos nem habilita sincronizacao geral.",
+                  "Atualizacao sobre a versao anterior, preservando dados locais."
               ]
 }
