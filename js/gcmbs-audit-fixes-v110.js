@@ -5,6 +5,7 @@ import './gcmbs-bank-advanced-v169.js?v=100169';
 import './gcmbs-justificativas-filtro-impressao-v170.js?v=100170';
 import './gcmbs-justificativas-tabela-filtro-v171.js?v=100171';
 import './gcmbs-bank-approval-entry-v172.js?v=100172';
+import './gcmbs-bank-competencia-v233.js?v=100233';
 (()=>{
 'use strict';
 const VERSION='10.0.147';
