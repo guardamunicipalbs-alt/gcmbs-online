@@ -35,6 +35,21 @@ let permutasEspelho=[];
 let permutaExtrasCache={mine:[],others:[]};
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
 
+function limparEscopoUsuarioRuntime(){
+  permutasEspelho=[];
+  permutaExtrasCache={mine:[],others:[]};
+  onlineCatalog=[];onlineCurrent=null;onlineRecords=[];onlineEditing=null;
+  quadroAtual=null;permutaEditingId=null;escalaModo='pessoal';escalasInstitucionais=[];escalaEditing=null;
+  try{chkRecords=[];chkPending=[];occRecords=[];}catch{}
+  for(const id of [
+    'onlineRegistros','listaPermutasSolicitadas','listaPermutasGestao','listaBanco','listaCorrecoes',
+    'listaBancoGestao','relatoriosLista','chkLista','occLista','pendenciasLista'
+  ]){
+    const el=$(id);if(el)el.replaceChildren();
+  }
+  try{if($('onlineEditor')?.open)$('onlineEditor').close()}catch{}
+}
+
 const ONLINE_LABELS={
   viatura_id:'Viatura',data_manutencao:'Data da manutenção',tipo_manutencao:'Tipo de manutenção',descricao:'Descrição',
   quilometragem:'Quilometragem',responsavel:'Responsável',empresa:'Empresa / oficina',valor:'Valor',status:'Status',
@@ -171,13 +186,23 @@ async function abrirModuloPrincipal(modulo){
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
 function meusExtras(){return provider.extras()}
 function minhasPermutas(){return provider.permutas()}
+function permutaVisivelAoUsuario(x){
+  if(provider.gestor())return true;
+  const gid=Number(provider.session?.guarda_id||0),p=x?.payload||x||{};
+  if(!gid)return false;
+  if(Number(x?.guarda_id||0)===gid)return true;
+  return [
+    p.contraparte_id,p.substituido_id,p.substituto_id,p.solicitante_id,p.solicitante_guarda_id,
+    x?.substituido_id,x?.substituto_id,x?.solicitante_id,x?.solicitante_guarda_id
+  ].some(v=>Number(v||0)===gid);
+}
 function meuBanco(){return provider.bancoHoras().filter(x=>String(x.status||'ATIVO').toUpperCase()==='ATIVO')}
 
 /* GCMBS_HF158_R2_BANK_GCM_FILTER
    O filtro do GCM precisa fazer parte do render principal.
    Assim nenhum refresh da tela volta a mostrar outros servidores. */
 function bancoGcmFiltroId(){
-  if(!provider.gestor())return 0;
+  if(!provider.gestor())return Number(provider.session?.guarda_id||0);
   return Number($('bhGcmFiltroV136')?.value||0);
 }
 
@@ -413,9 +438,31 @@ function preencherFiltrosRelatorios(){
   p.innerHTML='<option value="">Todos os postos</option>'+postos.map(x=>`<option>${esc(x)}</option>`).join('');p.value=postos.includes(vp)?vp:'';
 }
 function renderRelatoriosInstitucionais(){
-  preencherFiltrosRelatorios();const dados=filtrarRelatoriosInstitucionais(),host=$('relatoriosLista'),status=$('relatoriosStatus');if(!host)return;
-  if(status)status.textContent=`${dados.length} registro(s) institucional(is) · fonte: réplica integral do Desktop 10.0.85`;
-  host.innerHTML=dados.length?dados.map(x=>`<article class="record-card"><div class="record-card-head"><strong>${esc(nomeEscala(x)||'GCM')}</strong><span>${esc(fmt(String(x.data||'').slice(0,10)))}</span></div><div class="record-meta">${esc(postoEscala(x)||'Posto não informado')} · ${esc(horarioRelatorio(x)||x.turno||'Horário não informado')}</div><div>${x.motorista?'<span class="tag-driver">MOTORISTA</span> ':''}${x.viatura?`Viatura: ${esc(x.viatura)}`:''}${ehExtraEscala(x)?' <span class="tag-extra">Extra</span>':''}</div></article>`).join(''):'<div class="empty">Nenhum registro encontrado para os filtros informados.</div>';
+  preencherFiltrosRelatorios();
+  const dados=filtrarRelatoriosInstitucionais(),host=$('relatoriosLista'),status=$('relatoriosStatus');if(!host)return;
+  const ini=$('relatoriosIni')?.value||'',fim=$('relatoriosFim')?.value||'';
+  if(status)status.textContent=`${dados.length} registro(s) institucional(is) · visão em grade por posto e horário`;
+  if(!ini||!fim){
+    host.innerHTML='<div class="empty">Informe o período para consultar.</div>';
+    return;
+  }
+  let datas=gerarDatas(ini,fim);
+  const gcm=$('relatoriosGcm')?.value||'',posto=$('relatoriosPosto')?.value||'';
+  if(gcm||posto){
+    const ds=new Set(dados.map(x=>String(x.data||'').slice(0,10)));
+    datas=datas.filter(d=>ds.has(d));
+  }
+  const grupos=montarGruposEscala(dados);
+  const cab=`<th class="col-posto">POSTO / HORÁRIO</th>${datas.map(d=>`<th>${esc(fmt(d))}</th>`).join('')}`;
+  const linhas=grupos.map(g=>`<tr><th class="posto-linha"><b>${esc(g.posto)}</b><span>${esc(g.horario)}</span></th>${datas.map(d=>{
+    const itens=g.itens.get(d)||[];
+    return itens.length
+      ?`<td>${itens.map(x=>`<div class="gcm-linha"><b>${esc(x.nome)}</b>${x.motorista?`<span class="tag-driver">MOTORISTA${x.veiculo?' - '+esc(x.veiculo):''}</span>`:x.veiculo?`<span>Viatura: ${esc(x.veiculo)}</span>`:''}${x.extra?'<span class="tag-extra">Extra</span>':''}</div>`).join('')}</td>`
+      :'<td class="vazio">—</td>';
+  }).join('')}</tr>`).join('');
+  host.innerHTML=grupos.length&&datas.length
+    ?`<div class="matrix-wrap"><table class="report-matrix" data-gc129-desktop="1"><thead><tr>${cab}</tr></thead><tbody>${linhas}</tbody></table></div>`
+    :'<div class="empty">Nenhum registro encontrado para os filtros informados.</div>';
 }
 async function carregarRelatoriosInstitucionais(force=false){
   if(force||!escalasInstitucionais.length)escalasInstitucionais=await provider.relatorioEscalas();
@@ -601,7 +648,7 @@ function renderPermutas(){
     el.innerHTML=(extras.map(renderPendente).join('')+espelho.map(renderHistorico).join(''))||'<div class="empty">Nenhuma permuta encontrada nesta competência.</div>';
     return;
   }
-  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'),'pmCompetenciaFiltro');
+  const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'&&permutaVisivelAoUsuario(x)),'pmCompetenciaFiltro');
   el.innerHTML=req.length?req.map(x=>{
     const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',assuncaoExtra=modal==='CESSAO_EXTRA',nome=nomeCandidato(q.substituido_id||q.substituto_id),dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null;
     const cab=troca?'Troca bilateral de extras':mista?'Troca ordinário ↔ extra':`${esc(q.data||'')} · Turno ${esc(q.turno||'-')}`;
@@ -1125,7 +1172,16 @@ function renderEntityTabs(){
 }
 async function abrirEntidadeOnline(entity){
   const b=await provider.entityList(entity,500,0);onlineCurrent=b.catalog;onlineRecords=b.records||[];
-  if(String(entity||'').toLowerCase()==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
+  const ent=String(entity||'').toLowerCase(),gid=Number(provider.session?.guarda_id||0);
+  if(!provider.gestor()&&gid){
+    if(ent==='justificativas_faltas')onlineRecords=onlineRecords.filter(r=>Number(r?.data?.guarda_id||0)===gid);
+    else if(ent==='abastecimento_viaturas')onlineRecords=onlineRecords.filter(r=>Number(r?.data?.motorista_id||0)===gid);
+    else if(ent==='manutencao_viaturas')onlineRecords=onlineRecords.filter(r=>Number(r?.data?.encaminhado_por||0)===gid);
+    else if(!['ocorrencias_operacionais','feriados','eventos_extras'].includes(ent)&&Array.isArray(onlineCurrent?.scope_fields)&&onlineCurrent.scope_fields.length){
+      onlineRecords=onlineRecords.filter(r=>(r?.scope_guard_ids||[]).map(Number).includes(gid));
+    }
+  }
+  if(ent==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
     onlineCurrent={...onlineCurrent,can_edit:false,writable:false};
     try{if($('onlineEditor')?.open)$('onlineEditor').close()}catch{}
   }
@@ -1769,7 +1825,7 @@ async function entrar(e){
   $('loginErro').textContent='';
   $('entrar').disabled=true;
   try{
-    const lembrar=!!$('loginLembrar')?.checked;const sessao=await provider.login($('loginUsuario').value,$('loginSenha').value,lembrar);localStorage.setItem('gcmbs.login.remember',lembrar?'1':'0');if(lembrar)localStorage.setItem('gcmbs.login.usuario',$('loginUsuario').value);else localStorage.removeItem('gcmbs.login.usuario');
+    const lembrar=!!$('loginLembrar')?.checked;const sessao=await provider.login($('loginUsuario').value,$('loginSenha').value,lembrar);limparEscopoUsuarioRuntime();localStorage.setItem('gcmbs.login.remember',lembrar?'1':'0');if(lembrar)localStorage.setItem('gcmbs.login.usuario',$('loginUsuario').value);else localStorage.removeItem('gcmbs.login.usuario');
     configurarPushNativo(provider).catch(()=>{});
     $('loginTela').classList.add('hidden');
     $('appTela').classList.remove('hidden');
@@ -1786,6 +1842,7 @@ async function entrar(e){
 async function sair(){
   const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';
   await provider.logout(lembrar);
+  limparEscopoUsuarioRuntime();
   $('appTela').classList.add('hidden');$('loginTela').classList.remove('hidden');$('loginSenha').value='';$('loginErro').textContent='';
   if(!lembrar){localStorage.removeItem('gcmbs.login.usuario');localStorage.removeItem('gcmbs.mobile.token');$('loginUsuario').value='';if($('loginLembrar'))$('loginLembrar').checked=false}else{$('loginUsuario').value=localStorage.getItem('gcmbs.login.usuario')||$('loginUsuario').value;if($('loginLembrar'))$('loginLembrar').checked=true}
 }
