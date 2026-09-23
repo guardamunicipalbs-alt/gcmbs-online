@@ -1,7 +1,7 @@
 
 import {AuthenticatedProvider} from './data-provider.js?v=100161-accessscope';
-import {MODULOS_GCMBS} from './access-catalog.js?v=100085';
-import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100161-accessscope';
+import {MODULOS_GCMBS} from './access-catalog.js?v=100250';
+import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
@@ -152,7 +152,7 @@ function setView(id){
   fecharMenu();
 }
 function temAcesso(modulo){
-  if(modulo==='perfil'||modulo==='avisos') return true;
+  if(modulo==='perfil'||modulo==='avisos'||modulo==='gratificacao_motorista') return true;
   if(modulo==='escalas'||modulo==='gerador_escala') return provider.gestor() && provider.pode('escalas');
   return provider.pode(modulo);
 }
@@ -183,7 +183,7 @@ async function abrirModuloPrincipal(modulo){
     return;
   }
   const view=DEDICATED_VIEW[modulo];
-  if(view){if(modulo==='justificativas_faltas'){await abrirModuloOnline(modulo);ativar();return;}setView(view);ativar();if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatoriosFrota')renderRelatoriosFrota();if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();if(view==='escala'){escalaModo='pessoal';renderEscalas();}return;}
+  if(view){if(modulo==='justificativas_faltas'){await abrirModuloOnline(modulo);ativar();return;}setView(view);ativar();if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatoriosFrota')renderRelatoriosFrota();if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();if(view==='escala'){escalaModo='pessoal';renderEscalas();}return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -261,8 +261,42 @@ function renderPerfil(){
       ? ps.map(p=>`<span class="badge">${esc(p.modulo)} · ${esc(p.nivel)}</span>`).join(' ')
       : '<span class="muted">Sem permissões habilitadas no Desktop.</span>';
 }
+
+let __gratificacaoEventos=false;
+function grHm(m){const n=Math.max(0,Math.round(Number(m)||0));return `${Math.floor(n/60)}h${String(n%60).padStart(2,'0')}`}
+async function carregarGratificacao(){
+  const compEl=$('grComp');if(compEl&&!compEl.value)compEl.value=competenciaAtual();
+  const comp=String(compEl?.value||'');
+  try{
+    const [cfgR,regR]=await Promise.all([
+      provider.entityList('gratificacao_motorista_config',10,0),
+      provider.entityList('gratificacao_motorista_registros',500,0)
+    ]);
+    const cfg=(cfgR.records||[]).find(x=>String(x.record_key||x.id)==='1')?.data||(cfgR.records||[])[0]?.data||{};
+    const rows=(regR.records||[]).map(x=>x.data||x).filter(x=>!comp||String(x.competencia||x.data_servico||'').startsWith(comp));
+    if($('grAtivo')){$('grAtivo').checked=Number(cfg.ativo)===1;$('grAtivo').disabled=true;}
+    if($('grFator')){$('grFator').value=Number(cfg.fator_hora||0.125);$('grFator').disabled=true;}
+    if($('grSalvar'))$('grSalvar').disabled=true;
+    if($('grMsg'))$('grMsg').textContent='Ativação/desativação permanece protegida no Desktop; Online/App acompanham o estado sincronizado.';
+    if($('grStatus'))$('grStatus').textContent=Number(cfg.ativo)===1?'ATIVADA':'DESATIVADA';
+    const totalMin=rows.reduce((a,x)=>a+Number(x.minutos_gratificacao||0),0);
+    const motorMin=rows.reduce((a,x)=>a+Math.round(Number(x.segundos_motorista||0)/60),0);
+    if($('grResumo'))$('grResumo').innerHTML=`<div class="metric">Registros<b>${rows.length}</b></div><div class="metric">Tempo motorista<b>${grHm(motorMin)}</b></div><div class="metric">Gratificação<b>${grHm(totalMin)}</b></div>`;
+    if($('grLista'))$('grLista').innerHTML=rows.length
+      ?rows.sort((a,b)=>String(b.inicio_reconhecido||'').localeCompare(String(a.inicio_reconhecido||''))).map(x=>`<article class="record"><strong>${esc(x.data_servico||'')} · ${esc(x.nome_guerra||('GCM '+x.guarda_id))}</strong><small>Viatura ${esc(x.prefixo||x.viatura_id||'')} · ${grHm(Math.round(Number(x.segundos_motorista||0)/60))} como motorista · Gratificação ${grHm(x.minutos_gratificacao)} · ${esc(x.classe?x.classe+'%':'em apuração')}</small><span class="badge">${esc(x.status||'')}</span></article>`).join('')
+      :'<div class="empty">Nenhum registro nesta competência.</div>';
+    if(!__gratificacaoEventos){
+      __gratificacaoEventos=true;
+      $('grComp')?.addEventListener('change',()=>carregarGratificacao().catch(console.warn));
+    }
+  }catch(e){
+    if($('grMsg'))$('grMsg').textContent='A Gratificação ainda não está disponível na réplica online: '+(e.message||e);
+    if($('grLista'))$('grLista').innerHTML='<div class="empty">Aguardando sincronização do módulo com o Desktop.</div>';
+  }
+}
+
 function modulosOutros(){
-  const dedicados=new Set(['dashboard','escalas','relatorios','banco_horas','permutas','abastecimento_viaturas','manutencao_viaturas']);
+  const dedicados=new Set(['dashboard','escalas','relatorios','banco_horas','gratificacao_motorista','permutas','abastecimento_viaturas','manutencao_viaturas']);
   // Comandante/Subcomandante recebem o catálogo integral do Desktop. Para os
   // demais GCMs continuam valendo estritamente as permissões cadastradas.
   const base=provider.controleTotal()?MODULOS_GCMBS:provider.modulosAutorizados();
