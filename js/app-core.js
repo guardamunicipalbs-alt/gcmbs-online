@@ -1,7 +1,7 @@
 
 import {AuthenticatedProvider} from './data-provider.js?v=100161-accessscope';
 import {MODULOS_GCMBS} from './access-catalog.js?v=100085';
-import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100085';
+import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100161-accessscope';
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
