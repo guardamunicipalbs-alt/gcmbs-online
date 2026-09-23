@@ -1,0 +1,156 @@
+/* GCMBS V176 — Relatórios: grade mensal com espaçamento legível.
+   Mantém todas as datas e usa rolagem horizontal, evitando comprimir nomes,
+   viaturas e marcadores MOTORISTA/Extra.
+*/
+#relatoriosLista .matrix-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  border:1px solid #d8e3ef;
+  border-radius:12px;
+  background:#fff;
+  scrollbar-gutter:stable;
+}
+
+#relatoriosLista .report-matrix{
+  border-collapse:separate!important;
+  border-spacing:0!important;
+  table-layout:fixed!important;
+  width:max-content!important;
+  min-width:100%!important;
+  margin:0!important;
+}
+
+#relatoriosLista .report-matrix th,
+#relatoriosLista .report-matrix td{
+  box-sizing:border-box!important;
+  min-width:132px!important;
+  width:132px!important;
+  padding:9px 10px!important;
+  vertical-align:top!important;
+  line-height:1.25!important;
+  overflow-wrap:anywhere;
+}
+
+#relatoriosLista .report-matrix thead th{
+  position:sticky;
+  top:0;
+  z-index:3;
+  white-space:nowrap;
+  text-align:center;
+  background:#eaf2f9!important;
+  font-size:11px!important;
+}
+
+#relatoriosLista .report-matrix .col-posto,
+#relatoriosLista .report-matrix .posto-linha{
+  min-width:255px!important;
+  width:255px!important;
+  max-width:255px!important;
+  text-align:left!important;
+  position:sticky;
+  left:0;
+  background:#edf4fa!important;
+}
+
+#relatoriosLista .report-matrix .col-posto{
+  z-index:5;
+}
+
+#relatoriosLista .report-matrix .posto-linha{
+  z-index:2;
+}
+
+#relatoriosLista .posto-linha b{
+  display:block!important;
+  margin:0 0 5px!important;
+  font-size:12px!important;
+  line-height:1.25!important;
+  white-space:normal!important;
+}
+
+#relatoriosLista .posto-linha span{
+  display:block!important;
+  margin:0!important;
+  font-size:10.5px!important;
+  line-height:1.2!important;
+  color:#60758b!important;
+  font-weight:600!important;
+  white-space:normal!important;
+}
+
+#relatoriosLista .gcm-linha{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  align-items:start!important;
+  gap:3px!important;
+  margin:0!important;
+  padding:7px 0!important;
+  border-bottom:1px solid #e5edf5;
+}
+
+#relatoriosLista .gcm-linha:first-child{
+  padding-top:0!important;
+}
+
+#relatoriosLista .gcm-linha:last-child{
+  padding-bottom:0!important;
+  border-bottom:0!important;
+}
+
+#relatoriosLista .gcm-linha b{
+  display:block!important;
+  margin:0!important;
+  font-size:11px!important;
+  line-height:1.2!important;
+  white-space:normal!important;
+  color:#173653!important;
+}
+
+#relatoriosLista .gcm-linha>span:not(.tag-driver):not(.tag-extra){
+  display:block!important;
+  margin:0!important;
+  font-size:10px!important;
+  line-height:1.2!important;
+  color:#60758b!important;
+  white-space:normal!important;
+}
+
+#relatoriosLista .gcm-linha .tag-driver,
+#relatoriosLista .gcm-linha .tag-extra{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  justify-self:start!important;
+  width:auto!important;
+  max-width:100%!important;
+  min-height:18px!important;
+  padding:2px 6px!important;
+  margin:1px 0 0!important;
+  font-size:9px!important;
+  line-height:1.05!important;
+  white-space:normal!important;
+  text-align:left!important;
+}
+
+#relatoriosLista .report-matrix td.vazio{
+  text-align:center!important;
+  color:#9aa9b8!important;
+  vertical-align:middle!important;
+}
+
+@media(max-width:760px){
+  #relatoriosLista .report-matrix th,
+  #relatoriosLista .report-matrix td{
+    min-width:118px!important;
+    width:118px!important;
+    padding:8px!important;
+  }
+  #relatoriosLista .report-matrix .col-posto,
+  #relatoriosLista .report-matrix .posto-linha{
+    min-width:205px!important;
+    width:205px!important;
+    max-width:205px!important;
+  }
+}
