@@ -1868,7 +1868,7 @@ async function entrar(e){
 }
 async function sair(){
   const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';
-  await provider.logout(lembrar);
+  await provider.logout(false);
   limparEscopoUsuarioRuntime();
   $('appTela').classList.add('hidden');$('loginTela').classList.remove('hidden');$('loginSenha').value='';$('loginErro').textContent='';
   if(!lembrar){localStorage.removeItem('gcmbs.login.usuario');localStorage.removeItem('gcmbs.mobile.token');$('loginUsuario').value='';if($('loginLembrar'))$('loginLembrar').checked=false}else{$('loginUsuario').value=localStorage.getItem('gcmbs.login.usuario')||$('loginUsuario').value;if($('loginLembrar'))$('loginLembrar').checked=true}
