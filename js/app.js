@@ -127,9 +127,57 @@ async function gcmbsFreqLoad(force=false,silent=false){
   catch(e){const host=document.getElementById('onlineRegistros');if(host)host.innerHTML=`<div data-gcmbs-frequencia-controle="1" style="padding:22px;text-align:center;color:#b91c1c">${gcmbsEsc(e.message||'Falha ao carregar frequência.')}</div>`;if(st){st.textContent=e.message||'Falha ao carregar frequência.';st.style.color='#b91c1c';}}
   finally{gcmbsFreqLoading=false;}
 }
-function gcmbsAjustarFrequenciaComando(){
+let gcmbsFreqGestorToken='';
+let gcmbsFreqGestorCache=null;
+let gcmbsFreqGestorPromise=null;
+function gcmbsSessaoEhGestor(s){
+  const role=String(s?.role||s?.perfil||'').trim().toLowerCase();
+  const cargo=String(s?.cargo||'').trim().toUpperCase();
+  return role==='comandante'||role==='subcomandante'||/SUBCOMANDANTE/.test(cargo)||(/COMANDANTE/.test(cargo)&&!/SUBCOMANDANTE/.test(cargo));
+}
+async function gcmbsFreqEhGestor(){
+  const token=localStorage.getItem('gcmbs.mobile.token')||'';
+  if(!token)return false;
+  if(token!==gcmbsFreqGestorToken){
+    gcmbsFreqGestorToken=token;
+    gcmbsFreqGestorCache=null;
+    gcmbsFreqGestorPromise=null;
+  }
+  if(gcmbsFreqGestorCache!==null)return gcmbsFreqGestorCache;
+  if(!gcmbsFreqGestorPromise){
+    gcmbsFreqGestorPromise=gcmbsFreqCall('session')
+      .then(r=>gcmbsSessaoEhGestor(r?.session||{}))
+      .catch(()=>false)
+      .then(v=>{
+        gcmbsFreqGestorCache=!!v;
+        return gcmbsFreqGestorCache;
+      })
+      .finally(()=>{gcmbsFreqGestorPromise=null;});
+  }
+  return gcmbsFreqGestorPromise;
+}
+async function gcmbsAjustarFrequenciaComando(){
   const titulo=String(document.getElementById('onlineTitulo')?.textContent||'').trim(),wrap=gcmbsFreqControls(),filtro=document.getElementById('onlineFiltro');
-  if(titulo!=='Frequência'){if(wrap)wrap.remove();if(filtro)filtro.style.display='';gcmbsFreqLoadedKey='';gcmbsFreqDirty.clear();return;}
+  if(titulo!=='Frequência'){
+    if(wrap)wrap.remove();
+    if(filtro)filtro.style.display='';
+    gcmbsFreqLoadedKey='';
+    gcmbsFreqDirty.clear();
+    return;
+  }
+
+  // A visão operacional completa de frequência é exclusiva do Comando/Subcomando.
+  // GCM comum permanece na visão genérica já filtrada pelo próprio guarda_id.
+  if(!(await gcmbsFreqEhGestor())){
+    const atual=gcmbsFreqControls();
+    if(atual)atual.remove();
+    if(filtro)filtro.style.display='';
+    gcmbsFreqLoadedKey='';
+    gcmbsFreqDirty.clear();
+    return;
+  }
+
+  if(String(document.getElementById('onlineTitulo')?.textContent||'').trim()!=='Frequência')return;
   gcmbsFreqEnsureControls();
   if(!document.querySelector('[data-gcmbs-frequencia-controle]'))gcmbsFreqLoadedKey='';
   gcmbsFreqLoad(false);
