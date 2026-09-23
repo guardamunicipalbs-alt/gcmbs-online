@@ -1,4 +1,4 @@
-import {MODULES,PRIMARY_ENTITY} from './communication-contract.js?v=100076';
+import {MODULES,PRIMARY_ENTITY} from './communication-contract.js?v=100250';
 // GCMBS 10.0.62 — correcoes acumuladas da auditoria funcional Online/Android.
 // Este modulo atua somente na camada de interface/fluxos Online e nao altera o Gerador de Escala.
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
