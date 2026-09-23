@@ -67,10 +67,33 @@ export class AuthenticatedProvider {
   async decideMirrorPermuta(desktopId,decisao,motivo=''){return this.call('permuta_admin_decide_mirror',{desktop_id:Number(desktopId),decisao:String(decisao||'').toUpperCase(),motivo:String(motivo||'')})}
   async load(){
     const body=await this.call('data');
+    // Defesa em profundidade no cliente: GCM comum nunca mantém em memória
+    // Banco de Horas, extras, solicitações ou permutas de terceiros.
+    if(!this.gestor()){
+      const gid=Number(this.session?.guarda_id||0);
+      if(gid){
+        if(Array.isArray(body.banco_horas))body.banco_horas=body.banco_horas.filter(x=>Number(x?.guarda_id||0)===gid);
+        if(Array.isArray(body.extras))body.extras=body.extras.filter(x=>Number(x?.guarda_id||0)===gid);
+        const envolvido=x=>{
+          const p=x?.payload||x||{};
+          return Number(x?.guarda_id||0)===gid||[
+            p.contraparte_id,p.substituido_id,p.substituto_id,p.solicitante_id,p.solicitante_guarda_id,
+            x?.substituido_id,x?.substituto_id,x?.solicitante_id,x?.solicitante_guarda_id
+          ].some(v=>Number(v||0)===gid);
+        };
+        if(Array.isArray(body.permutas))body.permutas=body.permutas.filter(envolvido);
+        if(Array.isArray(body.action_requests))body.action_requests=body.action_requests.filter(envolvido);
+        if(Array.isArray(body.guardas))body.guardas=body.guardas.filter(x=>Number(x?.guarda_id||x?.id||0)===gid);
+      }
+    }
     this.data=body;
-    try{this.refs=await this.call('references')}catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
-    // v74: a ação data é montada pela réplica integral canônica do Desktop.
-    // Não há mais substituição parcial por módulo no cliente.
+    try{
+      this.refs=await this.call('references');
+      if(!this.gestor()){
+        const gid=Number(this.session?.guarda_id||0),root=this.refs?.references&&typeof this.refs.references==='object'?this.refs.references:this.refs;
+        if(Array.isArray(root?.justificativas))root.justificativas=root.justificativas.filter(x=>Number(x?.guarda_id||0)===gid);
+      }
+    }catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
     return this;
   }
 
@@ -86,7 +109,20 @@ export class AuthenticatedProvider {
 
   async branding(){return (await this.call('branding')).branding||[]}
   async entityCatalog(){return (await this.call('entity_catalog')).entities||[]}
-  async entityList(entity,limit=500,offset=0){return this.call('entity_list',{entity,limit,offset})}
+  async entityList(entity,limit=500,offset=0){
+    const b=await this.call('entity_list',{entity,limit,offset});
+    if(this.gestor())return b;
+    const gid=Number(this.session?.guarda_id||0),ent=String(entity||'').toLowerCase();
+    if(!gid||!Array.isArray(b.records))return b;
+    // Ocorrências são consulta institucional para todos os GCMs.
+    // Feriados também permanecem referência institucional.
+    if(['ocorrencias_operacionais','feriados','eventos_extras'].includes(ent))return b;
+    if(ent==='justificativas_faltas')b.records=b.records.filter(r=>Number(r?.data?.guarda_id||0)===gid);
+    else if(ent==='abastecimento_viaturas')b.records=b.records.filter(r=>Number(r?.data?.motorista_id||0)===gid);
+    else if(ent==='manutencao_viaturas')b.records=b.records.filter(r=>Number(r?.data?.encaminhado_por||0)===gid);
+    else if(Array.isArray(b.catalog?.scope_fields)&&b.catalog.scope_fields.length)b.records=b.records.filter(r=>(r?.scope_guard_ids||[]).map(Number).includes(gid));
+    return b;
+  }
   async entityGet(entity,record_key){return this.call('entity_get',{entity,record_key})}
   async entityMutate(entity,record_key,operation,data,client_change_id=''){
     if(String(entity||'').toLowerCase()==='justificativas_faltas'){
