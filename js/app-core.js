@@ -473,9 +473,29 @@ async function carregarRelatoriosInstitucionais(force=false){
   renderRelatoriosInstitucionais();
 }
 function imprimirRelatoriosInstitucionais(){
-  const dados=filtrarRelatoriosInstitucionais();const w=window.open('','_blank','noopener,noreferrer');if(!w)return alert('Libere pop-ups para imprimir o relatório.');
-  const rows=dados.map(x=>`<tr><td>${esc(fmt(String(x.data||'').slice(0,10)))}</td><td>${esc(nomeEscala(x)||'')}</td><td>${esc(postoEscala(x)||'')}</td><td>${esc(horarioRelatorio(x)||x.turno||'')}</td><td>${esc(x.viatura||'')}</td></tr>`).join('');
-  w.document.write(`<!doctype html><meta charset="utf-8"><title>GCMBS 10.0.85 - Relatório</title><style>body{font:12px Arial;margin:24px}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:5px;text-align:left}th{background:#eee}</style><h1>GCMBS — Relatório Institucional de Escalas</h1><p>${dados.length} registro(s)</p><table><thead><tr><th>Data</th><th>GCM</th><th>Posto</th><th>Horário</th><th>Viatura</th></tr></thead><tbody>${rows}</tbody></table>`);w.document.close();w.focus();w.print();
+  const dados=filtrarRelatoriosInstitucionais(),ini=$('relatoriosIni')?.value||'',fim=$('relatoriosFim')?.value||'';
+  const w=window.open('','_blank','noopener,noreferrer');if(!w)return alert('Libere pop-ups para imprimir o relatório.');
+  const grupos=montarGruposEscala(dados);
+  let datas=gerarDatas(ini,fim);
+  const gcm=$('relatoriosGcm')?.value||'',posto=$('relatoriosPosto')?.value||'';
+  if(gcm||posto){const ds=new Set(dados.map(x=>String(x.data||'').slice(0,10)));datas=datas.filter(d=>ds.has(d));}
+  const blocos=[];for(let i=0;i<datas.length;i+=7)blocos.push(datas.slice(i,i+7));
+  const tabelas=blocos.map((bloco,idx)=>{
+    const head=`<tr><th class="posto">POSTO / HORÁRIO</th>${bloco.map(d=>`<th>${esc(fmt(d))}</th>`).join('')}</tr>`;
+    const body=grupos.map(g=>`<tr><th class="posto"><b>${esc(g.posto)}</b><small>${esc(g.horario)}</small></th>${bloco.map(d=>{
+      const itens=g.itens.get(d)||[];
+      return `<td>${itens.length?itens.map(x=>`<div class="gcm"><b>${esc(x.nome)}</b>${x.motorista?`<em>MOTORISTA${x.veiculo?' - '+esc(x.veiculo):''}</em>`:x.veiculo?`<span>Viatura: ${esc(x.veiculo)}</span>`:''}${x.extra?'<strong class="extra">Extra</strong>':''}</div>`).join(''):'—'}</td>`;
+    }).join('')}</tr>`).join('');
+    return `<section class="${idx?'page':''}"><table><thead>${head}</thead><tbody>${body}</tbody></table></section>`;
+  }).join('');
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>GCMBS — Relatório de Escalas</title><style>
+    @page{size:landscape;margin:9mm}body{font:10px Arial,sans-serif;color:#17365d;margin:0}h1{font-size:16px;margin:0 0 4px}p{margin:0 0 10px;color:#52627a}
+    table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:8px}th,td{border:1px solid #c7d4e4;padding:5px;vertical-align:top;word-break:break-word}
+    thead th{background:#eaf1f8;text-align:left;font-size:9px}.posto{width:160px;background:#eef4f9;text-align:left}.posto small{display:block;font-weight:normal;margin-top:3px}
+    .gcm{margin:0 0 5px}.gcm b{display:block}.gcm em{display:block;color:#18834b;font-style:normal;font-weight:bold;font-size:8px}.gcm span{display:block;font-size:8px}.extra{display:block;color:#6d28d9;font-size:8px}
+    .page{break-before:page}
+  </style></head><body><h1>GCMBS — Relatório Institucional de Escalas</h1><p>${esc(fmt(ini))} a ${esc(fmt(fim))} · ${dados.length} registro(s) · grade por posto e horário</p>${tabelas||'<p>Nenhum registro encontrado.</p>'}</body></html>`);
+  w.document.close();w.focus();setTimeout(()=>w.print(),150);
 }
 
 function abrirAjusteEscala(id){
