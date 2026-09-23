@@ -146,6 +146,11 @@
     <button id="pmEnviar" class="primary full" type="submit">Enviar solicitação</button><button id="pmCancelarEdicao" class="secondary full hidden" type="button">Cancelar edição</button><div id="pmMsg" class="full request-message" role="status"></div>
   </form></div>
 </section>
+<section data-view="gratificacao" class="hidden">
+  <div class="desktop-page-head"><div><h1>Gratificação de Motorista</h1><p>Configuração e histórico do crédito automático por tempo reconhecido como motorista.</p></div></div>
+  <div class="card"><div class="toolbar"><h2>Automação</h2><span id="grStatus" class="badge">Carregando...</span></div><div id="grConfigBox" class="form-grid"><label class="full check"><input id="grAtivo" type="checkbox" disabled> Gratificação automática</label><label>Horas extras por hora como motorista<input id="grFator" type="number" min="0.001" max="1" step="0.001" value="0.125" disabled></label><div class="notice">Nesta fase segura, a ativação/desativação é feita no Desktop. Online e App acompanham o mesmo estado sincronizado.</div><button id="grSalvar" class="primary" type="button" disabled>Salvar configuração</button><span id="grMsg" class="muted"></span></div></div>
+  <div class="card"><div class="toolbar"><h2>Histórico</h2><label>Competência <input id="grComp" type="month"></label></div><div id="grResumo" class="grid"></div><div id="grLista" class="record-grid"></div></div>
+</section>
 <section data-view="banco" class="hidden">
 <div class="card"><div class="toolbar"><h2 id="tituloBanco">Meu banco de horas</h2><label>Competência <input id="bhCompetenciaFiltro" type="month"></label></div><div class="grid"><div class="metric">50%<b id="bh50">0h00</b></div><div class="metric">100%<b id="bh100">0h00</b></div><div class="metric">Débitos<b id="bhDeb">0h00</b></div><div class="metric">Saldo<b id="bhSaldo">0h00</b></div></div></div>
 <div class="card"><h2>Solicitar correção</h2><p class="muted">Solicitações devem ser feitas em blocos de 30 minutos. O saldo só muda após aprovação do Comando.</p><form id="formBancoCorrecao" class="form-grid"><label>Competência<input id="bcComp" type="month" required></label><label>Data do serviço<input id="bcData" type="date" required></label><label>Horas<input id="bcHoras" type="number" min="0" max="200" step="1" value="0" required></label><label>Minutos<select id="bcMinutos"><option value="0">00</option><option value="30">30</option></select></label><label>Classe<select id="bcClasse"><option value="50">50%</option><option value="100">100%</option></select></label><label class="full">Descrição<textarea id="bcDescricao" required placeholder="Descreva a correção solicitada"></textarea></label><button id="bcEnviar" class="primary full" type="submit">Enviar solicitação</button><div id="bcMsg" class="full request-message" role="status"></div></form></div>
@@ -213,7 +218,7 @@
 </div>
 <script defer src="js/gcmbs-design-system-v76.js?v=100160"></script>
 <script type="module" src="js/hf10-r15-online-stability.js?v=100110"></script>
-<script type="module" src="js/app.js?v=100177-extra-classify2"></script>
+<script type="module" src="js/app.js?v=100250-extra-classify2"></script>
 <script defer src="js/gcmbs-quadro-tipo-servico-v151.js?v=100177-extra-classify2"></script>
 <script defer src="js/gcmbs-desktop-parity-v107.js?v=100110"></script><script type="module" src="js/gcmbs-audit-fixes-v110.js?v=100156"></script>
 <!-- GCMBS_V118_EXACT_LAYOUT -->
