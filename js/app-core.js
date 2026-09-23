@@ -516,7 +516,23 @@ async function salvarAjusteEscala(){
 }
 
 function detalhesQuadro(caminho){const [g,k]=String(caminho||'').split('.');if(!quadroAtual)return[];if(g==='efetivo')return quadroAtual.efetivo?.detalhes?.[k]||[];if(g==='viaturas')return quadroAtual.viaturas?.detalhes?.[k]||[];if(g==='postos'&&k==='cobertos')return quadroAtual.postos?.detalhamento||[];if(g==='faltas'&&k==='registros')return quadroAtual.faltas?.registros||[];return[]}
-function abrirQuadroDetalhe(titulo,caminho){const itens=detalhesQuadro(caminho);$('quadroModalTitulo').textContent=titulo||'Detalhes';$('quadroModalMeta').textContent=`Data de referência: ${fmt(quadroAtual?.data||$('quadroData').value)} · ${itens.length} registro(s)`;$('quadroModalLista').innerHTML=itens.length?itens.map(x=>`<div class="item"><strong>${esc(x.nome||'-')}</strong><span>${esc(x.complemento||'')}</span></div>`).join(''):'<div class="empty">Nenhum registro compõe este indicador na data selecionada.</div>';$('quadroModal').classList.remove('hidden')}
+function tipoServicoQuadro(x){
+  const raw=[x?.tipo,x?.natureza,x?.origem,x?.descricao,x?.complemento]
+    .filter(Boolean).join(' ')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  return /\bextra\b/.test(raw)||/extra\s+automatic/.test(raw)||/extra\s+por\s+evento/.test(raw)||/servico\s+extra/.test(raw)?'EXTRA':'ORDINARIO';
+}
+function abrirQuadroDetalhe(titulo,caminho){
+  const itens=detalhesQuadro(caminho),servicoAB=['efetivo.servicoA','efetivo.servicoB'].includes(String(caminho||''));
+  $('quadroModalTitulo').textContent=titulo||'Detalhes';
+  $('quadroModalMeta').textContent=`Data de referência: ${fmt(quadroAtual?.data||$('quadroData').value)} · ${itens.length} registro(s)`;
+  $('quadroModalLista').innerHTML=itens.length?itens.map(x=>{
+    const tipo=servicoAB?tipoServicoQuadro(x):'';
+    const badge=tipo?`<span class="gc151-service-type ${tipo==='EXTRA'?'gc151-extra':'gc151-ordinario'}">${tipo==='EXTRA'?'Extra':'Ordinário'}</span>`:'';
+    return `<div class="item${servicoAB?' gc151-servico-item':''}" data-gcmbs-tipo-servico="${tipo}"><strong>${esc(x.nome||'-')}${badge}</strong><span>${esc(x.complemento||'')}</span></div>`;
+  }).join(''):'<div class="empty">Nenhum registro compõe este indicador na data selecionada.</div>';
+  $('quadroModal').classList.remove('hidden');
+}
 function renderInicio(){
   const s=provider.session||{};$('perfilNome').textContent=s.nome||'';$('perfilCargo').textContent=s.cargo||s.role||'';
 }
