@@ -11,11 +11,27 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #quadroModalLista .item.gc151-servico-item strong{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
-      .gc151-service-type{display:inline-flex;align-items:center;justify-content:center;min-height:22px;padding:2px 9px;border-radius:999px;font-size:11px;line-height:1;font-weight:800;letter-spacing:.02em;text-transform:none;white-space:nowrap;border:1px solid transparent}
+      #quadroModalLista{gap:6px!important}
+      #quadroModalLista .item.gc151-servico-item{
+        display:grid!important;
+        grid-template-columns:minmax(175px,230px) minmax(0,1fr)!important;
+        align-items:center!important;
+        column-gap:10px!important;
+        row-gap:3px!important;
+        min-height:40px!important;
+        padding:8px 11px!important;
+        border-radius:10px!important;
+      }
+      #quadroModalLista .item.gc151-servico-item strong{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.2}
+      #quadroModalLista .item.gc151-servico-item>span{line-height:1.25!important;margin:0!important}
+      .gc151-service-type{display:inline-flex;align-items:center;justify-content:center;min-height:19px;padding:2px 7px;border-radius:999px;font-size:10px;line-height:1;font-weight:800;letter-spacing:.01em;text-transform:none;white-space:nowrap;border:1px solid transparent}
       .gc151-service-type.gc151-ordinario{background:#eaf2ff;color:#174ea6;border-color:#bfd3f6}
       .gc151-service-type.gc151-extra{background:#fff2d8;color:#8a4b00;border-color:#f2cf8e}
-      @media (max-width:640px){.gc151-service-type{font-size:10px;padding:2px 7px}}
+      @media (max-width:640px){
+        #quadroModalLista{gap:5px!important}
+        #quadroModalLista .item.gc151-servico-item{grid-template-columns:1fr!important;padding:8px 10px!important;row-gap:4px!important}
+        .gc151-service-type{font-size:10px;padding:2px 7px}
+      }
     `;
     document.head.appendChild(style);
   }
