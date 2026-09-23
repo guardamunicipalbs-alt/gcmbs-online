@@ -1228,6 +1228,10 @@ function campoOnline(col,val){
   if(onlineCurrent?.entity==='justificativas_faltas'&&['status','arquivo_nome'].includes(lower))return'';
   if(onlineCurrent?.entity==='abastecimento_viaturas'&&lower==='motorista')return'';
   if(lower==='guarda_id'&&!provider.gestor())return'';
+  if(!provider.gestor()&&['motorista_id','encaminhado_por'].includes(lower)){
+    const gid=Number(provider.session?.guarda_id||0),nome=provider.session?.nome||provider.session?.nome_guerra||'GCM';
+    return `<label>${esc(onlineLabel(name))}<input type="hidden" data-online-field="${esc(name)}" value="${gid}"><span class="field-auto">${esc(nome)} · preenchido automaticamente pelo seu acesso</span></label>`;
+  }
   const type=String(col.type||'').toUpperCase(),v=valorOnline(val),label=onlineLabel(name);
   if(/^(viatura_id|viatura_principal_id|viatura_substituta_id|hist_viatura_id)$/.test(lower)){
     const all=(refData().viaturas||[]);
