@@ -42,8 +42,26 @@
     return titulo.includes('servico a')||titulo.includes('servico b');
   }
   function classificar(item){
-    const detalhe=norm(item.querySelector('span')?.textContent);
-    return /(^|\b)extra(\b|$)/i.test(detalhe)?'EXTRA':'ORDINARIO';
+    // Não usar item.querySelector('span'): depois que o badge é inserido,
+    // o primeiro <span> passa a ser o próprio badge ("Ordinário"/"Extra"),
+    // fazendo um extra real ficar preso como Ordinário.
+    const detalheEl=item.querySelector(':scope > span');
+    const detalhe=norm(detalheEl?.textContent||'');
+    const textoCompleto=norm(
+      Array.from(item.childNodes)
+        .filter(n=>n!==item.querySelector('strong'))
+        .map(n=>n.textContent||'')
+        .join(' ')
+    );
+
+    const s=(detalhe+' '+textoCompleto).trim();
+    const ehExtra=
+      /\bextra\b/i.test(s) ||
+      /extra\s+automatic/i.test(s) ||
+      /extra\s+por\s+evento/i.test(s) ||
+      /servico\s+extra/i.test(s);
+
+    return ehExtra?'EXTRA':'ORDINARIO';
   }
   function aplicar(){
     const lista=document.getElementById('quadroModalLista');
