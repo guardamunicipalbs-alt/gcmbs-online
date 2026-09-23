@@ -172,6 +172,9 @@ function abrirMenu(){$('mainNav')?.classList.add('open');$('navBackdrop')?.class
 async function abrirModuloPrincipal(modulo){
   modulo=canonicalModule(modulo);
   if(!temAcesso(modulo)){alert('Você não possui acesso a este módulo.');return;}
+  const metaModulo=MODULOS_GCMBS.find(m=>m.id===modulo)||{};
+  if($('onlineModuloTitulo'))$('onlineModuloTitulo').textContent=metaModulo.nome||modulo;
+  if($('onlineModuloDescricao'))$('onlineModuloDescricao').textContent=metaModulo.descricao||'Módulo autorizado conforme o Controle de Acesso.';
   const ativar=()=>document.querySelectorAll('#mainNav [data-module]').forEach(x=>x.classList.toggle('active',x.dataset.module===modulo));
   if(modulo==='gerador_escala'){
     onlineModuleFilter='gerador_escala'; setView('online'); ativar();
