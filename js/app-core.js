@@ -58,7 +58,7 @@ const ONLINE_LABELS={
   motorista:'Motorista',motorista_id:'Motorista',litros:'Litros',guarda_id:'GCM',data_inicial:'Data inicial',
   quantidade_dias:'Quantidade de dias',data_final:'Data final',motivo:'Motivo / justificativa',tipo_servico:'Tipo do serviço',
   arquivo_nome:'Documento',arquivo_tipo:'Tipo do documento',arquivo_dados:'Arquivo',criado_em:'Criado em',atualizado_em:'Atualizado em',
-  nome_guerra:'Nome de guerra',nome_completo:'Nome completo',cpf:'CPF',matricula:'Matrícula',cargo:'Cargo',equipe:'Equipe',equipe_id:'Equipe',posto_prioritario:'Posto prioritário',posto_prioritario_id:'Posto prioritário',categoria_cnh:'Categoria CNH',
+  nome_guerra:'Nome de guerra',nome_completo:'Nome completo',cpf:'CPF',matricula:'Matrícula',cargo:'Cargo',equipe:'Equipe',equipe_id:'Equipe',posto_prioritario:'Posto prioritário',posto_prioritario_id:'Posto prioritário',restricao_escala:'Restrição da escala ordinária',categoria_cnh:'Categoria CNH',
   nome:'Nome',tipo:'Tipo',prioridade:'Prioridade',minimo:'Efetivo mínimo',maximo:'Efetivo máximo',quantidade_minima:'Efetivo mínimo',quantidade_maxima:'Efetivo máximo',horario_inicio:'Horário inicial',horario_fim:'Horário final',
   data:'Data',hora:'Hora',prefixo:'Prefixo',placa:'Placa',modelo:'Modelo',ano:'Ano',ano_fabricacao:'Ano de fabricação',ano_modelo:'Ano/modelo',combustivel:'Combustível',intervalo_troca_oleo_km:'Intervalo troca de óleo (km)',km_ultima_troca_oleo:'KM da última troca de óleo',
   patrimonio:'Patrimônio',equipamento:'Equipamento',modalidade_uso:'Modalidade de uso',data_entrega:'Data de entrega',data_devolucao:'Data de devolução',situacao:'Situação',
@@ -118,7 +118,7 @@ function valorApresentacao(k,v){
 
 
 const ENTITY_UI={
-  guardas:{titulo:'Cadastro de Guardas',action:'Novo GCM',descricao:'Cadastro funcional organizado por assunto, sem expor campos técnicos.',order:['nome_guerra','nome_completo','cpf','matricula','cargo','status','tipo_sanguineo','fator_rh','equipe','posto_prioritario','categoria_cnh','autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h'],sections:[['Identificação funcional',['nome_guerra','nome_completo','cpf','matricula','cargo','status']],['Dados pessoais',['tipo_sanguineo','fator_rh']],['Lotação e configuração operacional',['equipe','posto_prioritario','disponivel_escala','pode_noite','pode_24h']],['CNH e autorizações',['categoria_cnh','autorizado_viatura','autorizado_motocicleta']]]},
+  guardas:{titulo:'Cadastro de Guardas',action:'Novo GCM',descricao:'Cadastro funcional organizado por assunto, sem expor campos técnicos.',order:['nome_guerra','nome_completo','cpf','matricula','cargo','status','tipo_sanguineo','fator_rh','equipe','posto_prioritario','restricao_escala','categoria_cnh','autorizado_viatura','autorizado_motocicleta','disponivel_escala','pode_noite','pode_24h'],sections:[['Identificação funcional',['nome_guerra','nome_completo','cpf','matricula','cargo','status']],['Dados pessoais',['tipo_sanguineo','fator_rh']],['Lotação e configuração operacional',['equipe','posto_prioritario','restricao_escala','disponivel_escala','pode_noite','pode_24h']],['CNH e autorizações',['categoria_cnh','autorizado_viatura','autorizado_motocicleta']]]},
   equipes:{titulo:'Equipes',action:'Nova equipe',descricao:'Equipes operacionais, jornada vinculada e ciclo de serviço.',order:['nome','tipo_escala_id','ciclo','ativa','participa_gerador','turno_inicio','modo_distribuicao'],sections:[['Identificação',['nome','ativa']],['Jornada e ciclo',['tipo_escala_id','ciclo','turno_inicio','modo_distribuicao']],['Operação',['participa_gerador']]]},
   postos:{titulo:'Postos Operacionais',action:'Novo posto',descricao:'Prioridade operacional, efetivo mínimo/máximo, horários e funcionamento dos postos.',order:['nome','tipo','prioridade','quantidade_minima','quantidade_maxima','horario_inicio','horario_fim','funcionamento_24h','ativo','observacao'],sections:[['Identificação',['nome','tipo','ativo']],['Prioridade e efetivo',['prioridade','quantidade_minima','quantidade_maxima']],['Funcionamento',['horario_inicio','horario_fim','funcionamento_24h']],['Observações',['observacao']]]},
   tipos_escalas:{titulo:'Tipos de Escalas',action:'Novo tipo',descricao:'Jornadas e horários utilizados pelas equipes e escalas.',order:['nome','descricao','ativo'],sections:[['Tipo de escala',['nome','ativo']],['Descrição',['descricao']]]},
@@ -1327,6 +1327,10 @@ function campoOnline(col,val){
   if(lower==='equipe'&&onlineCurrent?.entity==='guardas'){
     const opts=(refData().equipes||[]).map(x=>`<option value="${esc(x.nome||'')}" ${String(x.nome||'')===String(v)?'selected':''}>${esc(x.nome||'Equipe')}</option>`).join('');
     return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Sem equipe informada</option>${opts}</select></label>`;
+  }
+  if(lower==='restricao_escala'&&onlineCurrent?.entity==='guardas'){
+    const atual=String(v||'').toUpperCase();
+    return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="" ${!atual?'selected':''}>Sem restrição especial</option><option value="SOMENTE_FIM_SEMANA" ${atual==='SOMENTE_FIM_SEMANA'?'selected':''}>Somente sábados e domingos</option></select><small>Limita apenas a escala ordinária automática; extras e permutas continuam pelas regras gerais.</small></label>`;
   }
   if(/^(guarda_id|substituido_id|substituto_id|motorista_id|recebido_por|encaminhado_por|responsavel_id|condutor_ocorrencia_id)$/.test(lower)){
     const opts=(refData().guardas||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc(x.nome_guerra||x.nome_completo||'GCM')}</option>`).join('');
