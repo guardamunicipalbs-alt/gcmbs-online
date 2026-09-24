@@ -90,9 +90,6 @@ function gcmbsV125FeriadosPodeEditar(){
     .trim().toUpperCase();
   return equipe==='COMANDANTES';
 }
-function gcmbsV125FeriadosBloqueio(){
-  return 'Cadastro, edição e exclusão de feriados são exclusivos aos integrantes da equipe COMANDANTES. Para os demais GCMs, este módulo é somente consulta.';
-}
 function viaturaPorId(v){const x=(refData().viaturas||[]).find(r=>Number(r.id)===Number(v));return x?[x.prefixo,x.placa].filter(Boolean).join(' · '):''}
 function guardaPorId(v){const x=(refData().guardas||[]).find(r=>Number(r.id)===Number(v));return x?.nome_guerra||x?.nome_completo||''}
 function equipePorId(v){const x=(refData().equipes||[]).find(r=>Number(r.id)===Number(v));return x?.nome||''}
@@ -1651,9 +1648,7 @@ async function salvarSubstituicoesViatura(principalId,selecionadas){
   }
 }
 async function editarOnline(key=null){
-  if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
-    alert(gcmbsV125FeriadosBloqueio());return;
-  }
+  if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
   onlineEditing=key?onlineRecords.find(r=>String(r.record_key)===String(key)):null;const d=onlineEditing?.data||{},cfg=uiEntity();
   $('onlineEditorTitulo').textContent=(onlineEditing?'Editar ':'Novo ')+(cfg.titulo||onlineCurrent?.titulo||'registro');
   const cols=orderedColumns(),map=new Map(cols.map(c=>[c.name,c]));let html='';
@@ -1671,7 +1666,7 @@ async function editarOnline(key=null){
 }
 async function salvarOnline(){
   try{
-    if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())throw new Error(gcmbsV125FeriadosBloqueio());
+    if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
     const d={...(onlineEditing?.data||{})};
     const substitutasSelecionadas=onlineCurrent.entity==='viaturas'?coletarSubstitutasViaturaEditor():[];
     document.querySelectorAll('[data-online-field]').forEach(i=>{let v=i.value;const c=onlineCurrent.columns.find(x=>x.name===i.dataset.onlineField);if(/INT|REAL|NUM/i.test(String(c?.type||''))&&v!=='')v=Number(v);d[i.dataset.onlineField]=v});
@@ -1716,9 +1711,7 @@ async function salvarOnline(){
   }catch(e){$('onlineMsg').textContent=e.message}
 }
 async function excluirOnline(key){
-  if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar()){
-    alert(gcmbsV125FeriadosBloqueio());return;
-  }
+  if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
   if(!confirm('Excluir este registro online?'))return;
   try{const r=onlineRecords.find(x=>String(x.record_key)===String(key));await provider.entityMutate(onlineCurrent.entity,key,'DELETE',r?.data||{});await abrirEntidadeOnline(onlineCurrent.entity)}catch(e){alert(e.message)}
 }
