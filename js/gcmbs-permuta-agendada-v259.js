@@ -19,7 +19,7 @@ const TERM_TEXT=[
 ].join(' ');
 
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,a]=String(d).slice(0,10).split('-');return a&&m&&y?`${a}/${m}/${y}`:String(d||'')};
 const token=()=>localStorage.getItem('gcmbs.mobile.token')||'';
 const nativeApp=()=>!!window.Capacitor;
