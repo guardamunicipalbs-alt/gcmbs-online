@@ -1,14 +1,14 @@
-{
-    "version":  "10.0.151",
-    "versionCode":  151,
-    "apk":  "GCMBS-10.0.151.apk",
-    "publishedAt":  "2026-09-22T15:22:15.5854344Z",
-    "sha256":  "A64437E41D7A178FD55538056C51AC6522CAD45587DD439A246BB3848E09F695",
-    "sizeBytes":  5663991,
+﻿{
+    "version":  "10.0.152",
+    "versionCode":  152,
+    "apk":  "GCMBS-10.0.152.apk",
+    "publishedAt":  "2026-09-24T00:39:02.2183361Z",
+    "sha256":  "3E02B862B141C89632F9E462BB44AB2309F29FA7C468E3F9D31B43CFCA21D91E",
+    "sizeBytes":  5667939,
     "notes":  [
-                  "Android 10.0.151: competencia integral do Banco de Horas como no Desktop.",
-                  "Inclui servicos previstos no mes, identificados como previstos, sem confirma-los como realizados ou pagos.",
-                  "Exclui estornos e exclusoes; nao altera movimentos nem habilita sincronizacao geral.",
-                  "Atualizacao sobre a versao anterior, preservando dados locais."
+                  "Android 10.0.152: Gratificacao de Motorista preparada e sincronizada, inicialmente desativada.",
+                  "Consulta do estado e historico da Gratificacao no App; ativacao continua protegida no Desktop nesta etapa.",
+                  "Inclui paridade da restricao de escala ordinaria \u0027Somente sabados e domingos\u0027.",
+                  "Atualizacao sobre a versao anterior, preservando os dados locais."
               ]
 }
