@@ -5,8 +5,8 @@ import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-con
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.154';
-const GCMBS_APP_VERSION_CODE=154;
+const GCMBS_APP_VERSION='10.0.155';
+const GCMBS_APP_VERSION_CODE=155;
 const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
 const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
 async function verificarAtualizacaoApp(){
@@ -29,7 +29,7 @@ const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Amer
 const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia_pagamento||x?.competencia_pagamento||p.competencia||x?.competencia||p.competencia_origem||x?.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.154';
+const APP_VERSION='10.0.155';
 let provider=new AuthenticatedProvider();
 let permutasEspelho=[];
 let permutasAgendadasEspelho=[];let permutasAgendadasCarregadas=false;
@@ -154,7 +154,8 @@ function setView(id){
   fecharMenu();
 }
 function temAcesso(modulo){
-  if(modulo==='perfil'||modulo==='avisos'||modulo==='gratificacao_motorista') return true;
+  if(modulo==='perfil'||modulo==='avisos') return true;
+  if(modulo==='gratificacao_motorista') return provider.gestor() && provider.pode(modulo);
   if(modulo==='escalas'||modulo==='gerador_escala') return provider.gestor() && provider.pode('escalas');
   return provider.pode(modulo);
 }
@@ -256,7 +257,7 @@ function renderPerfil(){
   $('perfilCargo').textContent=s.cargo||s.role||'';
   $('perfilUsuario').textContent=s.usuario||s.username||'';
   $('perfilRole').textContent=s.role||'gcm';
-  const ps=provider.permissoesEfetivas();
+  const ps=provider.permissoesEfetivas().filter(p=>provider.gestor()||canonicalModule(p.modulo)!=='gratificacao_motorista');
   $('listaPermissoes').innerHTML=provider.controleTotal()
     ? `<span class="badge">CONTROLE TOTAL · ${ps.length} módulos</span>`
     : ps.length
@@ -267,6 +268,7 @@ function renderPerfil(){
 let __gratificacaoEventos=false;
 function grHm(m){const n=Math.max(0,Math.round(Number(m)||0));return `${Math.floor(n/60)}h${String(n%60).padStart(2,'0')}`}
 async function carregarGratificacao(){
+  if(!provider.gestor())return;
   const compEl=$('grComp');if(compEl&&!compEl.value)compEl.value=competenciaAtual();
   const comp=String(compEl?.value||'');
   try{
@@ -1090,6 +1092,7 @@ function renderBanco(){
           const tipo=String(x.tipo||x.origem||'Movimentação');
           const origem=String(x.origem||'');
           const motivo=String(x.motivo||'');
+          const observacao=String(x.observacao||'');
 
           const folha=/FOLHA|PAGAMENTO|INDENIZA/i.test(
             `${tipo} ${origem} ${motivo}`
@@ -1132,6 +1135,10 @@ function renderBanco(){
 
               ${motivo
                 ? `<small>Motivo: ${esc(motivo)}</small>`
+                : ''
+              }
+              ${observacao
+                ? `<small>Detalhes: ${esc(observacao)}</small>`
                 : ''
               }
             </div>
