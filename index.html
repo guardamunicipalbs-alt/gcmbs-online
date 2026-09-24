@@ -129,7 +129,7 @@
   <div class="desktop-page-head"><div><h1>Permutas</h1><p>Solicite, acompanhe e consulte as decisões do Comando.</p></div></div>
   <div class="card"><div class="toolbar"><h2>Minhas solicitações de permuta</h2><label>Competência <input id="pmCompetenciaFiltro" type="month"></label></div><div id="listaPermutasSolicitadas" class="list"></div></div>
   <div id="permutaGestaoCard" class="card hidden"><h2>Gerenciamento de permutas — Comando</h2><p class="muted">Analise as solicitações pendentes, aprove, recuse ou retire da fila solicitações registradas de forma equivocada. As decisões são sincronizadas com o Desktop.</p><div id="listaPermutasGestao" class="list"></div></div>
-  <div class="card" id="permutaCard"><h2 id="pmTitulo">Nova solicitação de permuta</h2><form id="formPermuta" class="form-grid">
+  <div class="card" id="permutaCard"><h2 id="pmTitulo">Nova solicitação de permuta</h2><div class="notice" style="margin-bottom:12px"><b>Acompanhamento da troca agendada V256:</b> as trocas agendadas e compensações criadas pelo fluxo protegido do Desktop aparecem acima com seu status sincronizado. A criação pelo Online será liberada somente após o mesmo fluxo protegido estar disponível no servidor.</div><form id="formPermuta" class="form-grid">
     <label class="full">Modalidade<select id="pmModalidade"><option value="ASSUNCAO">Assumir serviço ordinário</option><option value="CESSAO_EXTRA">Assumir um serviço extra</option><option value="TROCA_EXTRA">Troca bilateral de serviços extras</option><option value="TROCA_ORDINARIO_EXTRA">Trocar meu ordinário por um extra</option></select></label>
     <div class="full notice"><b>Qual opção usar?</b><br><b>Assumir serviço ordinário:</b> você substitui outro GCM no ordinário selecionado.<br><b>Assumir um serviço extra:</b> você passa a executar o extra e a responsabilidade financeira acompanha a assunção aprovada.<br><b>Troca bilateral de extras:</b> cada GCM executa o extra do outro, mas os créditos financeiros originais permanecem com seus titulares.<br><b>Trocar meu ordinário por um extra:</b> você executa o extra do outro GCM e ele executa o seu ordinário; a troca é apenas operacional e não transfere horas, 50% ou 100%.</div>
     <label class="pm-ordinary">Data do serviço ordinário<input id="pmData" type="date"></label>
@@ -218,7 +218,7 @@
 </div>
 <script defer src="js/gcmbs-design-system-v76.js?v=100160"></script>
 <script type="module" src="js/hf10-r15-online-stability.js?v=100110"></script>
-<script type="module" src="js/app.js?v=100254-extra-classify2"></script>
+<script type="module" src="js/app.js?v=100256"></script>
 <script defer src="js/gcmbs-quadro-tipo-servico-v151.js?v=100177-extra-classify2"></script>
 <script defer src="js/gcmbs-desktop-parity-v107.js?v=100110"></script><script type="module" src="js/gcmbs-audit-fixes-v110.js?v=100156"></script>
 <!-- GCMBS_V118_EXACT_LAYOUT -->
