@@ -32,11 +32,13 @@ const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor
 const APP_VERSION='10.0.85';
 let provider=new AuthenticatedProvider();
 let permutasEspelho=[];
+let permutasAgendadasEspelho=[];let permutasAgendadasCarregadas=false;
 let permutaExtrasCache={mine:[],others:[]};
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
 
 function limparEscopoUsuarioRuntime(){
   permutasEspelho=[];
+  permutasAgendadasEspelho=[];permutasAgendadasCarregadas=false;
   permutaExtrasCache={mine:[],others:[]};
   onlineCatalog=[];onlineCurrent=null;onlineRecords=[];onlineEditing=null;
   quadroAtual=null;permutaEditingId=null;escalaModo='pessoal';escalasInstitucionais=[];escalaEditing=null;
@@ -699,8 +701,28 @@ function descricaoTrocaMista(q){
     extra:`[${tipo}] ${esc(e.descricao||q.extra_descricao||'Serviço extra')} · ${fmt(extraData)} · ${esc(e.horario_inicio||q.extra_horario_inicio||'')}–${esc(e.horario_fim||q.extra_horario_fim||'')} · ${Number(e.minutos||q.minutos_extra_origem||0)/60}h · ${esc(e.classe||q.classe_extra_origem||'50')}%`
   };
 }
+function renderPermutaAgendadaV256(x){
+  const st=String(x.status||'AGUARDANDO_ACEITE').toUpperCase();
+  const devedor=pessoaPorId(x.devedor_id)||x.devedor_nome||`GCM #${x.devedor_id||'-'}`;
+  const credor=pessoaPorId(x.credor_id)||x.credor_nome||`GCM #${x.credor_id||'-'}`;
+  const tipo=String(x.tipo_servico||'').toUpperCase()==='EXTRA'?'Extra':'Ordinário';
+  const min=Number(x.duracao_minutos||0),dur=min?`${Math.floor(min/60)}h${String(min%60).padStart(2,'0')}`:'-';
+  const comp=x.compensacao_data?`<div class="record-meta"><b>Compensação:</b> ${fmt(x.compensacao_data)} · ${esc(x.compensacao_turno||'')} · ${dur}</div>`:'';
+  const realizado=x.compensacao_realizada_em?'<div class="record-meta">Compensação confirmada pela Frequência.</div>':'';
+  return `<article class="record-card"><div class="record-card-head"><strong>Troca agendada · ${esc(tipo)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta"><b>Origem:</b> ${fmt(x.data_origem)} · ${esc(x.turno_origem||'')} · ${dur}</div><div class="record-meta"><b>Devedor:</b> ${esc(devedor)} · <b>Credor:</b> ${esc(credor)}</div>${comp}${realizado}<div class="record-warning">Compensação financeiramente neutra. A obrigação só é quitada após Frequência efetiva do serviço equivalente.</div>${x.observacao?`<div>${esc(x.observacao)}</div>`:''}</article>`;
+}
 function renderPermutas(){
   const el=$('listaPermutasSolicitadas');if(!el)return;
+  if(!permutasAgendadasCarregadas){
+    permutasAgendadasCarregadas=true;
+    provider.entityList('permutas_compensacoes_agendadas',500,0)
+      .then(r=>{permutasAgendadasEspelho=(r.records||[]).map(x=>x.data||{});renderPermutas();})
+      .catch(e=>{permutasAgendadasCarregadas=false;console.warn('[GCMBS] espelho de compensacoes agendadas:',e?.message||e);});
+  }
+  const compAg=$('pmCompetenciaFiltro')?.value||competenciaAtual();
+  const agendadas=permutasAgendadasEspelho.filter(x=>[x.data_origem,x.compensacao_data,x.solicitado_em].some(v=>String(v||'').slice(0,7)===compAg))
+    .sort((a,b)=>String(b.compensacao_data||b.data_origem||'').localeCompare(String(a.compensacao_data||a.data_origem||'')));
+  const agHtml=agendadas.map(renderPermutaAgendadaV256).join('');
   const gestor=provider.gestor();
   if(gestor){
     if(!permutasEspelho.length){provider.entityList('permutas',500,0).then(r=>{permutasEspelho=(r.records||[]).map(x=>x.data||{});renderPermutas();}).catch(e=>console.warn('[GCMBS] espelho de permutas:',e?.message||e));}
@@ -718,11 +740,11 @@ function renderPermutas(){
       const info=mista?`Ordinário ${dm.ordinario}<br>Extra ${dm.extra}`:troca?`Origem ${dt.a}<br>Contrapartida ${dt.b}`:`${fmt(q.data)} · Turno ${esc(q.turno||'-')}`;
       return `<article class="record-card"><div class="record-card-head"><strong>${esc(sol)} — solicitação online</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${info}</div>${mista||troca?'<div class="record-warning">Troca operacional financeiramente neutra.</div>':''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</article>`;
     };
-    el.innerHTML=(extras.map(renderPendente).join('')+espelho.map(renderHistorico).join(''))||'<div class="empty">Nenhuma permuta encontrada nesta competência.</div>';
+    el.innerHTML=(agHtml+extras.map(renderPendente).join('')+espelho.map(renderHistorico).join(''))||'<div class="empty">Nenhuma permuta encontrada nesta competência.</div>';
     return;
   }
   const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'&&permutaVisivelAoUsuario(x)),'pmCompetenciaFiltro');
-  el.innerHTML=req.length?req.map(x=>{
+  const reqHtml=req.length?req.map(x=>{
     const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',assuncaoExtra=modal==='CESSAO_EXTRA',nome=nomeCandidato(q.substituido_id||q.substituto_id),dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null;
     const cab=troca?'Troca bilateral de extras':mista?'Troca ordinário ↔ extra':`${esc(q.data||'')} · Turno ${esc(q.turno||'-')}`;
     const titulo=troca?'Troca de serviço extra':mista?'Troca operacional sem efeito financeiro':assuncaoExtra?'Assunção de serviço extra':`GCM substituído: ${esc(nome)}`;
@@ -733,7 +755,8 @@ function renderPermutas(){
         :'';
     const exigeAceite=troca||mista||assuncaoExtra;
     return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${cab}</small><strong>${titulo}</strong>${detalhes}<span class="status-pill status-${esc(st)}">${esc(st)}</span>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${Number(q.contraparte_id)===Number(provider.session?.guarda_id)&&exigeAceite&&['AGUARDANDO_ACEITE','PENDENTE'].includes(st)?`<div class="request-actions"><button class="mini" data-pm-accept="${x.id}">Autorizar/aceitar</button><button class="mini" data-pm-reject="${x.id}">Recusar</button></div>`:''}${x.editable&&modal==='ASSUNCAO'?`<div class="request-actions"><button class="mini" data-pm-edit="${x.id}">Editar</button><button class="mini" data-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</div>`;
-  }).join(''):'<div class="empty">Nenhuma solicitação de permuta enviada.</div>';
+  }).join(''):'';
+  el.innerHTML=(agHtml+reqHtml)||'<div class="empty">Nenhuma solicitação de permuta enviada.</div>';
   document.querySelectorAll('[data-pm-edit]').forEach(b=>b.onclick=()=>editarPermutaSolicitacao(Number(b.dataset.pmEdit)));
   document.querySelectorAll('[data-pm-del]').forEach(b=>b.onclick=()=>cancelarPermutaSolicitacao(Number(b.dataset.pmDel)));
   document.querySelectorAll('[data-pm-accept]').forEach(b=>b.onclick=async()=>{if(!confirm('Você confirma que leu os serviços, compreendeu a regra financeira aplicável e autoriza/aceita esta permuta?'))return;try{const id=Number(b.dataset.pmAccept),req=provider.actionRequests().find(x=>Number(x.id)===id),modal=req?.payload?.modalidade||'';await provider.acceptExtraSwap(id,true,modal);await provider.load();renderTudo(false)}catch(e){alert(e.message)}});
