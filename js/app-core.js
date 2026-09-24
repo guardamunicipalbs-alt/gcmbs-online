@@ -5,8 +5,8 @@ import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-con
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.148';
-const GCMBS_APP_VERSION_CODE=148;
+const GCMBS_APP_VERSION='10.0.154';
+const GCMBS_APP_VERSION_CODE=154;
 const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
 const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
 async function verificarAtualizacaoApp(){
@@ -29,7 +29,7 @@ const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Amer
 const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia_pagamento||x?.competencia_pagamento||p.competencia||x?.competencia||p.competencia_origem||x?.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
-const APP_VERSION='10.0.85';
+const APP_VERSION='10.0.154';
 let provider=new AuthenticatedProvider();
 let permutasEspelho=[];
 let permutasAgendadasEspelho=[];let permutasAgendadasCarregadas=false;

@@ -1,14 +1,14 @@
-﻿{
-    "version":  "10.0.153",
-    "versionCode":  153,
-    "apk":  "GCMBS-10.0.153.apk",
-    "publishedAt":  null,
-    "sha256":  "5FE9F459002FEA347094765F2EE7796DCDD2CF68B30F0C3D5A662C264C614358",
+{
+    "version":  "10.0.154",
+    "versionCode":  154,
+    "apk":  "GCMBS-10.0.154.apk",
+    "publishedAt":  "2026-09-24T10:40:56.7302133Z",
+    "sha256":  "636E8314E3CD463C79BF5CFEE336A687CE6EFB42A832076C8B93583B616708F5",
     "sizeBytes":  5672128,
     "notes":  [
-                  "Android 10.0.153: Permuta Agendada / Compensacao Futura V259 com solicitacao e aceite protegidos.",
-                  "Fluxo V258: a solicitacao aceita e revalidada no Desktop antes de seguir ao Comando; sem alterar escala ou Banco de Horas na importacao.",
-                  "Compensacao exige mesmo tipo e mesma duracao, com quitacao somente apos Frequencia efetiva.",
+                  "Android 10.0.154: identidade interna e verificador de atualizacao corrigidos para 10.0.154 / code 154.",
+                  "Online: identidade V262, cache 100262, manifest e Service Worker alinhados com a versao 10.0.154.",
+                  "Mantida a Permuta Agendada / Compensacao Futura V259 com fluxo protegido V258.",
                   "Gratificacao de Motorista permanece preparada e sincronizada, inicialmente desativada.",
                   "Mantida a restricao de escala ordinaria \u0027Somente sabados e domingos\u0027 e as quatro modalidades anteriores de permuta."
               ]
