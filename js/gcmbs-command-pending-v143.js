@@ -120,6 +120,6 @@ for(const n of (d.notifications||[])){
   });
 }const seen=new Set();mount(out.filter(x=>{const k=x.title+'|'+x.text;if(seen.has(k))return false;seen.add(k);return true}))}
 function guardClicks(){if(document.documentElement.dataset.gcmbsV143ClickGuard)return;document.documentElement.dataset.gcmbsV143ClickGuard='1';document.addEventListener('click',e=>{const b=e.target?.closest?.('[data-cmd-pm-ok],[data-cmd-pm-no],[data-cmd-pm-del],[data-cmd-mirror-ok],[data-cmd-mirror-no],[data-cmd-bh-ok],[data-cmd-bh-no]');if(!b||b.disabled)return;queueMicrotask(()=>{b.disabled=true;b.setAttribute('aria-busy','true');setTimeout(()=>{if(document.body.contains(b)){b.disabled=false;b.removeAttribute('aria-busy')}},15000)})},true)}
-function boot(){guardClicks();refresh();let q=false;new MutationObserver(()=>{if(q)return;q=true;requestAnimationFrame(()=>{q=false;bankOrder()})}).observe(document.documentElement,{childList:true,subtree:true});setInterval(refresh,15000)}
+function boot(){guardClicks();refresh();let q=false;new MutationObserver(()=>{if(q)return;q=true;requestAnimationFrame(()=>{q=false;bankOrder()})}).observe(document.documentElement,{childList:true,subtree:true});setInterval(()=>{if(!document.hidden)refresh()},30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
