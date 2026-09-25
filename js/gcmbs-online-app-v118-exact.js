@@ -22,7 +22,7 @@ const sourceCard=id=>{
 };
 
 let refsCache={postos:null};
-let extrasCache={date:'',value:0,busy:false};
+let extrasCache={date:'',value:0,items:[],busy:false};
 
 function greeting(){
   const h=new Date().getHours();
@@ -95,12 +95,67 @@ async function loadExtras(date){
       ...(Array.isArray(b?.extrasB)?b.extrasB:[])
     ];
     const keys=new Set(all.map(x=>String(x?.guarda_id??x?.id??x?.nome??JSON.stringify(x))));
-    extrasCache={date,value:keys.size,busy:false};
+    extrasCache={date,value:keys.size,items:all,busy:false};
     return keys.size;
   }catch(e){
     console.warn('[GCMBS V118] extras por evento:',e?.message||e);
-    extrasCache={date,value:0,busy:false};
+    extrasCache={date,value:0,items:[],busy:false};
     return 0;
+  }
+}
+
+function gc118AgruparExtrasEvento(body){
+  const grupos=new Map();
+  const adicionar=(turno,item)=>{
+    const nome=text(item?.nome||item?.nome_guerra||item?.guarda_nome||'GCM');
+    const gid=Number(item?.guarda_id||0);
+    const chave=gid>0?'ID:'+gid:'NOME:'+norm(nome);
+    if(!chave||chave==='NOME:')return;
+    if(!grupos.has(chave))grupos.set(chave,{nome,detalhes:[]});
+    const complemento=text(item?.complemento||item?.evento_nome||item?.descricao||'Extra por Evento');
+    const detalhe=[`Turno ${turno}`,complemento].filter(Boolean).join(' · ');
+    const g=grupos.get(chave);
+    if(!g.detalhes.includes(detalhe))g.detalhes.push(detalhe);
+  };
+  for(const x of Array.isArray(body?.extrasA)?body.extrasA:[])adicionar('A',x);
+  for(const x of Array.isArray(body?.extrasB)?body.extrasB:[])adicionar('B',x);
+  return [...grupos.values()].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+}
+
+async function abrirExtrasEvento(data){
+  const modal=document.getElementById('quadroModal');
+  const title=document.getElementById('quadroModalTitulo');
+  const meta=document.getElementById('quadroModalMeta');
+  const list=document.getElementById('quadroModalLista');
+  if(!modal||!title||!meta||!list)return;
+
+  title.textContent='Extras por Evento';
+  meta.textContent='Consultando GCMs escalados...';
+  list.innerHTML='<div class="empty">Carregando serviços extras por evento...</div>';
+  modal.classList.remove('hidden');
+
+  try{
+    const body=await apiExtrasEvento(data);
+    const grupos=gc118AgruparExtrasEvento(body);
+    const designacoes=(Array.isArray(body?.extrasA)?body.extrasA.length:0)+(Array.isArray(body?.extrasB)?body.extrasB.length:0);
+    title.textContent='Extras por Evento';
+    meta.textContent=`Data de referência: ${data?data.split('-').reverse().join('/'):'-'} · ${grupos.length} GCM(s) · ${designacoes} designação(ões) por turno`;
+    list.innerHTML=grupos.length
+      ?grupos.map(g=>`<div class="item"><strong>${esc(g.nome)}</strong><span>${g.detalhes.map(esc).join('<br>')}</span></div>`).join('')
+      :'<div class="empty">Nenhum GCM está escalado em serviço extra por evento nesta data.</div>';
+
+    const all=[
+      ...(Array.isArray(body?.extrasA)?body.extrasA:[]),
+      ...(Array.isArray(body?.extrasB)?body.extrasB:[])
+    ];
+    extrasCache={date:data,value:grupos.length,items:all,busy:false};
+    const home=$('section[data-view="inicio"]');
+    const main=home?$('.gc118-main',home):null;
+    if(main)renderBars(main,grupos.length);
+  }catch(e){
+    console.warn('[GCMBS V118] detalhe de extras por evento:',e?.message||e);
+    meta.textContent=`Data de referência: ${data?data.split('-').reverse().join('/'):'-'}`;
+    list.innerHTML=`<div class="empty">Não foi possível carregar os GCMs escalados em extras por evento: ${esc(e?.message||e)}</div>`;
   }
 }
 
@@ -276,13 +331,19 @@ function renderBars(main,extras){
     <div class="gc118-bar-col" role="button" tabindex="0" data-source="${esc(id)}">
       <b>${v}</b><span class="gc118-bar ${cls}" style="height:${v?Math.max(8,Math.round(v/max*108)):4}px"></span><small>${esc(label)}</small>
     </div>`).join('');
-  $$('[data-source]',box).forEach(el=>{
-    const fire=()=>{
-      if(el.dataset.source==='__extras__')clickModule('eventos_extra','Eventos');
-      else clickSource(el.dataset.source);
+  $('[data-source]',box).forEach(el=>{
+    const fire=e=>{
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      if(el.dataset.source==='__extras__'){
+        const data=$('.gc118-date',main)?.value||document.getElementById('quadroData')?.value||'';
+        abrirExtrasEvento(data);
+      }else{
+        clickSource(el.dataset.source);
+      }
     };
     el.onclick=fire;
-    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fire()}};
+    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){fire(e)}};
   });
 }
 
