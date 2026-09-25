@@ -331,7 +331,7 @@ function renderBars(main,extras){
     <div class="gc118-bar-col" role="button" tabindex="0" data-source="${esc(id)}">
       <b>${v}</b><span class="gc118-bar ${cls}" style="height:${v?Math.max(8,Math.round(v/max*108)):4}px"></span><small>${esc(label)}</small>
     </div>`).join('');
-  $('[data-source]',box).forEach(el=>{
+  $$('[data-source]',box).forEach(el=>{
     const fire=e=>{
       e?.preventDefault?.();
       e?.stopPropagation?.();
