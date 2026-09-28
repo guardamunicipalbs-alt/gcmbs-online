@@ -5,8 +5,8 @@ import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-con
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.156';
-const GCMBS_APP_VERSION_CODE=156;
+const GCMBS_APP_VERSION='10.0.157';
+const GCMBS_APP_VERSION_CODE=157;
 const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
 const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
 async function verificarAtualizacaoApp(){
