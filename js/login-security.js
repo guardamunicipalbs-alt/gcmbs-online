@@ -13,11 +13,15 @@ const byId=id=>document.getElementById(id);
 const rememberEnabled=()=>localStorage.getItem(GCMBS_LOGIN_REMEMBER)==='1';
 let interacted=false;
 
-function clearUnrememberedStorage(){
+function clearUnrememberedStorage(options={}){
   if(rememberEnabled())return;
   localStorage.removeItem(GCMBS_LOGIN_USER);
-  localStorage.removeItem(GCMBS_LOGIN_TOKEN);
-  try{sessionStorage.removeItem(GCMBS_LOGIN_TOKEN);}catch{}
+  // GCMBS V282-O: durante a sessao ativa o token precisa continuar disponivel
+  // para as chamadas autenticadas. Ele so e removido ao sair/fechar a pagina.
+  if(options.removeToken===true){
+    localStorage.removeItem(GCMBS_LOGIN_TOKEN);
+    try{sessionStorage.removeItem(GCMBS_LOGIN_TOKEN);}catch{}
+  }
 }
 
 function configureBrowserAutocomplete(){
@@ -83,7 +87,7 @@ function setupLoginSecurity(){
   });
 
   window.addEventListener('pagehide',()=>{
-    if(!rememberEnabled())clearUnrememberedStorage();
+    if(!rememberEnabled())clearUnrememberedStorage({removeToken:true});
   });
 
   configureBrowserAutocomplete();
