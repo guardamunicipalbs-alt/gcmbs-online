@@ -2048,7 +2048,7 @@ async function resetSenhaComando(){const id=Number($('senhaResetGcm')?.value||0)
 
 async function boot(){
   await aplicarIdentidadeVisual();atualizarStatusConexao();window.addEventListener('online',atualizarStatusConexao);window.addEventListener('offline',atualizarStatusConexao);if($('quadroData'))$('quadroData').value=hoje();if($('escalaIni'))$('escalaIni').value=hoje();if($('escalaFim'))$('escalaFim').value=hoje();['pmCompetenciaFiltro','bhCompetenciaFiltro','avisosCompetenciaFiltro'].forEach(id=>{if($(id)&&!$(id).value)$(id).value=competenciaAtual();});
-  const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';if($('loginLembrar'))$('loginLembrar').checked=lembrar;if(lembrar&&$('loginUsuario'))$('loginUsuario').value=localStorage.getItem('gcmbs.login.usuario')||'';else if(!lembrar)localStorage.removeItem('gcmbs.mobile.token');
+  const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';if($('loginLembrar'))$('loginLembrar').checked=lembrar;if(lembrar&&$('loginUsuario'))$('loginUsuario').value=localStorage.getItem('gcmbs.login.usuario')||'';
   $('loginForm').addEventListener('submit',entrar);$('sair').addEventListener('click',sair);$('minhaSenha')?.addEventListener('click',abrirSenha);$('senhaFechar')?.addEventListener('click',()=>{if(!senhaObrigatoria)$('senhaEditor')?.close()});$('senhaEditor')?.addEventListener('cancel',e=>{if(senhaObrigatoria)e.preventDefault()});$('senhaSalvar')?.addEventListener('click',alterarSenhaOnline);$('senhaResetar')?.addEventListener('click',resetSenhaComando);
   ['pmCompetenciaFiltro','bhCompetenciaFiltro','avisosCompetenciaFiltro'].forEach(id=>$(id)?.addEventListener('change',()=>renderTudo(false)));
   $('formBancoCorrecao')?.addEventListener('submit',enviarBancoCorrecao);
