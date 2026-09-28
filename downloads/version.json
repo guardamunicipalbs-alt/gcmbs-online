@@ -1,15 +1,16 @@
 {
-    "version":  "10.0.155",
-    "versionCode":  155,
-    "apk":  "GCMBS-10.0.155.apk",
-    "publishedAt":  "2026-09-24T11:53:08.8019605Z",
-    "sha256":  "713D79DF3E62267FE239D095D9B57C70EE59DC638FB660F0B141961435DAC0AA",
-    "sizeBytes":  5672128,
+    "version":  "10.0.156",
+    "versionCode":  156,
+    "apk":  "GCMBS-10.0.156.apk",
+    "publishedAt":  "2026-09-28T19:36:33.3530170Z",
+    "sha256":  "A10E1ECE131CFE93AF8567E33B14D5B932668C87A2A47450FB4F998C6DE20B32",
+    "sizeBytes":  5676473,
     "notes":  [
-                  "Android 10.0.155: V266 com Gratificacao oculta para GCM comum e resultado exibido no Banco de Horas.",
-                  "Banco de Horas passa a exibir a observacao do lancamento, incluindo inicio e finalizacao da contabilizacao.",
-                  "Servico continuo de 24h em A+B, mesmo GCM e mesma viatura: um unico checklist; troca de motorista exige novo checklist.",
-                  "Mantida a Permuta Agendada / Compensacao Futura V259 com fluxo protegido V258.",
-                  "Gratificacao de Motorista permanece preparada e sincronizada, inicialmente desativada."
+                  "Android 10.0.156: consolidacao das atualizacoes funcionais e de sincronizacao realizadas apos a 10.0.155.",
+                  "Permuta Agendada: suporte do Comando para aprovar ou negar solicitacoes pelo Online, com processamento sincronizado no Desktop.",
+                  "Banco de Horas: decisao de correcoes pelo Comando no Online, com rastreabilidade de origem e confirmacao do processamento pelo Desktop.",
+                  "Avisos e notificacoes: removida a duplicacao de Aviso Institucional no feed generico e priorizada a data real do evento.",
+                  "Permutas e Banco de Horas mantem as protecoes contra duplicacao de movimentacoes.",
+                  "Gratificacao de Motorista permanece preparada e DESATIVADA."
               ]
 }
