@@ -60,7 +60,7 @@ const ONLINE_LABELS={
   motorista:'Motorista',motorista_id:'Motorista',litros:'Litros',guarda_id:'GCM',data_inicial:'Data inicial',
   quantidade_dias:'Quantidade de dias',data_final:'Data final',motivo:'Motivo / justificativa',tipo_servico:'Tipo do serviço',
   arquivo_nome:'Documento',arquivo_tipo:'Tipo do documento',arquivo_dados:'Arquivo',criado_em:'Criado em',atualizado_em:'Atualizado em',
-  nome_guerra:'Nome de guerra',nome_completo:'Nome completo',cpf:'CPF',matricula:'Matrícula',cargo:'Cargo',equipe:'Equipe',equipe_id:'Equipe',posto_prioritario:'Posto prioritário',posto_prioritario_id:'Posto prioritário',restricao_escala:'Restrição da escala ordinária',categoria_cnh:'Categoria CNH',
+  nome_guerra:'Nome de guerra',nome_completo:'Nome completo',cpf:'CPF',matricula:'Matrícula',cargo:'Cargo',equipe:'Equipe',equipe_id:'Equipe',posto_prioritario:'Posto prioritário',posto_prioritario_id:'Posto prioritário',restricao_escala:'Dias permitidos para escala ordinária',categoria_cnh:'Categoria CNH',
   nome:'Nome',tipo:'Tipo',prioridade:'Prioridade',minimo:'Efetivo mínimo',maximo:'Efetivo máximo',quantidade_minima:'Efetivo mínimo',quantidade_maxima:'Efetivo máximo',horario_inicio:'Horário inicial',horario_fim:'Horário final',
   data:'Data',hora:'Hora',prefixo:'Prefixo',placa:'Placa',modelo:'Modelo',ano:'Ano',ano_fabricacao:'Ano de fabricação',ano_modelo:'Ano/modelo',combustivel:'Combustível',intervalo_troca_oleo_km:'Intervalo troca de óleo (km)',km_ultima_troca_oleo:'KM da última troca de óleo',
   patrimonio:'Patrimônio',equipamento:'Equipamento',modalidade_uso:'Modalidade de uso',data_entrega:'Data de entrega',data_devolucao:'Data de devolução',situacao:'Situação',
@@ -1356,8 +1356,16 @@ function campoOnline(col,val){
     return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="">Sem equipe informada</option>${opts}</select></label>`;
   }
   if(lower==='restricao_escala'&&onlineCurrent?.entity==='guardas'){
-    const atual=String(v||'').toUpperCase();
-    return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="" ${!atual?'selected':''}>Sem restrição especial</option><option value="SOMENTE_FIM_SEMANA" ${atual==='SOMENTE_FIM_SEMANA'?'selected':''}>Somente sábados e domingos</option></select><small>Limita apenas a escala ordinária automática; extras e permutas continuam pelas regras gerais.</small></label>`;
+    const raw=String(v||'').trim().toUpperCase();
+    const todos=['1','2','3','4','5','6','0'];
+    const selecionados=raw==='SOMENTE_FIM_SEMANA'
+      ?new Set(['6','0'])
+      :raw.startsWith('DIAS:')
+        ?new Set(raw.slice(5).split(',').map(x=>x.trim()).filter(x=>todos.includes(x)))
+        :new Set(todos);
+    const dias=[['1','Segunda'],['2','Terça'],['3','Quarta'],['4','Quinta'],['5','Sexta'],['6','Sábado'],['0','Domingo']];
+    const valor=selecionados.size===7?'':`DIAS:${todos.filter(x=>selecionados.has(x)).join(',')}`;
+    return `<fieldset class="online-days-field"><legend>${esc(label)}</legend><div class="check-grid">${dias.map(([id,rot])=>`<label><input type="checkbox" data-online-dia="${id}" ${selecionados.has(id)?'checked':''}> ${rot}</label>`).join('')}</div><input type="hidden" id="onlineDiasPermitidosEscala" data-online-field="${esc(name)}" value="${esc(valor)}"><div class="request-actions"><button type="button" class="mini" id="onlineDiasTodos">Todos os dias</button><button type="button" class="mini" id="onlineDiasSemana">Seg–Sex</button><button type="button" class="mini" id="onlineDiasFimSemana">Sáb–Dom</button></div><small>A regra limita apenas a escala ordinária. Extras, eventos e permutas seguem suas próprias regras.</small></fieldset>`;
   }
   if(/^(guarda_id|substituido_id|substituto_id|motorista_id|recebido_por|encaminhado_por|responsavel_id|condutor_ocorrencia_id)$/.test(lower)){
     const opts=(refData().guardas||[]).map(x=>`<option value="${esc(x.id)}" ${Number(x.id)===Number(v)?'selected':''}>${esc(x.nome_guerra||x.nome_completo||'GCM')}</option>`).join('');
@@ -1660,6 +1668,17 @@ async function editarOnline(key=null){
   }
   $('onlineMsg').textContent='';$('onlineEditor').showModal();
   if(onlineCurrent?.entity==='viaturas')await renderSubstitutasViaturaEditor();
+  if(onlineCurrent?.entity==='guardas'){
+    const dias=[...document.querySelectorAll('[data-online-dia]')],hidden=document.getElementById('onlineDiasPermitidosEscala');
+    const ordem=['1','2','3','4','5','6','0'];
+    const sync=()=>{if(!hidden)return;const ativos=ordem.filter(id=>dias.some(x=>x.dataset.onlineDia===id&&x.checked));hidden.value=ativos.length===7?'':`DIAS:${ativos.join(',')}`;};
+    const set=(ids)=>{const alvo=new Set(ids);dias.forEach(x=>x.checked=alvo.has(x.dataset.onlineDia));sync();};
+    dias.forEach(x=>x.addEventListener('change',sync));
+    document.getElementById('onlineDiasTodos')?.addEventListener('click',()=>set(ordem));
+    document.getElementById('onlineDiasSemana')?.addEventListener('click',()=>set(['1','2','3','4','5']));
+    document.getElementById('onlineDiasFimSemana')?.addEventListener('click',()=>set(['6','0']));
+    sync();
+  }
   if(onlineCurrent?.entity==='frequencia_registros'){
     const atualizar=async()=>{const g=Number(document.querySelector('[data-online-field="guarda_id"]')?.value||0),dt=document.querySelector('[data-online-field="data"]')?.value,ts=document.querySelector('[data-online-field="tipo_servico"]'),ref=document.querySelector('[data-online-field="referencia_id"]');if(!g||!dt||!ts)return;try{const rr=await provider.frequencyServices(g,dt),sv=rr.services||[];ts.disabled=false;ts.innerHTML=sv.length?sv.map(x=>`<option value="${esc(x.tipo_servico)}" data-ref="${esc(x.referencia_id)}">${esc(x.tipo_servico==='ORDINARIO'?'Serviço ordinário':'Serviço extra')} · ${esc(x.turno||'')} · ${esc(x.referencia||'')}</option>`).join(''):'<option value="">Nenhum serviço gravado nesta data</option>';const setref=()=>{if(ref)ref.value=ts.selectedOptions[0]?.dataset.ref||''};ts.onchange=setref;setref()}catch(e){ts.innerHTML=`<option value="">${esc(e.message)}</option>`}};document.querySelector('[data-online-field="guarda_id"]')?.addEventListener('change',atualizar);document.querySelector('[data-online-field="data"]')?.addEventListener('change',atualizar);atualizar();
   }
