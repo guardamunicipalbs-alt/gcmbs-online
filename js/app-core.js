@@ -1800,12 +1800,23 @@ function renderAvisosInstitucionais(){
 }
 
 function renderAvisos(){
-  const lista=filtraCompetencia(provider.notifications().slice(),'avisosCompetenciaFiltro');
+  /* GCMBS_V278_NOTIFICACOES_LIMPAS
+     Aviso institucional possui tela propria no Quadro de Avisos.
+     Evita duplicacao/reaparecimento no feed de notificacoes.
+     Para eventos e servicos, data_evento prevalece sobre created_at.
+  */
+  const lista=filtraCompetencia(
+    provider.notifications()
+      .filter(x=>
+        String(x?.tipo||'').toUpperCase()!=='AVISO_INSTITUCIONAL'
+      ),
+    'avisosCompetenciaFiltro'
+  );
   const decisoes=filtraCompetencia(provider.actionRequests().filter(x=>['APROVADA','RECUSADA','REPROVADA','CANCELADA'].includes(String(x.status||'').toUpperCase())),'avisosCompetenciaFiltro').map(x=>({created_at:x.processado_em||x.created_at,titulo:String(x.tipo).toUpperCase()==='PERMUTA'?'Decisão de permuta':'Decisão do Banco de Horas',mensagem:x.resposta||`Situação: ${x.status}`,synthetic:true}));
   const naoLidas=lista.filter(x=>!x.lida_em).length;
   const badge=$('navAvisosBadge'); if(badge){badge.textContent=naoLidas?String(naoLidas):'';badge.classList.toggle('hidden',!naoLidas);}
   const todos=[...decisoes,...lista];
-  $('listaAvisos').innerHTML=todos.length?todos.map(x=>`<div class="item notice-item ${!x.synthetic&&!x.lida_em?'unread':''}" ${x.id?`data-notification-id="${x.id}"`:''}><small>${fmt(String(x.created_at||'').slice(0,10))}${x.data_evento?' · evento '+fmt(x.data_evento):''}</small><strong>${esc(x.titulo||'Aviso')}</strong><span>${esc(x.mensagem||'')}</span>${x.id&&!x.lida_em?'':' '}${x.id&&!x.lida_em?'<button class="mini" data-read="'+x.id+'">Marcar como lido</button>':''}</div>`).join(''):'<div class="empty">Nenhuma notificação.</div>';
+  $('listaAvisos').innerHTML=todos.length?todos.map(x=>`<div class="item notice-item ${!x.synthetic&&!x.lida_em?'unread':''}" ${x.id?`data-notification-id="${x.id}"`:''}><small>${fmt(String(x.data_evento||x.created_at||'').slice(0,10))}${x.data_evento?' · evento '+fmt(x.data_evento):''}</small><strong>${esc(x.titulo||'Aviso')}</strong><span>${esc(x.mensagem||'')}</span>${x.id&&!x.lida_em?'':' '}${x.id&&!x.lida_em?'<button class="mini" data-read="'+x.id+'">Marcar como lido</button>':''}</div>`).join(''):'<div class="empty">Nenhuma notificação.</div>';
   document.querySelectorAll('[data-read]').forEach(b=>b.addEventListener('click',async()=>{try{await provider.markNotificationRead(Number(b.dataset.read));renderAvisos();}catch(e){alert(e.message)}}));
 }
 
@@ -1919,6 +1930,11 @@ function renderCentralPendencias(){
     if(x.lida_em)return false;
 
     const tipo=String(x.tipo||'').trim().toUpperCase();
+
+    // GCMBS V278:
+    // avisos institucionais pertencem ao Quadro de Avisos,
+    // nao a Central de Pendencias.
+    if(tipo==='AVISO_INSTITUCIONAL')return false;
     const refTipo=String(x.referencia_tipo||'').trim().toUpperCase();
     const refId=Number(x.referencia_id||0);
 
@@ -1962,7 +1978,7 @@ function renderCentralPendencias(){
   const itens=[
     ...req.map(x=>{const perm=String(x.tipo||'').startsWith('PERMUTA'),dataServico=perm?String(x.payload?.data||'').slice(0,10):'';return{data:dataServico||x.created_at,sort:dataServico||String(x.created_at||''),tipo:'Solicitação',titulo:String(x.tipo||'PENDÊNCIA').replace(/_/g,' '),texto:x.resposta||'Aguardando análise/processamento.',status:x.status||'PENDENTE',modulo:perm?'permutas':String(x.tipo||'').startsWith('BANCO_HORAS')?'banco_horas':'',analise:true};}),
     ...espelho.map(x=>({data:String(x.data||'').slice(0,10),sort:String(x.data||'9999-99-99').slice(0,10),tipo:'Permuta Desktop',titulo:`Permuta #${Number(x.id||x.desktop_id||0)} aguardando análise`,texto:`${pessoaPorId(x.substituto_id)||x.substituto_nome||'GCM'} ↔ ${pessoaPorId(x.substituido_id)||x.substituido_nome||'GCM'} · turno ${x.turno||'-'}.`,status:'PENDENTE',modulo:'permutas',analise:true})),
-    ...notif.map(x=>({data:x.created_at,sort:String(x.created_at||''),tipo:'Aviso',titulo:x.titulo||'Notificação',texto:x.mensagem||'',status:'NÃO LIDA',modulo:x.referencia_tipo&&String(x.referencia_tipo).includes('PERMUTA')?'permutas':'',analise:false}))
+    ...notif.map(x=>({data:x.data_evento||x.created_at,sort:String(x.data_evento||x.created_at||''),tipo:'Aviso',titulo:x.titulo||'Notificação',texto:x.mensagem||'',status:'NÃO LIDA',modulo:x.referencia_tipo&&String(x.referencia_tipo).includes('PERMUTA')?'permutas':'',analise:false}))
   ].sort((a,b)=>{if(a.analise!==b.analise)return a.analise?-1:1;return a.analise?String(a.sort||'9999').localeCompare(String(b.sort||'9999')):String(b.sort||'').localeCompare(String(a.sort||''));});
   if($('pTotal'))$('pTotal').textContent=String(itens.length);if($('pSolic'))$('pSolic').textContent=String(req.length+espelho.length);if($('pAvisos'))$('pAvisos').textContent=String(notif.length);
   host.innerHTML=itens.map(x=>`<article class="pending-card" ${x.modulo?`data-pend-open="${esc(x.modulo)}" tabindex="0" role="button"`:''}><div><small>${esc(x.tipo)} · ${fmt(String(x.data||'').slice(0,10))}</small><strong>${esc(x.titulo)}</strong><p>${esc(x.texto)}</p></div><span class="status-pill status-PENDENTE">${esc(x.status)}</span></article>`).join('')||'<div class="empty">Nenhuma pendência visível para seu perfil.</div>';
