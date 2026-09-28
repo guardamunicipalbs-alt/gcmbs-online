@@ -1,7 +1,5 @@
 import './sync-button-hotfix-v62.js?v=100076';
 import {MODULES} from './communication-contract.js?v=100250';
-import './gcmbs-cessao-aceite-v219.js?v=219';
-
 // v74: o runtime canônico não carrega hotfixes opcionais fora do manifesto.
 // V219: confirmação isolada da cessão 321 pelo GCM titular autenticado.
 
