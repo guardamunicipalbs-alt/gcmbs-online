@@ -1145,15 +1145,66 @@ function renderBanco(){
   }
 
   const req=filtraGcmBanco(filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro'));
-  const lr=$('listaCorrecoes');if(lr)lr.innerHTML=req.length?req.map(x=>{const p=x.payload||{},min=Number(p.minutos_solicitados||0),status=String(x.status||'PENDENTE').toUpperCase();return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(p.data_servico||'')} · ${horas(min)}</small><strong>${esc(status)} · Solicitação #${x.id}</strong><span>${esc(p.descricao||'Solicitação de correção')}</span>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de correção enviada.</div>';
+  const lr=$('listaCorrecoes');if(lr)lr.innerHTML=req.length?req.map(x=>{const p=x.payload||{},min=Number(p.minutos_solicitados||0),status=String(x.status||'PENDENTE').toUpperCase();return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(p.data_servico||'')} · ${horas(min)}</small><strong>${esc(status)} · Solicitação #${x.id}</strong><span>${esc(p.descricao||'Solicitação de correção')}</span>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${resumoDecisaoBanco(x)}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de correção enviada.</div>';
 
   renderBancoFolhaResumoHF158R2(historico);
+}
+
+/* GCMBS_V276_DECISION_TRACE_UI */
+function dataHoraBancoDecisao(v){
+  if(!v)return '';
+
+  try{
+    return new Intl.DateTimeFormat(
+      'pt-BR',
+      {
+        timeZone:'America/Fortaleza',
+        dateStyle:'short',
+        timeStyle:'short'
+      }
+    ).format(new Date(v));
+  }catch{
+    return String(v);
+  }
+}
+
+function resumoDecisaoBanco(x){
+  const st=String(x?.status||'').toUpperCase();
+
+  if(!['APROVADA','RECUSADA'].includes(st))
+    return '';
+
+  const origem=String(x?.decisao_origem||'').toUpperCase();
+  const decisor=String(x?.decisao_por_nome||'').trim();
+  const registrada=dataHoraBancoDecisao(x?.decisao_registrada_em);
+  const aplicada=dataHoraBancoDecisao(x?.decisao_aplicada_em);
+  const partes=[];
+
+  if(origem)
+    partes.push(
+      origem==='ONLINE'
+        ?'Decisão registrada no Online'
+        :'Decisão registrada no Desktop'
+    );
+
+  if(decisor)
+    partes.push(`por ${decisor}`);
+
+  if(registrada)
+    partes.push(`em ${registrada}`);
+
+  if(aplicada && aplicada!==registrada)
+    partes.push(`confirmada pelo Desktop em ${aplicada}`);
+
+  if(!partes.length)return '';
+
+  return `<small><b>Decisão:</b> ${esc(partes.join(' · '))}</small>`;
 }
 
 function renderBancoGestao(){
   const card=$('bancoGestaoCard'),el=$('listaBancoGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('banco_horas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
   const req=filtraGcmBanco(filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='BANCO_HORAS_CORRECAO'),'bhCompetenciaFiltro'));
-  el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Solicitação #${x.id} · Pagamento ${esc(p.competencia_pagamento||p.competencia||'-')}${(()=>{const o=String(p.competencia_origem||p.data_servico||'').slice(0,7),pg=String(p.competencia_pagamento||p.competencia||'');return o&&o!==pg?` · Origem ${esc(o)}`:''})()} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
+  el.innerHTML=req.length?req.map(x=>{const p=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),min=Number(p.minutos_solicitados||0),hor=min/60,pend=['PENDENTE','PENDENTE_DESKTOP'].includes(st),nome=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';return `<article class="record-card"><div class="record-card-head"><strong>${esc(nome)} — ${fmt(p.data_servico)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">Solicitação #${x.id} · Pagamento ${esc(p.competencia_pagamento||p.competencia||'-')}${(()=>{const o=String(p.competencia_origem||p.data_servico||'').slice(0,7),pg=String(p.competencia_pagamento||p.competencia||'');return o&&o!==pg?` · Origem ${esc(o)}`:''})()} · solicitado ${horas(min)}</div><div>${esc(p.descricao||'Solicitação de correção')}</div>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${resumoDecisaoBanco(x)}${pend?`<div class="form-grid command-review"><label>Horas a reconhecer<input type="number" min="0.5" step="0.5" value="${hor}" data-bh-hours="${x.id}"></label><label>Classe<select data-bh-class="${x.id}"><option value="50" ${String(p.classe||'50')==='50'?'selected':''}>50%</option><option value="100" ${String(p.classe)==='100'?'selected':''}>100%</option></select></label><div class="request-actions full"><button class="mini" data-cmd-bh-ok="${x.id}">Aprovar / corrigir</button><button class="mini" data-cmd-bh-no="${x.id}">Recusar</button></div></div>`:''}</article>`}).join(''):'<div class="empty">Nenhuma solicitação de correção visível ao Comando.</div>';
   el.querySelectorAll('[data-cmd-bh-ok]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhOk),'APROVADA'));
   el.querySelectorAll('[data-cmd-bh-no]').forEach(b=>b.onclick=()=>decidirBancoComando(Number(b.dataset.cmdBhNo),'RECUSADA'));
 }
