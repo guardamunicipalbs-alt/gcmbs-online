@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100281-android-v156';
+const VERSION='gcmbs-online-100285-r2-permutas';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -15,11 +15,11 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.156');
+    headers.set('x-gcmbs-version','10.0.160');
     headers.set('x-gcmbs-banco-competencia','integral-v233-r2');
     headers.set('x-gcmbs-visual','paridade-cumulativa-v102');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });
 
-console.info('[GCMBS SW] Banco de Horas competência integral V233 R2',VERSION);
+console.info('[GCMBS SW] Permutas V285-R2 Online/App',VERSION);
