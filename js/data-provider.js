@@ -148,7 +148,7 @@ export class AuthenticatedProvider {
 
   async requestBankCorrection(request){const r=await this.call('request_bank_correction',{request});await this.load();return r}
   async requestPermuta(request){const modalidade=String(request?.modalidade||'ASSUNCAO').toUpperCase();const action=modalidade==='TROCA_EXTRA'?'extra_permuta_request_swap':modalidade==='CESSAO_EXTRA'?'extra_permuta_request_assumption':modalidade==='TROCA_ORDINARIO_EXTRA'?'mixed_permuta_request':'request_permuta';const r=await this.call(action,{request});await this.load();return r}
-  async acceptExtraSwap(id,aceitou,modalidade=''){const action=String(modalidade||'').toUpperCase()==='TROCA_ORDINARIO_EXTRA'?'mixed_permuta_accept':'extra_permuta_accept';const r=await this.call(action,{id,aceitou});await this.load();return r}
+  async acceptExtraSwap(id,aceitou,modalidade=''){const m=String(modalidade||'').toUpperCase();const action=m==='TROCA_ORDINARIO_EXTRA'?'mixed_permuta_accept':m==='TROCA_ORDINARIO'?'accept_ordinary_swap':'extra_permuta_accept';const r=await this.call(action,{id,aceitou});await this.load();return r}
   async updatePermutaRequest(id,request){const r=await this.call('update_permuta_request',{id,request});await this.load();return r}
   async cancelPermutaRequest(id){const r=await this.call('cancel_permuta_request',{id});await this.load();return r}
   async decidePermutaRequest(id,decisao,motivo=''){const r=await this.call('decide_permuta_request',{id,decisao,motivo});await this.load();return r}
