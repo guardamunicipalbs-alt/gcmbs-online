@@ -1866,8 +1866,13 @@ async function enviarPermuta(ev){
       extra_id:Number(outro?.value||0),extra_tipo:outro?.dataset.tipo||'MANUAL',extra_tipo_origem:outro?.dataset.tipo||'MANUAL',
       extra_guarda_id:Number(outro?.dataset.g||0),extra_data:outro?.dataset.data||$('pmExtraData')?.value||'',
       observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked,financeiro_neutro:1
-    }:{modalidade,data:dataOrd,turno,turno_confirmado_ui:turno,servico_extra:0,substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked};
-    if(modalidade==='ASSUNCAO'&&turno==='COMPLETO'&&!confirm('Confirmar permuta para TURNO COMPLETO (A+B · 24 horas)?')){msg.textContent='Envio cancelado. Confira o período selecionado.';msg.classList.remove('success');return;}
+    }:{modalidade,data:dataOrd,turno,turno_confirmado_ui:turno,servico_extra:0,substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked,assuncao_sem_troca_confirmada:false};
+    if(modalidade==='ASSUNCAO'){
+      const simples=confirm('ATENÇÃO: esta opção é somente para ASSUNÇÃO SIMPLES de serviço ordinário, sem troca e sem serviço de retorno.\n\nSe existe outro serviço em negociação, cancele e use a modalidade de troca identificando os dois serviços. Se o segundo serviço ainda não estiver definido, use Permuta Agendada (mesma natureza e mesma duração).\n\nConfirma que NÃO existe serviço de retorno em negociação?');
+      if(!simples){msg.textContent='Envio cancelado. Em uma troca, os dois serviços devem ser identificados; para retorno futuro use Permuta Agendada.';msg.classList.add('error');return;}
+      req.assuncao_sem_troca_confirmada=true;
+    }
+    if(modalidade==='ASSUNCAO'&&turno==='COMPLETO'&&!confirm('Confirmar ASSUNÇÃO SIMPLES para TURNO COMPLETO (A+B · 24 horas)?')){msg.textContent='Envio cancelado. Confira o período selecionado.';msg.classList.remove('success');return;}
     if((modalidade==='TROCA_EXTRA'||modalidade==='TROCA_ORDINARIO_EXTRA')&&permutaEditingId)throw new Error('Trocas neutras devem ser canceladas e refeitas, preservando a auditoria.');
     if(modalidade==='TROCA_EXTRA'&&(!req.extra_id||!req.extra_contrapartida_id))throw new Error('Selecione os dois serviços extras.');
     if(modalidade==='CESSAO_EXTRA'&&!req.extra_id)throw new Error('Selecione o serviço extra que deseja assumir.');
