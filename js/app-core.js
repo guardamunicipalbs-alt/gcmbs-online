@@ -1889,6 +1889,8 @@ async function enviarPermuta(ev){
       if(!$('pmExtraData')?.value)throw new Error('Informe a data do serviço extra que deseja receber.');
       if(!req.extra_id||!req.extra_guarda_id)throw new Error('Selecione um serviço extra de outro GCM na data informada.');
       if(req.extra_data!==$('pmExtraData').value)throw new Error('O serviço extra selecionado não corresponde à data informada.');
+      const minutosOrd=req.turno==='COMPLETO'?1440:720,minutosExtra=Number(outro?.dataset.minutos||0);
+      if(minutosExtra&&minutosExtra!==minutosOrd)throw new Error('Troca Ordinário x Extra exige serviços da mesma duração.');
       if(!req.concordou_termo)throw new Error('Confirme o termo de responsabilidade e a neutralidade financeira.');
     }
     if(modalidade==='TROCA_ORDINARIO'){
