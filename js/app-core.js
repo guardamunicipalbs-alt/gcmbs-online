@@ -2094,7 +2094,33 @@ async function boot(){
   $('onlineSalvar')?.addEventListener('click',salvarOnline);
   $('onlineCancelar')?.addEventListener('click',()=>$('onlineEditor').close());$('onlineCancelarBottom')?.addEventListener('click',()=>$('onlineEditor').close());
   ['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>$(id)?.addEventListener('change',renderEscalas));
-  $('escalaGerar')?.addEventListener('click',renderEscalas);$('pmData')?.addEventListener('change',atualizarSubstituidosPermuta);$('pmTurno')?.addEventListener('change',e=>{e.currentTarget.dataset.gcmbsTurnoSelecionado=e.currentTarget.value;atualizarSubstituidosPermuta();});$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirEventos')?.addEventListener('click',()=>abrirModuloOnline('eventos_extra'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
+  const gcmbsAtualizarPeriodoPermuta=()=>{
+  const modalidade=$('pmModalidade')?.value||'ASSUNCAO';
+
+  // Na troca ORDINARIO x EXTRA, estar escalado no ordinario informado
+  // e esperado: esse e justamente o servico oferecido na permuta.
+  // A validacao especifica e feita pelo fluxo mixed_permuta_request.
+  if(modalidade==='TROCA_ORDINARIO_EXTRA'){
+    const msg=$('pmMsg'),btn=$('pmEnviar');
+
+    if(msg&&msg.textContent.includes('já está escalado nesse mesmo período')){
+      msg.textContent='';
+      msg.classList.remove('error');
+    }
+
+    if(btn)btn.disabled=false;
+    return;
+  }
+
+  atualizarSubstituidosPermuta();
+};
+
+$('escalaGerar')?.addEventListener('click',renderEscalas);
+$('pmData')?.addEventListener('change',gcmbsAtualizarPeriodoPermuta);
+$('pmTurno')?.addEventListener('change',e=>{
+  e.currentTarget.dataset.gcmbsTurnoSelecionado=e.currentTarget.value;
+  gcmbsAtualizarPeriodoPermuta();
+});$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirEventos')?.addEventListener('click',()=>abrirModuloOnline('eventos_extra'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
   $('escalaLimpar')?.addEventListener('click',()=>{['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>{if($(id))$(id).value=''});renderEscalas();});
   $('quadroData')?.addEventListener('change',()=>carregarQuadro().catch(()=>{}));
   document.querySelectorAll('[data-quadro-detail]').forEach(b=>b.addEventListener('click',()=>abrirQuadroDetalhe(b.dataset.title,b.dataset.quadroDetail)));
