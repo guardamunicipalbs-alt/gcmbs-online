@@ -677,9 +677,10 @@ async function carregarTrocaExtraOpcoes(){
   }
 }
 async function atualizarModoPermuta(){
-  const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',mista=m==='TROCA_ORDINARIO_EXTRA',usaExtra=swap||cessao||mista;
-  document.querySelectorAll('.pm-ordinary').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||mista)));
-  document.querySelectorAll('.pm-assuncao').forEach(x=>x.classList.toggle('hidden',m!=='ASSUNCAO'));
+  const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',mista=m==='TROCA_ORDINARIO_EXTRA',ordord=m==='TROCA_ORDINARIO',usaExtra=swap||cessao||mista;
+  document.querySelectorAll('.pm-ordinary').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||mista||ordord)));
+  document.querySelectorAll('.pm-assuncao').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||ordord)));
+  document.querySelectorAll('.pm-troca-ordinario').forEach(x=>x.classList.toggle('hidden',!ordord));
   document.querySelectorAll('.pm-extra').forEach(x=>x.classList.toggle('hidden',!usaExtra));
   document.querySelectorAll('.pm-mista').forEach(x=>x.classList.toggle('hidden',!mista));
   $('pmExtraMeuLabel')?.classList.toggle('hidden',!swap);
@@ -735,8 +736,8 @@ function renderPermutas(){
       return `<article class="record-card"><div class="record-card-head"><strong>${esc(substituto)} ↔ ${esc(substituido)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${mista?'Troca ordinário ↔ extra · ':''}${fmt(x.data)} · Turno ${esc(x.turno||'-')} · ${extra?'Serviço extra':'Serviço ordinário'}</div>${mista?'<div class="record-warning">Financeiro neutro: crédito do extra preservado com o titular original.</div>':''}${x.motivo?`<div>${esc(x.motivo)}</div>`:''}${x.motivo_decisao?`<small>Decisão: ${esc(x.motivo_decisao)}</small>`:''}</article>`;
     };
     const renderPendente=x=>{
-      const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),mista=modal==='TROCA_ORDINARIO_EXTRA',troca=modal==='TROCA_EXTRA',dm=mista?descricaoTrocaMista(q):null,dt=troca?descricaoTrocaExtra(q):null;
-      const info=mista?`Ordinário ${dm.ordinario}<br>Extra ${dm.extra}`:troca?`Origem ${dt.a}<br>Contrapartida ${dt.b}`:`${fmt(q.data)} · Turno ${esc(q.turno||'-')}`;
+      const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),mista=modal==='TROCA_ORDINARIO_EXTRA',troca=modal==='TROCA_EXTRA',ordord=modal==='TROCA_ORDINARIO',dm=mista?descricaoTrocaMista(q):null,dt=troca?descricaoTrocaExtra(q):null;
+      const info=mista?`Ordinário ${dm.ordinario}<br>Extra ${dm.extra}`:troca?`Origem ${dt.a}<br>Contrapartida ${dt.b}`:ordord?`Serviço do outro GCM: ${fmt(q.data)} · ${esc(q.turno||'-')}<br>Serviço do solicitante: ${fmt(q.data_contrapartida)} · ${esc(q.turno_contrapartida||'-')}`:`${fmt(q.data)} · Turno ${esc(q.turno||'-')}`;
       return `<article class="record-card"><div class="record-card-head"><strong>${esc(sol)} — solicitação online</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${info}</div>${mista||troca?'<div class="record-warning">Troca operacional financeiramente neutra.</div>':''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</article>`;
     };
     el.innerHTML=(agHtml+extras.map(renderPendente).join('')+espelho.map(renderHistorico).join(''))||'<div class="empty">Nenhuma permuta encontrada nesta competência.</div>';
@@ -744,15 +745,17 @@ function renderPermutas(){
   }
   const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'&&permutaVisivelAoUsuario(x)),'pmCompetenciaFiltro');
   const reqHtml=req.length?req.map(x=>{
-    const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',assuncaoExtra=modal==='CESSAO_EXTRA',nome=nomeCandidato(q.substituido_id||q.substituto_id),dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null;
-    const cab=troca?'Troca bilateral de extras':mista?'Troca ordinário ↔ extra':`${esc(q.data||'')} · Turno ${esc(q.turno||'-')}`;
-    const titulo=troca?'Troca de serviço extra':mista?'Troca operacional sem efeito financeiro':assuncaoExtra?'Assunção de serviço extra':`GCM substituído: ${esc(nome)}`;
+    const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',ordord=modal==='TROCA_ORDINARIO',assuncaoExtra=modal==='CESSAO_EXTRA',nome=nomeCandidato(q.substituido_id||q.substituto_id),dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null;
+    const cab=troca?'Troca bilateral de extras':mista?'Troca ordinário ↔ extra':ordord?'Troca ordinário ↔ ordinário':`${esc(q.data||'')} · Turno ${esc(q.turno||'-')}`;
+    const titulo=troca?'Troca de serviço extra':mista?'Troca operacional sem efeito financeiro':ordord?'Troca de serviços ordinários':assuncaoExtra?'Assunção de serviço extra':`GCM substituído: ${esc(nome)}`;
     const detalhes=troca
       ?`<span>Seu serviço de origem: ${dt.a}</span><span>Serviço em contrapartida: ${dt.b}</span><div class="record-warning">A troca é apenas operacional. Os créditos financeiros originais dos extras permanecem com seus titulares.</div>`
       :mista
         ?`<span>Seu ordinário: ${dm.ordinario}</span><span>Extra que receberá: ${dm.extra}</span><div class="record-warning"><b>Financeiro neutro:</b> o titular original do extra mantém horas e classificação 50%/100%; não há transferência ou compensação financeira.</div>`
-        :'';
-    const exigeAceite=troca||mista||assuncaoExtra;
+        :ordord
+          ?`<span>Serviço do outro GCM: ${fmt(q.data)} · Turno ${esc(q.turno||'-')}</span><span>Seu serviço em contrapartida: ${fmt(q.data_contrapartida)} · Turno ${esc(q.turno_contrapartida||'-')}</span><div class="record-warning">Os dois serviços foram identificados no ato da solicitação.</div>`
+          :'';
+    const exigeAceite=troca||mista||ordord||assuncaoExtra;
     return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${cab}</small><strong>${titulo}</strong>${detalhes}<span class="status-pill status-${esc(st)}">${esc(st)}</span>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${Number(q.contraparte_id)===Number(provider.session?.guarda_id)&&exigeAceite&&['AGUARDANDO_ACEITE','PENDENTE'].includes(st)?`<div class="request-actions"><button class="mini" data-pm-accept="${x.id}">Autorizar/aceitar</button><button class="mini" data-pm-reject="${x.id}">Recusar</button></div>`:''}${x.editable&&modal==='ASSUNCAO'?`<div class="request-actions"><button class="mini" data-pm-edit="${x.id}">Editar</button><button class="mini" data-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</div>`;
   }).join(''):'';
   el.innerHTML=(agHtml+reqHtml)||'<div class="empty">Nenhuma solicitação de permuta enviada.</div>';
@@ -1866,6 +1869,11 @@ async function enviarPermuta(ev){
       extra_id:Number(outro?.value||0),extra_tipo:outro?.dataset.tipo||'MANUAL',extra_tipo_origem:outro?.dataset.tipo||'MANUAL',
       extra_guarda_id:Number(outro?.dataset.g||0),extra_data:outro?.dataset.data||$('pmExtraData')?.value||'',
       observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked,financeiro_neutro:1
+    }:modalidade==='TROCA_ORDINARIO'?{
+      modalidade,data:dataOrd,turno,turno_confirmado_ui:turno,servico_extra:0,
+      substituido_id:Number($('pmSubstituto').value),contraparte_id:Number($('pmSubstituto').value),
+      data_contrapartida:$('pmDataContrapartida')?.value||'',turno_contrapartida:$('pmTurnoContrapartida')?.value||'A',
+      observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked,financeiro_neutro:1
     }:{modalidade,data:dataOrd,turno,turno_confirmado_ui:turno,servico_extra:0,substituido_id:Number($('pmSubstituto').value),observacao:$('pmObs').value,concordou_termo:$('pmTermo').checked,assuncao_sem_troca_confirmada:false};
     if(modalidade==='ASSUNCAO'){
       const simples=confirm('ATENÇÃO: esta opção é somente para ASSUNÇÃO SIMPLES de serviço ordinário, sem troca e sem serviço de retorno.\n\nSe existe outro serviço em negociação, cancele e use a modalidade de troca identificando os dois serviços. Se o segundo serviço ainda não estiver definido, use Permuta Agendada (mesma natureza e mesma duração).\n\nConfirma que NÃO existe serviço de retorno em negociação?');
@@ -1873,7 +1881,7 @@ async function enviarPermuta(ev){
       req.assuncao_sem_troca_confirmada=true;
     }
     if(modalidade==='ASSUNCAO'&&turno==='COMPLETO'&&!confirm('Confirmar ASSUNÇÃO SIMPLES para TURNO COMPLETO (A+B · 24 horas)?')){msg.textContent='Envio cancelado. Confira o período selecionado.';msg.classList.remove('success');return;}
-    if((modalidade==='TROCA_EXTRA'||modalidade==='TROCA_ORDINARIO_EXTRA')&&permutaEditingId)throw new Error('Trocas neutras devem ser canceladas e refeitas, preservando a auditoria.');
+    if((modalidade==='TROCA_EXTRA'||modalidade==='TROCA_ORDINARIO_EXTRA'||modalidade==='TROCA_ORDINARIO')&&permutaEditingId)throw new Error('Trocas com dois serviços devem ser canceladas e refeitas, preservando a auditoria.');
     if(modalidade==='TROCA_EXTRA'&&(!req.extra_id||!req.extra_contrapartida_id))throw new Error('Selecione os dois serviços extras.');
     if(modalidade==='CESSAO_EXTRA'&&!req.extra_id)throw new Error('Selecione o serviço extra que deseja assumir.');
     if(modalidade==='TROCA_ORDINARIO_EXTRA'){
@@ -1882,6 +1890,13 @@ async function enviarPermuta(ev){
       if(!req.extra_id||!req.extra_guarda_id)throw new Error('Selecione um serviço extra de outro GCM na data informada.');
       if(req.extra_data!==$('pmExtraData').value)throw new Error('O serviço extra selecionado não corresponde à data informada.');
       if(!req.concordou_termo)throw new Error('Confirme o termo de responsabilidade e a neutralidade financeira.');
+    }
+    if(modalidade==='TROCA_ORDINARIO'){
+      if(!req.data||!req.turno||!req.substituido_id)throw new Error('Identifique o serviço do outro GCM que você irá cumprir.');
+      if(!req.data_contrapartida||!req.turno_contrapartida)throw new Error('Identifique também o seu serviço que será cumprido pela contraparte.');
+      if(!req.concordou_termo)throw new Error('Confirme o termo de responsabilidade.');
+      const resumo='Confirmar troca ordinário por ordinário?\n\nServiço do outro GCM: '+req.data+' · '+req.turno+'\nSeu serviço em contrapartida: '+req.data_contrapartida+' · '+req.turno_contrapartida+'\n\nOs dois serviços ficarão vinculados a esta solicitação.';
+      if(!confirm(resumo))return;
     }
     const r=permutaEditingId?await provider.updatePermutaRequest(permutaEditingId,req):await provider.requestPermuta(req);
     msg.textContent=r.warning||r.message||(permutaEditingId?'Solicitação atualizada. Aguardando decisão do Comando.':'Solicitação enviada. Acompanhe o histórico nesta tela.');msg.classList.add('success');resetPermutaForm();renderTudo(false);setView('permutas');
