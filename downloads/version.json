@@ -1,17 +1,16 @@
 {
-    "version":  "10.0.157",
-    "versionCode":  157,
-    "apk":  "GCMBS-10.0.157.apk",
-    "publishedAt":  "2026-09-28T22:55:52.4658746Z",
-    "sha256":  "73AE9121EDA27082C0C6F8C8276B982914620F54E70D227124EBE6D9CF49119B",
-    "sizeBytes":  5800198,
+    "version":  "10.0.158",
+    "versionCode":  158,
+    "apk":  "GCMBS-10.0.158.apk",
+    "publishedAt":  "2026-10-02T16:34:52.749Z",
+    "sha256":  "C474A5D18FF6E8932CFF9976E836E960AC5B6DDDFD8AA68DB0222176DDBCFAA3",
+    "sizeBytes":  5731135,
     "notes":  [
-                  "Android 10.0.157: reconciliacao final dos fluxos protegidos do Online e Android.",
-                  "Banco de Horas: mantido o fluxo por competencia V233.",
-                  "Permuta Agendada: mantidos os fluxos V259 e V275 para GCM e Comando.",
-                  "Escopo de acesso e sessao ativa reconciliados com o Online.",
-                  "Pacote Android otimizado: APKs antigos deixaram de ser incorporados ao aplicativo.",
-                  "Atualizacao preserva a mesma assinatura institucional da versao 10.0.156.",
-                  "Gratificacao de Motorista permanece DESATIVADA."
+                  "Android 10.0.158: permutas V285-R2 alinhadas com Desktop e Online.",
+                  "Troca Ordinario x Ordinario: os dois servicos devem ser identificados no ato da solicitacao.",
+                  "Troca Ordinario x Extra: somente servicos de mesma duracao.",
+                  "Troca Extra x Extra preservada.",
+                  "Assuncao simples preservada e separada das trocas.",
+                  "Permuta Agendada preservada para compensacao futura da mesma natureza e mesma duracao."
               ]
 }
