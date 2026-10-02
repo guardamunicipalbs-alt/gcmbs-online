@@ -217,3 +217,61 @@ html.gcmbs-ds #msg,html.gcmbs-ds [id*="mensagem" i],html.gcmbs-ds [id*="status" 
 @media(max-width:760px){html.gcmbs-ds body>main.wrap,html.gcmbs-ds main.wrap,html.gcmbs-ds .wrap,html.gcmbs-ds .container{width:100%;padding:14px 12px 26px}.filtros,.filters,.filter-bar{align-items:stretch}.filtros label,.filters label,.filter-bar label,.filtros button,.filters button,.filter-bar button{flex:1 1 100%;width:100%}.grid,.form-grid{grid-template-columns:1fr!important}.menu-grid,.menuGrid{grid-template-columns:1fr}.wide{grid-column:auto!important}}
 
 html.gcmbs-ds .nav-icon,html.gcmbs-ds .icon{display:inline-grid;place-items:center;flex:0 0 22px;width:22px;height:22px;color:currentColor}html.gcmbs-ds .nav-icon svg,html.gcmbs-ds .icon svg{width:18px;height:18px;display:block}html.gcmbs-ds .app nav button.active .nav-icon{color:#fff}html.gcmbs-ds button.btn .icon{color:var(--gc-primary);background:var(--gc-primary-soft);border-radius:7px}
+
+/* GCMBS V287 - PERMUTAS MOBILE
+   Ajuste exclusivamente visual.
+   Nao altera regras operacionais ou financeiras das permutas. */
+
+#permutas .item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#permutas .item > small,
+#permutas .item > strong,
+#permutas .item > span {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+#permutas .item > strong {
+  margin: 0;
+}
+
+#permutas .item > .status-pill {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-self: flex-start;
+}
+
+#permutas .item > .record-warning {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 2px 0;
+}
+
+#permutas .item .request-actions {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  #permutas .item {
+    gap: 10px;
+  }
+
+  #permutas .item > small,
+  #permutas .item > strong,
+  #permutas .item > span {
+    line-height: 1.5;
+  }
+}
