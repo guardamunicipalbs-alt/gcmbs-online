@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { successfulBaseline, reconcile, completenessGate } from '../sync-integrity-core.mjs';
+const row=(data={horas:12},record_key='1',extra={})=>({entity:'banco_horas_solicitacoes',record_key,module:'banco',data,...extra});
+const run=(snapshot_id,status)=>({client_name:'desktop',snapshot_id,status,completed_at:'2026-09-20T00:01:00Z',content_hash:snapshot_id,applied_verified:true,conflict_count:0});
+const backup=snapshot_id=>({client_name:'desktop',snapshot_id,created_at:snapshot_id==='failed'?'2026-09-20T00:02:00Z':'2026-09-20T00:00:00Z',snapshot_sha256:snapshot_id});
+test('backup com erro não vira baseline',()=>assert.equal(successfulBaseline([backup('good'),backup('failed')],[run('good','OK'),run('failed','ERRO')],'desktop').snapshot_id,'good'));
+test('snapshot idêntico recupera ausência por chave idempotente',()=>{const a={previous:[row()],current:[row()],cloud:[]},first=reconcile(a),retry=reconcile(a);assert.equal(first.inserts.length,1);assert.equal(first.inserts[0].changeId,retry.inserts[0].changeId);assert.equal(reconcile({...a,cloud:[row()]}).inserts.length,0);});
+test('não ressuscitar tombstone',()=>{const p=reconcile({current:[row()],cloud:[row({horas:12},'1',{deleted:true})]});assert.equal(p.inserts.length+p.updates.length,0);assert.equal(p.conflicts[0].reason,'legitimate-cloud-tombstone');});
+test('ausência com exclusão histórica bloqueia restauração',()=>{const p=reconcile({current:[row()],tombstoneHistory:[{entity:row().entity,record_key:'1'}]});assert.equal(p.inserts.length,0);assert.equal(p.conflicts.length,1);});
+test('edição concorrente nunca sobrescreve nuvem',()=>{const p=reconcile({previous:[row({horas:12})],current:[row({horas:14})],cloud:[row({horas:16},'1',{revision:3})]});assert.equal(p.updates.length,0);assert.equal(p.conflicts[0].reason,'concurrent-modification');});
+test('ausência de registro local não é DELETE',()=>{const p=reconcile({previous:[row()],current:[],cloud:[row()]});assert.equal(p.deletes.length,0);assert.equal(p.cloudOnly.length,1);});
+test('DELETE explícito exige ancestral igual e revisão',()=>{const p=reconcile({previous:[row()],current:[row({horas:12},'1',{deleted:true})],cloud:[row({horas:12},'1',{revision:7})]});assert.equal(p.deletes.length,1);assert.equal(p.deletes[0].expectedRevision,7);});
+test('timestamp técnico na folha não altera cálculo',()=>{const r=t=>({entity:'folha_pagamento_arredondamentos',record_key:'3|2026-09|50',data:{horas_base:12,atualizado_em:t}});assert.equal(reconcile({previous:[r('a')],current:[r('b')],cloud:[r('c')]}).noops.length,1);});
+test('colisão de ID do banco entre guardas é conflito',()=>{const a={entity:'banco_horas_movimentacoes',record_key:'718',data:{guarda_id:3,competencia:'2026-09',minutos:720}},b={...a,data:{...a.data,guarda_id:4}};assert.equal(reconcile({previous:[a],current:[a],cloud:[b]}).conflicts[0].reason,'bank-identity-collision');});
+test('não apresentar OK com Android sem teste ou ACK com erro',()=>{const ok={runStatus:'OK',localCommitted:true,pending:0,conflicts:0,ackErrors:0,mismatches:0,webVerified:true,androidVerified:true};assert.equal(completenessGate(ok),true);assert.equal(completenessGate({...ok,ackErrors:1}),false);assert.equal(completenessGate({...ok,androidVerified:false}),false);});
+test('HTTP OK sem verificação de aplicação não vira baseline',()=>{const bad={...run('good','OK'),applied_verified:false};assert.equal(successfulBaseline([backup('good')],[bad],'desktop'),null);});
