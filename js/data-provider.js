@@ -4,8 +4,17 @@ import './v58-ui.js?v=100110';
 import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100076';
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+const CORE_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
 const JUSTIFICATIVAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-justificativas-v68';
+// Estas ações já eram apenas encaminhadas sem alteração pelo gateway.
+// Ir direto ao CORE evita 1 ou 2 Edge Functions intermediárias sem mudar regras, sessão ou dados.
+const CORE_DIRECT_ACTIONS=new Set([
+  'login','session','logout','change_password','reset_password_admin','data','references','branding',
+  'relatorio_escalas','permuta_candidates','checklist_context','request_bank_correction','request_permuta',
+  'update_permuta_request','cancel_permuta_request','admin_delete_permuta_request','decide_bank_request',
+  'mark_notification_read'
+]);
 
 const PENDING_PERMUTA_STATUS=new Set(['AGUARDANDO_ACEITE','PENDENTE','PENDENTE_DESKTOP','PROCESSADO','ACEITE_PENDENTE_DESKTOP','DECISAO_PENDENTE_DESKTOP','CANCELAMENTO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP','CANCELAMENTO_COMANDO_PENDENTE']);
 function gcmbsServiceTime(x){const p=x?.payload&&typeof x.payload==='object'?x.payload:(x||{}),data=String(p.data||x?.data||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(data))return Number.MAX_SAFE_INTEGER;const turno=String(p.turno||x?.turno||'').toUpperCase();let hora=String(p.horario_inicio||x?.horario_inicio||'').slice(0,5);if(!/^\d{2}:\d{2}$/.test(hora))hora=turno==='B'?'19:00':'07:00';const t=Date.parse(`${data}T${hora}:00-03:00`);return Number.isFinite(t)?t:Number.MAX_SAFE_INTEGER;}
@@ -31,7 +40,10 @@ export class AuthenticatedProvider {
     return body;
   }
 
-  async call(action,payload={},authenticated=true){return this.endpoint(API,action,payload,authenticated)}
+  async call(action,payload={},authenticated=true){
+    const a=String(action||'').toLowerCase();
+    return this.endpoint(CORE_DIRECT_ACTIONS.has(a)?CORE_API:API,action,payload,authenticated);
+  }
 
   async login(identificador,senha,remember=false){
     const body=await this.call('login',{identificador,senha,remember},false);
