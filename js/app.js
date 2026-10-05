@@ -1,5 +1,15 @@
 import './communication-workflows-v74.js?v=100085';
-import './app-core.js?v=100282-session-fix2';;
+
+// GCMBS V293 - economia de invocações Edge Functions.
+// Mantém ações manuais/imediatas, mas alonga apenas os dois timers automáticos conhecidos
+// (atualização global e frequência) de 60 segundos para 30 minutos.
+const GCMBS_SET_INTERVAL_ORIGINAL=window.setInterval.bind(window);
+window.setInterval=(fn,delay,...args)=>{
+  const src=typeof fn==='function'?Function.prototype.toString.call(fn):'';
+  if(Number(delay)===60000&&(src.includes('atualizarAoVivo')||src.includes('gcmbsFreqLoad')))delay=1800000;
+  return GCMBS_SET_INTERVAL_ORIGINAL(fn,delay,...args);
+};
+await import('./app-core.js?v=100293-low-usage');
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;
