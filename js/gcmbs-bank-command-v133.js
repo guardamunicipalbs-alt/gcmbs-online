@@ -1,4 +1,4 @@
-const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v131';
+const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6';
 const BANK_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-bank-command-v133';
 const TYPES=[
   ['CREDITO_SERVICO_EXTRA','Crédito por Serviço Extra','CREDITO'],
@@ -12,9 +12,9 @@ const TYPES=[
   ['TRANSFERENCIA_COMPETENCIA_SEGUINTE','Transferência para competência seguinte','DEBITO']
 ];
 const TYPE_MAP=new Map(TYPES.map(x=>[x[0],x]));
-let mounted=false,refs={guardas:[]},feriados=new Set();
+let mounted=false,mounting=false,refs={guardas:[]},feriados=new Set(),lastFailureAt=0;
 const $=id=>document.getElementById(id);
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const token=()=>localStorage.getItem('gcmbs.mobile.token')||'';
 async function post(url,action,payload={}){
   const t=token();if(!t)throw new Error('Sessão não autenticada.');
@@ -43,7 +43,7 @@ function updateAutoFields(){
   if($('bcmdClasse'))$('bcmdClasse').value=classFor(date);
 }
 async function loadContext(){
-  await post(BANK_API,'health');
+  // Não faz health-check periódico. A própria consulta autenticada abaixo valida sessão e conectividade.
   const r=await post(API,'references');refs=r.references||r||{};
   try{
     const h=await post(API,'entity_list',{entity:'feriados',limit:500,offset:0});
@@ -94,12 +94,26 @@ async function submitMovement(e){
   finally{btn.disabled=false;btn.textContent='Registrar movimentação'}
 }
 async function tryMount(){
-  if(mounted||!token())return;
-  try{await loadContext();if(renderCard())mounted=true}catch{}
+  if(mounted||mounting||!token())return;
+  // Ponto decisivo: só consulta o servidor se a área exclusiva do Comando realmente existir no DOM.
+  if(!$('bancoGestaoCard'))return;
+  // Em falha transitória, limita novas tentativas a no máximo uma a cada 30 s.
+  if(lastFailureAt&&Date.now()-lastFailureAt<30000)return;
+  mounting=true;
+  try{await loadContext();if(renderCard()){mounted=true;lastFailureAt=0}}
+  catch{lastFailureAt=Date.now()}
+  finally{mounting=false}
 }
 function boot(){
   tryMount();
-  const app=$('appTela');if(app)new MutationObserver(()=>tryMount()).observe(app,{attributes:true,attributeFilter:['class']});
-  setInterval(()=>{if(!mounted)tryMount()},4000);
+  const app=$('appTela');
+  if(app){
+    let queued=false;
+    new MutationObserver(()=>{
+      if(queued||mounted||!$('bancoGestaoCard'))return;
+      queued=true;setTimeout(()=>{queued=false;tryMount()},350);
+    }).observe(app,{attributes:true,childList:true,subtree:true,attributeFilter:['class']});
+  }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)tryMount()});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
