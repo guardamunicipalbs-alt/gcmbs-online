@@ -7,7 +7,8 @@
 if(window.__GCMBS_V130_BANCO_FILTRO__)return;
 window.__GCMBS_V130_BANCO_FILTRO__=true;
 
-const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+// session/data/references existem diretamente no CORE; evita gateway-v74 -> v131 -> core.
+const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
