@@ -25,8 +25,23 @@ async function verificarAtualizacaoApp(){
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
-const competenciaAtual=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'}).slice(0,7);
-const competenciaDoRegistro=x=>{const p=x?.payload||{};return String(p.competencia_pagamento||x?.competencia_pagamento||p.competencia||x?.competencia||p.competencia_origem||x?.competencia_origem||p.data||x?.data_evento||x?.data_fato||x?.created_at||'').slice(0,7)};
+const gcmbsDataISO=v=>/^\d{4}-\d{2}-\d{2}$/.test(String(v||'').slice(0,10))?String(v).slice(0,10):'';
+const gcmbsCompetenciaData=v=>{
+  const d=gcmbsDataISO(v);if(!d)return '';
+  // Transicao: tudo ate 30/09/2026 ja foi pago e permanece no mes historico.
+  if(d<='2026-09-30')return d.slice(0,7);
+  const [a,m,dia]=d.split('-').map(Number);
+  if(dia<20)return `${a}-${String(m).padStart(2,'0')}`;
+  return m===12?`${a+1}-01`:`${a}-${String(m+1).padStart(2,'0')}`;
+};
+const competenciaAtual=()=>gcmbsCompetenciaData(new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'}));
+const competenciaDoRegistro=x=>{
+  const p=x?.payload||{};
+  const data=p.data_fato||x?.data_fato||p.data||x?.data||x?.data_evento||p.data_evento||'';
+  const pelaData=gcmbsCompetenciaData(data);
+  if(pelaData)return pelaData;
+  return String(p.competencia_pagamento||x?.competencia_pagamento||p.competencia||x?.competencia||p.competencia_origem||x?.competencia_origem||'').slice(0,7);
+};
 const filtraCompetencia=(lista,id)=>{const el=$(id),c=el?.value||competenciaAtual();return (lista||[]).filter(x=>competenciaDoRegistro(x)===c)};
 const horas=min=>{const n=Number(min||0),sg=n<0?'-':'';return `${sg}${Math.floor(Math.abs(n)/60)}h${String(Math.abs(n)%60).padStart(2,'0')}`};
 const APP_VERSION='10.0.156';
