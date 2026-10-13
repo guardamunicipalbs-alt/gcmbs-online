@@ -48,7 +48,8 @@ window.fetch=async(input,init={})=>{
   if(method==='POST'&&CORE.test(url)&&Object.prototype.hasOwnProperty.call(TTL,action)){
     const key=`${action}|${authKey(init)}`;
     const now=Date.now(),hit=cache.get(key);
-    if(hit&&now-hit.at<TTL[action])return responseOf(hit.snapshot);
+    // Em segundo plano, nunca refaz a leitura pesada. Ao voltar para o app, o cache é invalidado.
+    if(hit&&(document.hidden||now-hit.at<TTL[action]))return responseOf(hit.snapshot);
     if(inflight.has(key))return responseOf(await inflight.get(key));
 
     const p=(async()=>{
@@ -65,16 +66,15 @@ window.fetch=async(input,init={})=>{
   return nativeFetch(input,init);
 };
 
-// Botão de sincronização explícita sempre força leitura nova.
+// Sincronização explícita e eventos que alteram dados sempre forçam leitura nova.
 document.addEventListener('click',e=>{
   if(e.target?.closest?.('#syncAgoraOnline,#relatoriosAtualizar,#gc130BancoAtualizar'))clearData();
 },true);
 window.addEventListener('gcmbs:v110-refresh',clearData);
 window.addEventListener('online',clearData);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){
-  const last=Math.max(0,...[...cache.values()].map(x=>Number(x.at)||0));
-  if(last&&Date.now()-last>TTL.data)clearData();
-}});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)clearData();
+});
 
-console.info('[GCMBS] V161 cache inteligente: data 20s / references 120s');
+console.info('[GCMBS] V161 cache inteligente: data 20s / references 120s / pausa em segundo plano');
 })();
