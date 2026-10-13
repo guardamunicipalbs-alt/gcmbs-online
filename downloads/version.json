@@ -1,17 +1,20 @@
 {
-    "version":  "10.0.160",
-    "versionCode":  160,
-    "apk":  "GCMBS-10.0.160.apk",
-    "publishedAt":  "2026-10-13T20:05:05.1009941Z",
-    "sha256":  "309EC73D413C813C0A6B982B5DAF286280E250FFCB3B27401A4BDFC5D1E06940",
-    "sizeBytes":  5804294,
+    "version":  "10.0.161",
+    "versionCode":  161,
+    "apk":  "GCMBS-10.0.161.apk",
+    "publishedAt":  "2026-10-13T20:37:13.7149014Z",
+    "sha256":  "59C44A4D258228F4159F9FA4717248BFFFBC8C65BD50711F3654597B38ED2880",
+    "sizeBytes":  5804387,
     "notes":  [
-                  "Android 10.0.160: sistema automatico de aviso de atualizacao.",
-                  "Ao abrir o aplicativo, uma nova versao publicada sera detectada automaticamente.",
-                  "Quando houver atualizacao, o app exibira a versao instalada e a nova versao disponivel.",
-                  "Botao ATUALIZAR AGORA abre diretamente o APK oficial da nova versao.",
-                  "Botao DEPOIS permite continuar usando o aplicativo.",
-                  "Quando o aplicativo ja estiver atualizado, nenhum aviso de atualizacao sera exibido.",
-                  "Mantida a regra de competencia de pagamento do dia 20 ao dia 19."
+                  "Android 10.0.161: otimizacao de sincronizacao e reducao de trafego com o Supabase.",
+                  "Adicionado cache inteligente para evitar repeticao de leituras pesadas em curto intervalo.",
+                  "Consultas action=data sao reutilizadas por 20 segundos quando nao houve alteracao.",
+                  "Referencias estaticas sao reutilizadas por ate 120 segundos.",
+                  "Chamadas simultaneas identicas passam a compartilhar a mesma resposta.",
+                  "Operacoes de gravacao, permutas, decisoes e sincronizacao manual invalidam o cache imediatamente.",
+                  "Aplicativo em segundo plano deixa de provocar leituras pesadas desnecessarias.",
+                  "Reduzidas chamadas intermediarias de Edge Functions no Banco de Horas.",
+                  "Mantidas as rotinas V241 e V242 de sincronizacao por delta.",
+                  "Mantida a regra de competencia financeira do dia 20 ao dia 19."
               ]
 }
