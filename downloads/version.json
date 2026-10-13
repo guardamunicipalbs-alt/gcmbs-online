@@ -1,17 +1,17 @@
 {
-    "version":  "10.0.159",
-    "versionCode":  159,
-    "apk":  "GCMBS-10.0.159.apk",
-    "publishedAt":  "2026-10-13T19:48:17.5772309Z",
-    "sha256":  "2C42E959737BFAEAA84E80B12FB461EF8AFD6A435899FBA8D753164359F4BD19",
-    "sizeBytes":  5800198,
+    "version":  "10.0.160",
+    "versionCode":  160,
+    "apk":  "GCMBS-10.0.160.apk",
+    "publishedAt":  "2026-10-13T20:05:05.1009941Z",
+    "sha256":  "309EC73D413C813C0A6B982B5DAF286280E250FFCB3B27401A4BDFC5D1E06940",
+    "sizeBytes":  5804294,
     "notes":  [
-                  "Android 10.0.159: competencia de pagamento alinhada ao Desktop e Online.",
-                  "Regra geral de competencia: dia 20 do mes anterior ate dia 19 do mes da competencia.",
-                  "OUT/2026 em transicao considera 01/10/2026 a 19/10/2026, pois o periodo anterior ja foi pago.",
-                  "NOV/2026 considera 20/10/2026 a 19/11/2026.",
-                  "Lancamentos de periodo fechado/pago ate 30/09/2026 nao sao reimportados.",
-                  "Lancamentos futuros nao sao antecipados para competencia anterior.",
-                  "App assinado com a mesma chave institucional do aplicativo instalado."
+                  "Android 10.0.160: sistema automatico de aviso de atualizacao.",
+                  "Ao abrir o aplicativo, uma nova versao publicada sera detectada automaticamente.",
+                  "Quando houver atualizacao, o app exibira a versao instalada e a nova versao disponivel.",
+                  "Botao ATUALIZAR AGORA abre diretamente o APK oficial da nova versao.",
+                  "Botao DEPOIS permite continuar usando o aplicativo.",
+                  "Quando o aplicativo ja estiver atualizado, nenhum aviso de atualizacao sera exibido.",
+                  "Mantida a regra de competencia de pagamento do dia 20 ao dia 19."
               ]
 }
