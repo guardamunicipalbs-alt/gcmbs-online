@@ -1,17 +1,19 @@
-﻿{
-    "version":  "10.0.162",
-    "versionCode":  162,
-    "apk":  "GCMBS-10.0.162.apk",
-    "publishedAt":  "2026-10-14T12:10:54.7119465Z",
-    "sha256":  "FFD0C115B5262725FBB49F326909A49FF75C3D333D78FE89434F3076F570546D",
-    "sizeBytes":  6861279,
+{
+    "version":  "10.0.163",
+    "versionCode":  163,
+    "apk":  "GCMBS-10.0.163.apk",
+    "publishedAt":  "2026-10-14T12:38:32.8716555Z",
+    "sha256":  "FABE1CFA7A0664850A51A3E4F6B9E4B2A20945F37E08152A395874F770B20D8B",
+    "sizeBytes":  6861512,
     "notes":  [
-                  "Android 10.0.162: paridade do Banco de Horas com Desktop e Online.",
-                  "Competencia de pagamento passa a ser a referencia autoritativa do Banco de Horas.",
-                  "Data do fato permanece apenas como referencia historica quando a competencia de pagamento estiver definida.",
+                  "Android 10.0.163: correcao definitiva da competencia financeira do Banco de Horas no App.",
+                  "App passa a utilizar a mesma regra canonica do Desktop e do Online.",
+                  "Competencia de pagamento passa a ser a referencia autoritativa.",
+                  "Data do fato permanece somente como origem historica quando houver competencia de pagamento definida.",
+                  "Removida a regra antiga de contabilizacao prioritaria pela data do fato no Banco de Horas.",
                   "Lancamentos retroativos permanecem na competencia em que serao pagos.",
-                  "Lancamentos da competencia futura nao sao antecipados.",
-                  "Mantida integralmente a regra de ferias.",
-                  "Mantida a regra de transporte do limite de 84 horas somente apos fechamento da folha."
+                  "Lancamentos de competencia futura nao sao antecipados.",
+                  "Regra de ferias preservada integralmente.",
+                  "Transporte do limite de 84 horas permanece permitido somente apos fechamento da folha."
               ]
 }
