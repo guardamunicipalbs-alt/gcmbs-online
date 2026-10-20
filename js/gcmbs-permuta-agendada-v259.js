@@ -174,7 +174,11 @@ function renderCloud(){
   garantirUi();
   const host=$('gcmbsAgCloudListV259');if(!host)return;
   const me=Number(JSON.parse(localStorage.getItem('gcmbs.mobile.session')||'null')?.guarda_id||0);
-  const rows=cloudRows.filter(x=>String(x.status||'').toUpperCase()!=='PROCESSADO');
+  const rows=cloudRows.filter(x=>{
+    const st=String(x.status||'').toUpperCase();
+    // Aceites recebidos aparecem exclusivamente na caixa unificada V298.
+    return st!=='PROCESSADO'&&!(st==='AGUARDANDO_ACEITE'&&Number(x.payload?.contraparte_id||0)===me);
+  });
   if(!rows.length){host.innerHTML='<div class="empty">Nenhuma solicitação de troca agendada em trânsito.</div>';return}
 
   host.innerHTML=rows.map(x=>{
@@ -205,7 +209,10 @@ async function refreshCloud(force=false){
   cloudLoading=true;
   try{
     const r=await call(API,'list');
-    cloudRows=r.requests||[];lastLoad=Date.now();renderCloud();
+    cloudRows=r.requests||[];lastLoad=Date.now();
+    window.gcmbsAgendadaEstadoV298={requests:cloudRows,termText:TERM_TEXT};
+    renderCloud();
+    window.dispatchEvent(new Event('gcmbs:agendadas-atualizadas'));
   }catch(e){
     const host=$('gcmbsAgCloudListV259');
     if(host)host.innerHTML=`<div class="empty">${esc(e.message)}</div>`;
@@ -269,6 +276,17 @@ async function enviarAgendada(ev){
     if(msg){msg.textContent=e.message;msg.classList.add('error')}
   }finally{if(btn)btn.disabled=false}
 }
+
+// Ponte de aceite autenticado para a caixa unificada V298.
+// A Edge Function verifica novamente destinatario, estado e concordancia.
+window.gcmbsAgendadaResponderV298=async({id,aceitou,concordou_termo})=>{
+  const req=cloudRows.find(x=>Number(x.id)===Number(id));
+  if(!req||String(req.status||'').toUpperCase()!=='AGUARDANDO_ACEITE')
+    throw new Error('Esta troca agendada nao aguarda mais seu aceite. Atualize a pagina.');
+  const r=await call(API,'accept',{id:Number(id),aceitou:!!aceitou,concordou_termo:!!concordou_termo});
+  await refreshCloud(true);
+  return r;
+};
 
 function boot(){
   if(!garantirUi()){setTimeout(boot,300);return}
