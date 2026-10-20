@@ -726,7 +726,67 @@ function renderPermutaAgendadaV256(x){
   const realizado=x.compensacao_realizada_em?'<div class="record-meta">Compensação confirmada pela Frequência.</div>':'';
   return `<article class="record-card"><div class="record-card-head"><strong>Troca agendada · ${esc(tipo)}</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta"><b>Origem:</b> ${fmt(x.data_origem)} · ${esc(x.turno_origem||'')} · ${dur}</div><div class="record-meta"><b>Devedor:</b> ${esc(devedor)} · <b>Credor:</b> ${esc(credor)}</div>${comp}${realizado}<div class="record-warning">Compensação financeiramente neutra. A obrigação só é quitada após Frequência efetiva do serviço equivalente.</div>${x.observacao?`<div>${esc(x.observacao)}</div>`:''}</article>`;
 }
+// GCMBS V297 - Aceites ordinarios pendentes sempre visiveis ao destinatario.
+// Independente da competencia escolhida, sem liberar dados de outros GCMs.
+function renderAceitesPendentesPermuta(){
+  const view=document.querySelector('section[data-view="permutas"]');
+  if(!view)return;
+  const gid=Number(provider.session?.guarda_id||0);
+  let card=$('gcmbsAceitesPendentesV297');
+  const pendencias=gid
+    ?provider.actionRequests().filter(x=>{
+      const p=x?.payload||{};
+      return String(x?.tipo||'').toUpperCase()==='PERMUTA'
+        &&String(x?.status||'').toUpperCase()==='AGUARDANDO_ACEITE'
+        &&String(p.modalidade||'').toUpperCase()==='TROCA_ORDINARIO'
+        &&Number(p.contraparte_id||0)===gid;
+    }).sort((a,b)=>String(a?.payload?.data||'').localeCompare(String(b?.payload?.data||''))||Number(a.id)-Number(b.id))
+    :[];
+  if(!pendencias.length){card?.remove();return}
+  if(!card){
+    card=document.createElement('div');
+    card.id='gcmbsAceitesPendentesV297';
+    card.className='card';
+    card.setAttribute('aria-live','polite');
+    const head=view.querySelector('.desktop-page-head');
+    if(head)head.insertAdjacentElement('afterend',card);
+    else view.insertAdjacentElement('afterbegin',card);
+  }
+  card.innerHTML='<h2>Permutas aguardando seu aceite ('+pendencias.length+')</h2>'+
+    '<p class="muted">Solicitacoes destinadas a voce, independentemente do filtro de competencia. O aceite nao aprova a permuta: a decisao continua com o Comando.</p>'+
+    pendencias.map(x=>{
+      const p=x.payload||{};
+      const solicitante=x.nome_guerra||pessoaPorId(x.guarda_id)||('GCM #'+Number(x.guarda_id||0));
+      return '<article class="record-card">'+
+        '<div class="record-card-head"><strong>Solicitacao #'+Number(x.id)+'</strong><span class="status-pill">AGUARDANDO ACEITE</span></div>'+
+        '<div class="record-meta"><b>Solicitante:</b> '+esc(solicitante)+'</div>'+
+        '<div class="record-meta"><b>Servico que o solicitante assumira:</b> '+esc(fmt(p.data))+' · '+esc(p.turno||'-')+'</div>'+
+        '<div class="record-meta"><b>Servico que voce assumira:</b> '+esc(fmt(p.data_contrapartida))+' · '+esc(p.turno_contrapartida||'-')+'</div>'+
+        '<div class="request-actions"><button class="mini" type="button" data-v297-accept="'+Number(x.id)+'">Aceitar permuta</button>'+
+        '<button class="mini danger-soft" type="button" data-v297-reject="'+Number(x.id)+'">Recusar</button></div>'+
+        '</article>';
+    }).join('');
+  const responder=async(id,aceitou)=>{
+    const pedido=provider.actionRequests().find(x=>Number(x.id)===id);
+    if(!pedido||Number(pedido.payload?.contraparte_id||0)!==Number(provider.session?.guarda_id||0)
+       ||String(pedido.status||'').toUpperCase()!=='AGUARDANDO_ACEITE'){
+      alert('A solicitacao nao esta mais disponivel para seu aceite. Atualize a pagina.');
+      return;
+    }
+    if(!confirm(aceitou
+       ?'Confirma o aceite desta troca, apos conferir as duas datas e os turnos? Aprovacao final depende do Comando.'
+       :'Confirma a recusa desta troca?'))return;
+    try{
+      await provider.acceptExtraSwap(id,aceitou,'TROCA_ORDINARIO');
+      renderTudo(false);
+    }catch(e){alert(e?.message||'Nao foi possivel registrar a resposta.')}
+  };
+  card.querySelectorAll('[data-v297-accept]').forEach(b=>b.addEventListener('click',()=>responder(Number(b.dataset.v297Accept),true)));
+  card.querySelectorAll('[data-v297-reject]').forEach(b=>b.addEventListener('click',()=>responder(Number(b.dataset.v297Reject),false)));
+}
+
 function renderPermutas(){
+  renderAceitesPendentesPermuta();
   const el=$('listaPermutasSolicitadas');if(!el)return;
   if(!permutasAgendadasCarregadas){
     permutasAgendadasCarregadas=true;
@@ -758,6 +818,8 @@ function renderPermutas(){
     el.innerHTML=(agHtml+extras.map(renderPendente).join('')+espelho.map(renderHistorico).join(''))||'<div class="empty">Nenhuma permuta encontrada nesta competência.</div>';
     return;
   }
+  const tituloPessoal=el.closest('.card')?.querySelector('h2');
+  if(tituloPessoal)tituloPessoal.textContent='Permutas da competencia — minhas solicitacoes';
   const req=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'&&permutaVisivelAoUsuario(x)),'pmCompetenciaFiltro');
   const reqHtml=req.length?req.map(x=>{
     const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',ordord=modal==='TROCA_ORDINARIO',assuncaoExtra=modal==='CESSAO_EXTRA',nome=nomeCandidato(q.substituido_id||q.substituto_id),dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null;
