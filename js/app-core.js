@@ -199,7 +199,15 @@ async function abrirModuloPrincipal(modulo){
     return;
   }
   const view=DEDICATED_VIEW[modulo];
-  if(view){if(modulo==='justificativas_faltas'){await abrirModuloOnline(modulo);ativar();return;}setView(view);ativar();if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatoriosFrota')renderRelatoriosFrota();if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();if(view==='escala'){escalaModo='pessoal';renderEscalas();}return;}
+  if(view){if(modulo==='justificativas_faltas'){await abrirModuloOnline(modulo);ativar();return;}setView(view);ativar();if(view==='permutas'){
+    // V298: reler o servidor ao abrir a tela, sem depender do filtro ou do refresh global.
+    provider.load().then(()=>{
+      if(!document.querySelector('section[data-view="permutas"]')?.classList.contains('hidden')){
+        renderPermutas();renderPermutasGestao();
+      }
+    }).catch(e=>console.warn('[GCMBS] falha ao atualizar aceites:',e?.message||e));
+  }
+  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatoriosFrota')renderRelatoriosFrota();if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();if(view==='escala'){escalaModo='pessoal';renderEscalas();}return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
