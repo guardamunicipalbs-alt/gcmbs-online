@@ -52,6 +52,7 @@ let permutaExtrasCache={mine:[],others:[]};
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
 
 function limparEscopoUsuarioRuntime(){
+  if(window.gcmbsAgendadaEstadoV298)window.gcmbsAgendadaEstadoV298.requests=[];
   permutasEspelho=[];
   permutasAgendadasEspelho=[];permutasAgendadasCarregadas=false;
   permutaExtrasCache={mine:[],others:[]};
