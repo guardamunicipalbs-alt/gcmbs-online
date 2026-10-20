@@ -728,62 +728,87 @@ function renderPermutaAgendadaV256(x){
 }
 // GCMBS V297 - Aceites ordinarios pendentes sempre visiveis ao destinatario.
 // Independente da competencia escolhida, sem liberar dados de outros GCMs.
+// GCMBS V298 — caixa unica de aceites recebidos; nao depende da competencia.
+// A contraparte autenticada e o status sao conferidos tambem no servidor.
 function renderAceitesPendentesPermuta(){
   const view=document.querySelector('section[data-view="permutas"]');
   if(!view)return;
   const gid=Number(provider.session?.guarda_id||0);
+  const modalidades=new Set(['TROCA_ORDINARIO','TROCA_EXTRA','CESSAO_EXTRA','TROCA_ORDINARIO_EXTRA']);
+  const comuns=gid?provider.actionRequests().filter(x=>{
+    const p=x?.payload||{},modal=String(p.modalidade||'').toUpperCase();
+    const status=String(x.status_original||x.status||'').toUpperCase();
+    return String(x.tipo||'').toUpperCase()==='PERMUTA'&&modalidades.has(modal)
+      &&Number(p.contraparte_id||0)===gid
+      &&Number(p.aceite_contraparte||0)!==1
+      &&!Number(x.desktop_referencia_id||0)
+      &&(status==='AGUARDANDO_ACEITE'||(modal!=='TROCA_ORDINARIO'&&status==='PENDENTE'));
+  }):[];
+  const agendadas=gid?(window.gcmbsAgendadaEstadoV298?.requests||[]).filter(x=>
+    String(x.tipo||'').toUpperCase()==='PERMUTA_AGENDADA'
+    &&String(x.status_original||x.status||'').toUpperCase()==='AGUARDANDO_ACEITE'
+    &&Number(x.payload?.contraparte_id||0)===gid):[];
+  const pendencias=[
+    ...comuns.map(x=>({...x,classe:'COMUM'})),
+    ...agendadas.map(x=>({...x,classe:'AGENDADA'}))
+  ].sort((a,b)=>String(a.payload?.data_origem||a.payload?.data||'').localeCompare(String(b.payload?.data_origem||b.payload?.data||''))||Number(a.id)-Number(b.id));
   let card=$('gcmbsAceitesPendentesV297');
-  const pendencias=gid
-    ?provider.actionRequests().filter(x=>{
-      const p=x?.payload||{};
-      return String(x?.tipo||'').toUpperCase()==='PERMUTA'
-        &&String(x?.status||'').toUpperCase()==='AGUARDANDO_ACEITE'
-        &&String(p.modalidade||'').toUpperCase()==='TROCA_ORDINARIO'
-        &&Number(p.contraparte_id||0)===gid;
-    }).sort((a,b)=>String(a?.payload?.data||'').localeCompare(String(b?.payload?.data||''))||Number(a.id)-Number(b.id))
-    :[];
   if(!pendencias.length){card?.remove();return}
   if(!card){
-    card=document.createElement('div');
-    card.id='gcmbsAceitesPendentesV297';
-    card.className='card';
-    card.setAttribute('aria-live','polite');
+    card=document.createElement('div');card.id='gcmbsAceitesPendentesV297';
+    card.className='card';card.setAttribute('aria-live','polite');
     const head=view.querySelector('.desktop-page-head');
     if(head)head.insertAdjacentElement('afterend',card);
     else view.insertAdjacentElement('afterbegin',card);
   }
-  card.innerHTML='<h2>Permutas aguardando seu aceite ('+pendencias.length+')</h2>'+
-    '<p class="muted">Solicitacoes destinadas a voce, independentemente do filtro de competencia. O aceite nao aprova a permuta: a decisao continua com o Comando.</p>'+
-    pendencias.map(x=>{
-      const p=x.payload||{};
-      const solicitante=x.nome_guerra||pessoaPorId(x.guarda_id)||('GCM #'+Number(x.guarda_id||0));
-      return '<article class="record-card">'+
-        '<div class="record-card-head"><strong>Solicitacao #'+Number(x.id)+'</strong><span class="status-pill">AGUARDANDO ACEITE</span></div>'+
-        '<div class="record-meta"><b>Solicitante:</b> '+esc(solicitante)+'</div>'+
-        '<div class="record-meta"><b>Servico que o solicitante assumira:</b> '+esc(fmt(p.data))+' · '+esc(p.turno||'-')+'</div>'+
-        '<div class="record-meta"><b>Servico que voce assumira:</b> '+esc(fmt(p.data_contrapartida))+' · '+esc(p.turno_contrapartida||'-')+'</div>'+
-        '<div class="request-actions"><button class="mini" type="button" data-v297-accept="'+Number(x.id)+'">Aceitar permuta</button>'+
-        '<button class="mini danger-soft" type="button" data-v297-reject="'+Number(x.id)+'">Recusar</button></div>'+
-        '</article>';
+  const modalidadeLabel={TROCA_ORDINARIO:'Ordinario por ordinario',TROCA_EXTRA:'Troca bilateral de extras',CESSAO_EXTRA:'Assuncao de extra',TROCA_ORDINARIO_EXTRA:'Ordinario por extra'};
+  card.innerHTML='<h2>Permutas aguardando minha resposta ('+pendencias.length+')</h2>'
+    +'<p class="muted">Todas as modalidades, inclusive agendadas, independentemente da competencia. Aceite nao significa aprovacao do Comando.</p>'
+    +pendencias.map(x=>{
+      const p=x.payload||{},ag=x.classe==='AGENDADA';
+      const modal=String(p.modalidade||'').toUpperCase();
+      const solicitante=x.solicitante_nome||x.nome_guerra||pessoaPorId(x.guarda_id)||('GCM #'+Number(x.guarda_id||0));
+      const titulo=ag?'Troca agendada · '+esc(p.tipo_servico_agendado||p.tipo_servico||'Serviço'):modalidadeLabel[modal]||modal;
+      const data=esc(fmt(p.data_origem||p.data)),turno=esc(p.turno_origem||p.turno||'-');
+      let detalhes='<div class="record-meta"><b>Servico inicial:</b> '+data+' · '+turno+'</div>';
+      if(modal==='TROCA_ORDINARIO')detalhes+='<div class="record-meta"><b>Servico em contrapartida:</b> '+esc(fmt(p.data_contrapartida))+' · '+esc(p.turno_contrapartida||'-')+'</div>';
+      if(modal==='TROCA_EXTRA'||modal==='CESSAO_EXTRA'||modal==='TROCA_ORDINARIO_EXTRA')detalhes+='<div class="record-meta"><b>Extra de origem:</b> '+esc(p.extra_tipo_origem||p.extra_tipo||'MANUAL')+' #'+esc(p.extra_id||'-')+(p.extra_contrapartida_id?' · Contrapartida #'+esc(p.extra_contrapartida_id):'')+'</div>';
+      if(ag)detalhes+='<div class="record-meta"><b>Duracao:</b> '+esc(p.duracao_minutos||'-')+' minutos · Compensacao futura da mesma natureza</div>';
+      const term=ag?'<div class="responsibility-term"><p>'+esc(window.gcmbsAgendadaEstadoV298?.termText||'Troca agendada condicionada a compensacao futura.')+'</p><label class="check"><input type="checkbox" data-v298-termo="'+Number(x.id)+'"> <b>LI E CONCORDO COM O TERMO DA TROCA AGENDADA.</b></label></div>':'';
+      return '<article class="record-card"><div class="record-card-head"><strong>Solicitacao #'+Number(x.id)+' · '+esc(titulo)+'</strong><span class="status-pill">AGUARDANDO ACEITE</span></div>'
+        +'<div class="record-meta"><b>Solicitante:</b> '+esc(solicitante)+'</div>'+detalhes+term
+        +'<div class="request-actions"><button class="mini" type="button" data-v298-accept="'+Number(x.id)+'" data-v298-classe="'+x.classe+'">Aceitar</button> '
+        +'<button class="mini danger-soft" type="button" data-v298-reject="'+Number(x.id)+'" data-v298-classe="'+x.classe+'">Recusar</button></div></article>';
     }).join('');
-  const responder=async(id,aceitou)=>{
-    const pedido=provider.actionRequests().find(x=>Number(x.id)===id);
-    if(!pedido||Number(pedido.payload?.contraparte_id||0)!==Number(provider.session?.guarda_id||0)
-       ||String(pedido.status||'').toUpperCase()!=='AGUARDANDO_ACEITE'){
-      alert('A solicitacao nao esta mais disponivel para seu aceite. Atualize a pagina.');
-      return;
+  let enviando=false;
+  const responder=async(id,aceitou,classe)=>{
+    if(enviando)return;
+    const pedido=pendencias.find(x=>Number(x.id)===id&&x.classe===classe);
+    if(!pedido||Number(pedido.payload?.contraparte_id||0)!==Number(provider.session?.guarda_id||0)){
+      alert('Solicitacao indisponivel para a sua conta. Atualize a pagina.');return;
     }
-    if(!confirm(aceitou
-       ?'Confirma o aceite desta troca, apos conferir as duas datas e os turnos? Aprovacao final depende do Comando.'
-       :'Confirma a recusa desta troca?'))return;
+    if(classe==='AGENDADA'&&aceitou&&!card.querySelector('[data-v298-termo="'+id+'"]')?.checked){
+      alert('Confirme a leitura do termo da troca agendada antes de aceitar.');return;
+    }
+    if(!confirm(aceitou?'Confirma o aceite dos servicos apresentados? A decisao final continua com o Comando.':'Confirma a recusa desta solicitacao?'))return;
+    enviando=true;
+    card.querySelectorAll('[data-v298-accept],[data-v298-reject]').forEach(b=>b.disabled=true);
     try{
-      await provider.acceptExtraSwap(id,aceitou,'TROCA_ORDINARIO');
+      if(classe==='AGENDADA'){
+        const fn=window.gcmbsAgendadaResponderV298;
+        if(typeof fn!=='function')throw new Error('Aguarde a conexao do modulo de trocas agendadas.');
+        await fn({id,aceitou,concordou_termo:aceitou});
+      }else{
+        await provider.acceptExtraSwap(id,aceitou,pedido.payload?.modalidade||'');
+      }
       renderTudo(false);
-    }catch(e){alert(e?.message||'Nao foi possivel registrar a resposta.')}
+    }catch(e){alert(e?.message||'Falha ao registrar sua resposta. Nenhum aceite foi confirmado.')}
+    finally{enviando=false;card.querySelectorAll('[data-v298-accept],[data-v298-reject]').forEach(b=>b.disabled=false)}
   };
-  card.querySelectorAll('[data-v297-accept]').forEach(b=>b.addEventListener('click',()=>responder(Number(b.dataset.v297Accept),true)));
-  card.querySelectorAll('[data-v297-reject]').forEach(b=>b.addEventListener('click',()=>responder(Number(b.dataset.v297Reject),false)));
+  card.querySelectorAll('[data-v298-accept]').forEach(b=>b.addEventListener('click',()=>responder(Number(b.dataset.v298Accept),true,b.dataset.v298Classe)));
+  card.querySelectorAll('[data-v298-reject]').forEach(b=>b.addEventListener('click',()=>responder(Number(b.dataset.v298Reject),false,b.dataset.v298Classe)));
 }
+window.addEventListener('gcmbs:agendadas-atualizadas',()=>renderAceitesPendentesPermuta());
 
 function renderPermutas(){
   renderAceitesPendentesPermuta();
@@ -833,7 +858,7 @@ function renderPermutas(){
           ?`<span>Serviço do outro GCM: ${fmt(q.data)} · Turno ${esc(q.turno||'-')}</span><span>Seu serviço em contrapartida: ${fmt(q.data_contrapartida)} · Turno ${esc(q.turno_contrapartida||'-')}</span><div class="record-warning">Os dois serviços foram identificados no ato da solicitação.</div>`
           :'';
     const exigeAceite=troca||mista||ordord||assuncaoExtra;
-    return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${cab}</small><strong>${titulo}</strong>${detalhes}<span class="status-pill status-${esc(st)}">${esc(st)}</span>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${Number(q.contraparte_id)===Number(provider.session?.guarda_id)&&exigeAceite&&['AGUARDANDO_ACEITE','PENDENTE'].includes(st)?`<div class="request-actions"><button class="mini" data-pm-accept="${x.id}">Autorizar/aceitar</button><button class="mini" data-pm-reject="${x.id}">Recusar</button></div>`:''}${x.editable&&modal==='ASSUNCAO'?`<div class="request-actions"><button class="mini" data-pm-edit="${x.id}">Editar</button><button class="mini" data-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</div>`;
+    return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${cab}</small><strong>${titulo}</strong>${detalhes}<span class="status-pill status-${esc(st)}">${esc(st)}</span>${q.observacao?`<span>${esc(q.observacao)}</span>`:''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${x.editable&&modal==='ASSUNCAO'?`<div class="request-actions"><button class="mini" data-pm-edit="${x.id}">Editar</button><button class="mini" data-pm-del="${x.id}">Excluir solicitação</button></div>`:''}</div>`;
   }).join(''):'';
   el.innerHTML=(agHtml+reqHtml)||'<div class="empty">Nenhuma solicitação de permuta enviada.</div>';
   document.querySelectorAll('[data-pm-edit]').forEach(b=>b.onclick=()=>editarPermutaSolicitacao(Number(b.dataset.pmEdit)));
