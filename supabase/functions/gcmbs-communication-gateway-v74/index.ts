@@ -101,6 +101,33 @@ async function decide(req:Request,b:any){
  const u=await auth(req);if(!u)return reply(401,{message:'Sessão expirada.'});if(!['comandante','subcomandante'].includes(role(u))||!(await canPermuta(u)))return reply(403,{message:'Somente o Comando autorizado pode decidir permutas.'});
  const id=Number(b.id||0),dec=norm(b.decisao).toUpperCase(),mot=norm(b.motivo);if(!id||!['APROVADA','NEGADA'].includes(dec))return reply(400,{message:'Solicitação ou decisão inválida.'});if(dec==='NEGADA'&&!mot)return reply(400,{message:'Informe o motivo da recusa.'});
  const r=(await db`select * from public.mobile_action_requests where id=${id} and tipo='PERMUTA' limit 1`)[0];if(!r)return reply(404,{message:'Solicitação não encontrada.'});if(final(r.status))return reply(409,{message:'A solicitação já recebeu decisão final.'});const q=r.payload||{};
+ const modalidade=norm(q.modalidade||'ASSUNCAO').toUpperCase();
+ // V299: toda troca bilateral exige consentimento verificável, inclusive ordinário x ordinário.
+ const bilateral=['TROCA_ORDINARIO','TROCA_EXTRA','CESSAO_EXTRA','TROCA_ORDINARIO_EXTRA'].includes(modalidade);
+ const contra=Number(q.contraparte_id||q.substituido_id||0);
+ if(dec==='APROVADA'){
+   const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
+   const datas=[q.data,q.data_contrapartida,q.extra_data,q.extra_origem?.data,q.extra_contrapartida?.data].filter(Boolean).map((d:any)=>norm(d).slice(0,10));
+   if(datas.some((d:string)=>d<hoje))return reply(409,{message:'É proibido aprovar retroativamente permuta de serviço já ocorrido.'});
+   if(bilateral&&(Number(q.aceite_contraparte||0)!==1||!contra||Number(q.aceite_por||0)!==contra||!q.aceite_em))
+     return reply(409,{message:'A permuta exige aceite registrado e identificado do GCM destinatário.'});
+   if(modalidade==='TROCA_ORDINARIO'){
+     const dur=(t:any)=>norm(t).toUpperCase()==='COMPLETO'?1440:['A','B'].includes(norm(t).toUpperCase())?720:0;
+     if(!dur(q.turno)||dur(q.turno)!==dur(q.turno_contrapartida))
+       return reply(409,{message:'Troca ordinária exige dois serviços com a mesma duração.'});
+   }
+   if(modalidade==='TROCA_EXTRA'&&Number(q.minutos_extra_origem||0)!==Number(q.minutos_extra_contrapartida||0))
+     return reply(409,{message:'Troca de extras exige serviços da mesma duração.'});
+   if(!Number(r.desktop_referencia_id||0))return reply(409,{message:'A solicitação ainda não foi validada e recebida pelo Desktop.'});
+   const mirror=(await db`select data from public.mobile_entity_records where entity='permutas' and record_key=${String(r.desktop_referencia_id)} and deleted=false limit 1`)[0]?.data;
+   if(!mirror)return reply(409,{message:'A permuta não foi localizada no espelho operacional atualizado do Desktop.'});
+   if(['APROVADA','NEGADA','REPROVADA','REJEITADA','CANCELADA'].includes(norm(mirror.status).toUpperCase()))
+     return reply(409,{message:'Esta permuta já tem decisão final no Desktop; não é permitido duplicar a aplicação.'});
+   if(Number(mirror.substituto_id)!==Number(q.substituto_id||r.guarda_id)||Number(mirror.substituido_id)!==Number(q.substituido_id)||norm(mirror.data).slice(0,10)!==norm(q.data).slice(0,10))
+     return reply(409,{message:'Identidade da permuta diverge da versão do Desktop. Sincronize e audite antes de aprovar.'});
+ }
+ if(bilateral&&Number(q.aceite_contraparte||0)!==1&&dec!=='NEGADA')
+   return reply(409,{message:'Esta permuta ainda aguarda aceite da contraparte.'});
  const ex=await db`select id,status,payload from public.mobile_action_requests where tipo='PERMUTA_DECISAO_COMANDO' and nullif(payload->>'request_id','')::bigint=${id} order by id desc limit 1`;
  if(ex.length){if(!final(r.status))await db`update public.mobile_action_requests set status=${dec},resposta=${dec==='APROVADA'?'Permuta aprovada no Online; sincronização com Desktop pendente.':'Permuta recusada no Online; sincronização com Desktop pendente.'},processado_em=now() where id=${id}`;return reply(200,{success:true,idempotent:true,online_effective:true,desktop_sync_pending:true,command:ex[0],message:dec==='APROVADA'?'Permuta aprovada no Online. Sincronização com o Desktop pendente.':'Permuta recusada no Online. Sincronização com o Desktop pendente.'});}
  const payload={request_id:id,desktop_id:r.desktop_referencia_id||null,decisao:dec,motivo_decisao:mot,solicitante_guarda_id:Number(r.guarda_id),identidade:{data:q.data||null,turno:q.turno||null,modalidade:q.modalidade||'ASSUNCAO',substituto_id:Number(q.substituto_id||r.guarda_id)||null,substituido_id:Number(q.substituido_id)||null,posto_nome:q.posto_nome||null,servico_extra:Number(q.servico_extra||0)},origem:'ONLINE_AUTHORITATIVE_V160',online_effective:true,desktop_sync_pending:true};
