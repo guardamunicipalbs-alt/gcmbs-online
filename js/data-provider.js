@@ -5,6 +5,7 @@ import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.j
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 const CORE_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6';
+const PERMUTA_ADMIN_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-permuta-admin-v72';
 const PUSH_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-push-register';
 const JUSTIFICATIVAS_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-justificativas-v68';
 // Estas ações já eram apenas encaminhadas sem alteração pelo gateway.
@@ -76,7 +77,7 @@ export class AuthenticatedProvider {
   async changePassword(senha_atual,nova_senha){return this.call('change_password',{senha_atual,nova_senha})}
   async resetPasswordAdmin(guarda_id){return this.call('reset_password_admin',{guarda_id:Number(guarda_id)})}
 
-  async decideMirrorPermuta(desktopId,decisao,motivo=''){return this.call('permuta_admin_decide_mirror',{desktop_id:Number(desktopId),decisao:String(decisao||'').toUpperCase(),motivo:String(motivo||'')})}
+  async decideMirrorPermuta(desktopId,decisao,motivo=''){const r=await this.endpoint(PERMUTA_ADMIN_API,'decide_mirror',{desktop_id:Number(desktopId),decisao:String(decisao||'').toUpperCase(),motivo:String(motivo||'')});await this.load();return r}
   async load(){
     const body=await this.call('data');
     // Defesa em profundidade no cliente: GCM comum nunca mantém em memória
