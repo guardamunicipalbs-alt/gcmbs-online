@@ -286,7 +286,8 @@ async function enviarAgendada(ev){
       const op=$('pmExtraOutro')?.selectedOptions?.[0];
       request.extra_id=Number(op?.value||0);
       request.extra_tipo=op?.dataset?.tipo||'MANUAL';
-      if(!request.extra_id)throw new Error('Selecione o serviço extra que você cobrirá.');
+      request.extra_guarda_id=Number(op?.dataset?.g||0); // V302: o id do evento e compartilhado; titular e obrigatorio
+      if(!request.extra_id||!request.extra_guarda_id)throw new Error('Selecione um serviço extra válido e o respectivo GCM titular.');
     }
 
     const r=await call(API,'request',{request});
