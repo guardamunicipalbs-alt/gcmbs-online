@@ -1,5 +1,5 @@
 
-import {AuthenticatedProvider} from './data-provider.js?v=100282-active-session';
+import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin';
 import {MODULOS_GCMBS} from './access-catalog.js?v=100250';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
