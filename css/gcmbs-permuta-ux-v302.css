@@ -1,0 +1,16 @@
+/* GCMBS V302 - Guia de permutas, somente apresentacao. */
+#pmResumoModalidadeV302.pmux-guide{border:1px solid #c7d8eb;border-radius:15px;background:#f8fbff;padding:15px 16px;margin:2px 0 12px;color:#17365d;}
+.pmux-title{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px}
+.pmux-title strong{font-weight:800;font-size:17px;color:#10345f}
+.pmux-title span{font-size:12px;color:#52708e}
+.pmux-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pmux-step{display:flex;gap:10px;padding:12px;border:1px solid #d7e3f2;border-radius:12px;background:white;align-items:flex-start;min-width:0}
+.pmux-number{width:25px;height:25px;flex:none;display:grid;place-items:center;border-radius:50%;background:#0b62bb;color:#fff;font-weight:800;font-size:13px}
+.pmux-step b{display:block;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.pmux-step small{display:block;font-size:12px;color:#4f6883;margin-top:7px;line-height:1.45;overflow-wrap:anywhere}
+.pmux-approval{font-size:12px;line-height:1.7;margin:12px 1px 0;color:#345574}
+.pmux-separator{padding:0 5px;color:#9ab0c5}
+.pmux-help{margin:0 0 9px;padding:9px 12px;border-radius:10px;background:#f5f8fc;border:1px solid #dce6f1}
+.pmux-help summary{color:#20578b;cursor:pointer;font-weight:700;font-size:13px}
+.pmux-help>.notice{margin-top:10px}
+@media(max-width:660px){.pmux-two{grid-template-columns:1fr}.pmux-title{gap:4px}.pmux-separator{display:none}#pmResumoModalidadeV302.pmux-guide{padding:12px}}
