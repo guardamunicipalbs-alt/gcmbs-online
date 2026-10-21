@@ -110,7 +110,7 @@ Deno.serve(async req=>{
   if(req.method!=='POST')return reply(405,{message:'Método não permitido.'});
   try{
     const u=await user(req);if(!u)return reply(401,{message:'Sessão não autenticada ou expirada.'});
-    if(!(await can(u,'permutas','EDICAO')))return reply(403,{message:'Sem permissão para solicitar ou responder permuta.'});
+    if(!(await can(u,'permutas','CONSULTA')))return reply(403,{message:'Sem permissão para utilizar permutas.'});
     const body=await req.json().catch(()=>({})),action=norm(body.action).toLowerCase(),gid=Number(u.guarda_id);
 
     if(action==='request_mixed_swap'){
@@ -123,6 +123,9 @@ Deno.serve(async req=>{
       if(!ordin)return reply(400,{message:'Você não possui serviço ordinário ativo nesse período. Apenas seu próprio serviço ordinário pode ser oferecido.'});
       const extra=await extraRef(tipo,eid,donoExtra);
       if(!extra)return reply(404,{message:'O serviço extra selecionado não está mais ativo para o GCM informado.'});
+      const minutosOrdinario=turno==='COMPLETO'?1440:720;
+      if(Number(extra.minutos||0)!==minutosOrdinario)
+        return reply(400,{message:`Troca Ordinário x Extra exige serviços da mesma duração. Ordinário: ${minutosOrdinario/60}h; Extra: ${Number(extra.minutos||0)/60}h.`});
       if(String(extra.data||'')<hoje)return reply(400,{message:'Serviço extra já ocorrido não pode ser usado em nova troca.'});
       if(extraDataInformada&&String(extra.data)!==extraDataInformada)return reply(400,{message:'O serviço extra selecionado não corresponde à data informada.'});
       if(!(await activeProfile(donoExtra)))return reply(400,{message:'O GCM titular do serviço extra não está ativo.'});
@@ -135,6 +138,24 @@ Deno.serve(async req=>{
         and ((left(coalesce(payload->>'data',''),10)=${data} and upper(coalesce(payload->>'turno',''))=${turno})
           or (nullif(payload->>'extra_id','')::bigint=${eid} and upper(coalesce(payload->>'extra_tipo_origem',payload->>'extra_tipo','MANUAL'))=${tipo})) limit 1`;
       if(dup.length)return reply(409,{message:'Seu ordinário ou o extra selecionado já participa de uma troca pendente.'});
+      const ocupandoOrdinario=await db`select id from public.mobile_action_requests where tipo='PERMUTA'
+        and status in ('AGUARDANDO_ACEITE','PENDENTE','PENDENTE_DESKTOP','PROCESSADO','ACEITE_PENDENTE_DESKTOP','DECISAO_PENDENTE_DESKTOP')
+        and upper(coalesce(payload->>'modalidade','ASSUNCAO')) not in ('CESSAO_EXTRA','TROCA_EXTRA')
+        and (
+          (payload->>'data'=${data} and nullif(payload->>'substituido_id','')::bigint=${gid}
+            and (upper(coalesce(payload->>'turno','')) in (${turno},'COMPLETO') or ${turno}='COMPLETO'))
+          or (payload->>'data_contrapartida'=${data} and nullif(payload->>'substituto_id','')::bigint=${gid}
+            and (upper(coalesce(payload->>'turno_contrapartida','')) in (${turno},'COMPLETO') or ${turno}='COMPLETO'))
+        ) limit 1`;
+      if(ocupandoOrdinario.length)return reply(409,{message:'Seu serviço ordinário já participa de outra permuta pendente.',request_id:Number(ocupandoOrdinario[0].id)});
+      const ocupandoExtra=await db`select id from public.mobile_action_requests
+        where tipo='PERMUTA'
+          and status in ('AGUARDANDO_ACEITE','PENDENTE','PENDENTE_DESKTOP','PROCESSADO','DECISAO_PENDENTE_DESKTOP','ACEITE_PENDENTE_DESKTOP')
+          and (
+            (nullif(payload->>'extra_id','')::bigint=${eid} and upper(coalesce(payload->>'extra_tipo_origem',payload->>'extra_tipo','MANUAL'))=${tipo})
+            or (nullif(payload->>'extra_contrapartida_id','')::bigint=${eid} and upper(coalesce(payload->>'extra_tipo_contrapartida',payload->>'extra_contrapartida_tipo','MANUAL'))=${tipo})
+          ) limit 1`;
+      if(ocupandoExtra.length)return reply(409,{message:'Este serviço extra já participa de outra permuta pendente.'});
 
       const payload={modalidade:'TROCA_ORDINARIO_EXTRA',data,turno,servico_extra:1,
         substituido_id:gid,substituto_id:donoExtra,solicitante_id:gid,contraparte_id:donoExtra,
@@ -163,9 +184,19 @@ Deno.serve(async req=>{
         await note(Number(r.guarda_id),'PERMUTA_TROCA_MISTA_RECUSADA','Troca recusada',`${await profileName(gid)} recusou a troca ordinário ↔ extra.`,id,String(p.data||''),`mixed-reject:${id}:${r.guarda_id}`);
         return reply(200,{success:true,status:'RECUSADA'});
       }
+      const hojeAceite=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
+      if(String(p.data||'').slice(0,10)<hojeAceite||String(p.extra_data||p.extra_origem?.data||'').slice(0,10)<hojeAceite)
+        return reply(409,{message:'Não é permitido aceitar troca de serviço já ocorrido.'});
+      if(Number(p.minutos_extra_origem||0)!==(String(p.turno).toUpperCase()==='COMPLETO'?1440:720))
+        return reply(409,{message:'O extra e o ordinário devem ter a mesma duração.'});
       const np={...p,aceite_contraparte:1,aceite_por:gid,aceite_em:new Date().toISOString()};
-      await db`update public.mobile_action_requests set status='PENDENTE_DESKTOP',resposta='Troca aceita pelo titular do extra. Aguardando análise do Comando.',processado_em=null,payload=${db.json(np)} where id=${id}`;
-      await db`insert into public.mobile_action_requests(guarda_id,tipo,payload) values(${gid},'PERMUTA_ACEITE_EXTRA',${db.json({request_id:id,aceitou:true,modalidade:'TROCA_ORDINARIO_EXTRA',contraparte_id:gid})})`;
+      await db.begin(async sql=>{
+        const upd=await sql`update public.mobile_action_requests set status='PENDENTE_DESKTOP',resposta='Troca aceita pelo titular do extra. Aguardando análise do Comando.',processado_em=null,payload=${sql.json(np)}
+          where id=${id} and status in ('AGUARDANDO_ACEITE','PENDENTE') returning id`;
+        if(!upd.length)throw new Error('Esta permuta já recebeu resposta. Atualize a página.');
+        await sql`insert into public.mobile_action_requests(guarda_id,tipo,payload,status)
+          values(${gid},'PERMUTA_ACEITE_EXTRA',${sql.json({request_id:id,aceitou:true,modalidade:'TROCA_ORDINARIO_EXTRA',contraparte_id:gid})},'PENDENTE_DESKTOP')`;
+      });
       await note(Number(r.guarda_id),'PERMUTA_TROCA_MISTA_ACEITA','Troca aceita',`${await profileName(gid)} aceitou a troca ordinário ↔ extra. A solicitação seguirá ao Comando. O crédito financeiro do extra permanece com o titular original.`,id,String(p.data||''),`mixed-accept:${id}:${r.guarda_id}`);
       return reply(200,{success:true,status:'PENDENTE_DESKTOP',message:'Aceite registrado. Aguardando análise do Comando.'});
     }
