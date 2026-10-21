@@ -675,6 +675,8 @@ async function carregarTrocaExtraOpcoes(){
   a.disabled=true;b.disabled=true;
   try{
     const r=await provider.extraSwapCandidates(),ord=(x,y)=>String(x.data||'').localeCompare(String(y.data||''))||String(x.horario_inicio||'').localeCompare(String(y.horario_inicio||''))||String(x.extra_tipo||'MANUAL').localeCompare(String(y.extra_tipo||'MANUAL'));
+    // V302: consulta antiga nao deve substituir as opcoes da troca agendada.
+    if(!['CESSAO_EXTRA','TROCA_EXTRA','TROCA_ORDINARIO_EXTRA'].includes($('pmModalidade')?.value||''))return;
     permutaExtrasCache={mine:(r.mine||[]).sort(ord),others:(r.others||[]).sort(ord)};
     a.innerHTML=permutaExtrasCache.mine.length?'<option value="">Selecione seu serviço extra...</option>'+permutaExtrasCache.mine.map(x=>optionExtraPermuta(x,false)).join(''):'<option value="">Nenhum serviço extra seu disponível para troca</option>';
     a.disabled=!permutaExtrasCache.mine.length;
