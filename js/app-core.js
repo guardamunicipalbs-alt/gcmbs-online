@@ -884,7 +884,7 @@ function renderPermutas(){
     };
     const renderPendente=x=>{
       const q=x.payload||{},st=String(x.status||'PENDENTE').toUpperCase(),sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),mista=modal==='TROCA_ORDINARIO_EXTRA',troca=modal==='TROCA_EXTRA',ordord=modal==='TROCA_ORDINARIO',dm=mista?descricaoTrocaMista(q):null,dt=troca?descricaoTrocaExtra(q):null;
-      const info=mista?`Ordinário ${dm.ordinario}<br>Extra ${dm.extra}`:troca?`Origem ${dt.a}<br>Contrapartida ${dt.b}`:ordord?`Serviço do outro GCM: ${fmt(q.data)} · ${esc(q.turno||'-')}<br>Serviço do solicitante: ${fmt(q.data_contrapartida)} · ${esc(q.turno_contrapartida||'-')}`:`${fmt(q.data)} · Turno ${esc(q.turno||'-')}`;
+      const info=mista?`Ordinário ${dm.ordinario}<br>Extra ${dm.extra}`:troca?`Origem ${dt.a}<br>Contrapartida ${dt.b}`:ordord?`Serviço do outro GCM: ${fmt(q.data)} · ${esc(q.turno||'-')}<br>Serviço do solicitante: ${fmt(q.data_contrapartida)} · ${esc(q.turno_contrapartida||'-')}`:modal==='CESSAO_EXTRA'?`Extra #${esc(q.extra_id||'-')} de ${esc(pessoaPorId(q.contraparte_id)||nomeCandidato(q.contraparte_id)||'GCM')} · ${fmt(q.data)} · Turno ${esc(q.turno||'-')}`:`${fmt(q.data)} · Turno ${esc(q.turno||'-')}`;
       return `<article class="record-card"><div class="record-card-head"><strong>${esc(sol)} — solicitação online</strong><span class="status-pill status-${esc(st)}">${esc(st)}</span></div><div class="record-meta">${info}</div>${mista||troca?'<div class="record-warning">Troca operacional financeiramente neutra.</div>':''}${x.resposta?`<small>${esc(x.resposta)}</small>`:''}</article>`;
     };
     el.innerHTML=(agHtml+extras.map(renderPendente).join('')+espelho.map(renderHistorico).join(''))||'<div class="empty">Nenhuma permuta encontrada nesta competência.</div>';
@@ -918,10 +918,29 @@ function renderPermutasGestao(){
   if(!permutasEspelho.length)gcmbsCarregarPermutasEspelho();
   const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
   const actionAll=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA');
+  // V301: mostrar ao Comando pedidos ainda em aceite, sem liberar decisões antes da contraparte.
+  const aguardandoAceite=actionAll.filter(x=>String(x.status_original||x.status||'').toUpperCase()==='AGUARDANDO_ACEITE'
+    &&Number(x.payload?.aceite_contraparte||0)!==1)
+    .sort((a,b)=>String(a.payload?.data||'9999-99-99').slice(0,10).localeCompare(String(b.payload?.data||'9999-99-99').slice(0,10))||Number(a.id)-Number(b.id));
   const actionReady=actionAll.filter(x=>String(x.status||'').toUpperCase()==='PENDENTE').sort((a,b)=>String(a.payload?.data||'9999-99-99').slice(0,10).localeCompare(String(b.payload?.data||'9999-99-99').slice(0,10))||Number(a.id)-Number(b.id));
   const desktopLinked=new Set(actionAll.map(x=>Number(x.desktop_referencia_id||0)).filter(Boolean));
   const mirrorReady=permutasEspelho.filter(x=>String(x.status||'').toUpperCase()==='PENDENTE'&&!desktopLinked.has(Number(x.id||x.desktop_id||0))).sort((a,b)=>String(a.data||'9999-99-99').localeCompare(String(b.data||'9999-99-99'))||Number(a.id||0)-Number(b.id||0));
-  const titulo=card.querySelector('h2');if(titulo)titulo.textContent='Pendências de análise do Comando — todas as competências';
+  const titulo=card.querySelector('h2');if(titulo)titulo.textContent='Fluxo de permutas — aguardando aceites e análise do Comando';
+  const renderAguardando=x=>{
+    const q=x.payload||{},modal=String(q.modalidade||'ASSUNCAO').toUpperCase();
+    const solicitante=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM';
+    const contraparte=pessoaPorId(q.contraparte_id)||nomeCandidato(q.contraparte_id)||'GCM';
+    const extra=modal==='CESSAO_EXTRA'||modal==='TROCA_EXTRA'||modal==='TROCA_ORDINARIO_EXTRA';
+    const referencia=extra?' · Extra '+esc(q.extra_tipo_origem||q.extra_tipo||'MANUAL')+' #'+esc(q.extra_id||'-'):'';
+    const descricao=modal==='CESSAO_EXTRA'?'Assunção de serviço extra':modal==='TROCA_EXTRA'?'Troca bilateral de extras':modal==='TROCA_ORDINARIO_EXTRA'?'Troca ordinário por extra':'Troca de serviços ordinários';
+    const data=String(q.data||q.extra_origem?.data||'').slice(0,10);
+    return '<article class="record-card" data-gcmbs-aguardando-aceite="'+Number(x.id)+'">'
+      +'<div class="record-card-head"><strong>Solicitação #'+Number(x.id)+' · '+esc(descricao)+'</strong><span class="status-pill status-AGUARDANDO_ACEITE">AGUARDANDO ACEITE</span></div>'
+      +'<div class="record-meta"><b>Solicitante:</b> '+esc(solicitante)+' · <b>Titular / destinatário:</b> '+esc(contraparte)+'</div>'
+      +'<div class="record-meta">'+esc(fmt(data))+referencia+' · Turno '+esc(q.turno||'-')+'</div>'
+      +'<div class="record-warning">Aguardando resposta do GCM '+esc(contraparte)+'. A solicitação foi recebida na nuvem, mas ainda não está liberada para aprovação do Comando nem processamento no Desktop.</div>'
+      +'<small>Após o aceite, a solicitação seguirá para validação operacional e análise do Comando. Não é necessário fazer novo pedido.</small></article>';
+  };
   const renderAction=x=>{
     const q=x.payload||{},modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',ordord=modal==='TROCA_ORDINARIO',assuncaoExtra=modal==='CESSAO_EXTRA',sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM',dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null,data=String(q.data||'').slice(0,10),passada=!!data&&data<hoje;
     const tit=troca?`Troca bilateral de extras · ${esc(sol)}`:mista?`Troca ordinário ↔ extra · ${esc(sol)}`:ordord?`Troca ordinário ↔ ordinário · ${esc(sol)} ↔ ${esc(sub)}`:`${esc(sol)} assume serviço de ${esc(sub)}`;
@@ -937,7 +956,7 @@ function renderPermutasGestao(){
     const id=Number(x.id||x.desktop_id||0),data=String(x.data||'').slice(0,10),passada=!!data&&data<hoje,substituido=pessoaPorId(x.substituido_id)||x.substituido_nome||'GCM',substituto=pessoaPorId(x.substituto_id)||x.substituto_nome||'GCM',modal=String(x.modalidade||'ASSUNCAO').toUpperCase();
     return `<article class="record-card"><div class="record-card-head"><strong>Desktop #${id} · ${esc(substituto)} ↔ ${esc(substituido)}</strong><span class="status-pill status-PENDENTE">PENDENTE</span></div><div class="record-meta">${fmt(data)} · Turno ${esc(x.turno||'-')} · ${esc(modal)}</div>${passada?'<div class="record-warning"><b>Serviço já ocorrido.</b> Permanece na fila para decisão do Comando; aprovação retroativa é bloqueada.</div>':''}<div class="request-actions">${passada?'':`<button class="mini" data-cmd-mirror-ok="${id}">Aprovar</button>`}<button class="mini" data-cmd-mirror-no="${id}">Recusar</button></div></article>`;
   };
-  el.innerHTML=(actionReady.map(renderAction).join('')+mirrorReady.map(renderMirror).join(''))||'<div class="empty">Nenhuma permuta aguardando análise do Comando.</div>';
+  el.innerHTML=(aguardandoAceite.map(renderAguardando).join('')+actionReady.map(renderAction).join('')+mirrorReady.map(renderMirror).join(''))||'<div class="empty">Nenhuma permuta aguardando aceite ou análise do Comando.</div>';
   el.querySelectorAll('[data-cmd-pm-ok]').forEach(b=>b.onclick=()=>decidirPermutaComando(Number(b.dataset.cmdPmOk),'APROVADA'));
   el.querySelectorAll('[data-cmd-pm-no]').forEach(b=>b.onclick=()=>decidirPermutaComando(Number(b.dataset.cmdPmNo),'NEGADA'));
   el.querySelectorAll('[data-cmd-pm-del]').forEach(b=>b.onclick=()=>excluirPermutaComando(Number(b.dataset.cmdPmDel)));
