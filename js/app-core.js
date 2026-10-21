@@ -636,17 +636,24 @@ async function preencherEquipeOcorrencia(){const data=$('occData').value,hora=$(
 async function abrirNovaOcorrencia(){$('occForm').reset();$('occData').value=hoje();$('occHora').value=nowTime();$('occAlgemas').value='NÃO';document.querySelectorAll('.occ-nat').forEach(x=>x.checked=false);await preencherEquipeOcorrencia();$('occFormCard').classList.remove('hidden');$('occFormCard').scrollIntoView({behavior:'smooth',block:'start'})}
 async function salvarOcorrencia(e){e.preventDefault();try{const naturezas=[...document.querySelectorAll('.occ-nat:checked')].map(x=>x.value),comp=occEquipeIds(),cond=Number($('occCondutor').value);if(!naturezas.length&&!$('occNaturezaOutro').value.trim())throw new Error('Informe ao menos uma natureza da ocorrência.');if(!comp.length)throw new Error('Selecione os membros da equipe.');if(!cond||!comp.includes(cond))throw new Error('O condutor deve fazer parte da equipe.');if($('occAlgemas').value==='SIM'&&!$('occJustAlgemas').value.trim())throw new Error('Justifique o uso de algemas.');const d={data:$('occData').value,hora:$('occHora').value,tipo:naturezas.join(', ')||$('occNaturezaOutro').value.trim()||'OUTRO',naturezas:JSON.stringify(naturezas),natureza_outro:$('occNaturezaOutro').value.trim(),recebida_via:$('occVia').value,recebida_via_outro:$('occViaOutro').value.trim(),local:$('occLocal').value.trim(),suspeitos_dados:$('occSuspeitos').value.trim(),suspeitos_sexo:$('occSuspeitosSexo').value,suspeitos_sexo_outro:$('occSuspeitosSexoOutro').value.trim(),vitimas_dados:$('occVitimas').value.trim(),vitimas_sexo:$('occVitimasSexo').value,vitimas_sexo_outro:$('occVitimasSexoOutro').value.trim(),testemunhas_dados:$('occTestemunhas').value.trim(),uso_algemas:$('occAlgemas').value,justificativa_algemas:$('occJustAlgemas').value.trim(),materiais_apreendidos:$('occMateriais').value.trim(),composicao_equipe:JSON.stringify(comp),condutor_ocorrencia_id:cond,responsavel_id:Number(provider.session?.guarda_id),procedimentos_adotados:$('occProcedimentos').value.trim(),historico_ocorrencia:$('occHistorico').value.trim(),criado_em:new Date().toISOString()};await provider.entityMutate('ocorrencias_operacionais','','UPSERT',d);$('occMsg').textContent='Ocorrência registrada e enviada para sincronização.';$('occFormCard').classList.add('hidden');await carregarOcorrencias()}catch(err){$('occMsg').textContent=err.message}}
 
+let gcmbsPermutaConsultaOrdinariaSeq=0;
 async function atualizarSubstituidosPermuta(){
-  const sel=$('pmSubstituto'),data=$('pmData')?.value,turno=$('pmTurno')?.value,msg=$('pmMsg'),btn=$('pmEnviar');if(!sel)return;
+  const sel=$('pmSubstituto'),data=$('pmData')?.value,turno=$('pmTurno')?.value,msg=$('pmMsg'),btn=$('pmEnviar');
+  const modalidade=$('pmModalidade')?.value||'ASSUNCAO';
+  const consulta=++gcmbsPermutaConsultaOrdinariaSeq;
+  // V300: um bloqueio do formulário ordinário não pode permanecer após a escolha de Extra.
+  if(!['ASSUNCAO','TROCA_ORDINARIO'].includes(modalidade))return;
+  if(!sel)return;
   sel.disabled=true;if(btn)btn.disabled=true;sel.innerHTML='<option value="">Consultando escala...</option>';
   if(msg){msg.className='full request-message';msg.textContent='';}
   if(!data||!turno){sel.innerHTML='<option value="">Selecione data e turno</option>';return;}
   try{
     const r=await provider.permutaCandidatesFor(data,turno);
+    if(consulta!==gcmbsPermutaConsultaOrdinariaSeq||!['ASSUNCAO','TROCA_ORDINARIO'].includes($('pmModalidade')?.value||''))return;
     if(r.bloqueado){sel.innerHTML='<option value="">Indisponível neste período</option>';if(msg){msg.textContent=r.message;msg.classList.add('error');}return;}
     const lista=r.candidates||[];sel.innerHTML='<option value="">Selecione...</option>'+lista.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');
     if(!lista.length)sel.innerHTML='<option value="">Nenhum GCM escalado neste período</option>';else{sel.disabled=false;if(btn)btn.disabled=false;}
-  }catch(e){sel.innerHTML='<option value="">Não foi possível consultar</option>';if(msg){msg.textContent=e.message;msg.classList.add('error');}}
+  }catch(e){if(consulta!==gcmbsPermutaConsultaOrdinariaSeq)return;sel.innerHTML='<option value="">Não foi possível consultar</option>';if(msg){msg.textContent=e.message;msg.classList.add('error');}}
 }
 function optionExtraPermuta(x, incluirNome=false){
   const tipo=String(x.extra_tipo||x.tipo||'MANUAL').toUpperCase()==='EVENTO'?'EVENTO':'MANUAL';
@@ -704,13 +711,29 @@ async function carregarTrocaExtraOpcoes(){
 }
 async function atualizarModoPermuta(){
   const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',mista=m==='TROCA_ORDINARIO_EXTRA',ordord=m==='TROCA_ORDINARIO',usaExtra=swap||cessao||mista;
+  // V300: a opção de extra é independente da consulta ao ordinário.
+  // Essa consulta desabilita "Enviar" enquanto não houver data/turno; restaurar no modo extra.
+  if(usaExtra){
+    gcmbsPermutaConsultaOrdinariaSeq++;
+    const enviar=$('pmEnviar'),aviso=$('pmMsg');
+    if(enviar)enviar.disabled=false;
+    if(aviso&&/Selecione data e turno|já está escalado nesse mesmo período|Indisponível neste período|Consultando escala/i.test(aviso.textContent||'')){
+      aviso.textContent='';aviso.classList.remove('error');
+    }
+  }
   document.querySelectorAll('.pm-ordinary').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||mista||ordord)));
   document.querySelectorAll('.pm-assuncao').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||ordord)));
   document.querySelectorAll('.pm-troca-ordinario').forEach(x=>x.classList.toggle('hidden',!ordord));
   document.querySelectorAll('.pm-extra').forEach(x=>x.classList.toggle('hidden',!usaExtra));
   document.querySelectorAll('.pm-mista').forEach(x=>x.classList.toggle('hidden',!mista));
   $('pmExtraMeuLabel')?.classList.toggle('hidden',!swap);
-  if(usaExtra)await carregarTrocaExtraOpcoes();else await atualizarSubstituidosPermuta();
+  if(usaExtra){
+    await carregarTrocaExtraOpcoes();
+    // Se outra consulta ordinária concluiu tardiamente, o botão deve continuar operacional.
+    if(['CESSAO_EXTRA','TROCA_EXTRA','TROCA_ORDINARIO_EXTRA'].includes($('pmModalidade')?.value||'')){
+      const enviar=$('pmEnviar');if(enviar)enviar.disabled=false;
+    }
+  }else await atualizarSubstituidosPermuta();
 }
 function descricaoTrocaExtra(q){
   const o=q.extra_origem||{},c=q.extra_contrapartida||{},to=String(o.tipo||q.extra_tipo_origem||q.extra_tipo||'MANUAL').toUpperCase(),tc=String(c.tipo||q.extra_tipo_contrapartida||q.extra_contrapartida_tipo||'MANUAL').toUpperCase(),ro=to==='EVENTO'?'Extra por Evento':'Extra Manual',rc=tc==='EVENTO'?'Extra por Evento':'Extra Manual';
@@ -1959,7 +1982,14 @@ function renderSolicitacoes(){
   const lista=provider.actionRequests();
   $('listaSolicitacoes').innerHTML=lista.length?lista.map(x=>`<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(x.tipo||'')}</small><strong>${esc(x.status||'PENDENTE')}</strong><span>${esc(x.resposta||'Aguardando processamento pelo Desktop.')}</span></div>`).join(''):'<div class="empty">Nenhuma solicitação enviada pelo aplicativo.</div>';
 }
-function renderPermutaCandidates(){const el=$('pmSubstituto');if(!el)return;if(!$('pmData')?.value){el.disabled=true;el.innerHTML='<option value="">Selecione data e turno</option>';const btn=$('pmEnviar');if(btn)btn.disabled=true;}}
+function renderPermutaCandidates(){
+  const el=$('pmSubstituto');if(!el)return;
+  if(['CESSAO_EXTRA','TROCA_EXTRA','TROCA_ORDINARIO_EXTRA'].includes($('pmModalidade')?.value||'')){
+    const btn=$('pmEnviar');if(btn)btn.disabled=false;
+    return;
+  }
+  if(!$('pmData')?.value){el.disabled=true;el.innerHTML='<option value="">Selecione data e turno</option>';const btn=$('pmEnviar');if(btn)btn.disabled=true;}
+}
 async function enviarBancoCorrecao(ev){
   ev.preventDefault();const h=Number($('bcHoras').value||0),m=Number($('bcMinutos').value||0),total=h*60+m,msg=$('bcMsg'),btn=$('bcEnviar');
   msg.className='full request-message';
@@ -1985,7 +2015,10 @@ async function enviarBancoCorrecao(ev){
   }catch(e){msg.textContent=e.message;msg.classList.add('error')}finally{btn.disabled=false}
 }
 async function enviarPermuta(ev){
-  ev.preventDefault();const msg=$('pmMsg');msg.className='full request-message';msg.textContent='Enviando...';
+  ev.preventDefault();const msg=$('pmMsg'),btn=$('pmEnviar');
+  if(btn?.dataset.gcmbsEnviandoPermuta==='1')return;
+  if(btn){btn.dataset.gcmbsEnviandoPermuta='1';btn.disabled=true;}
+  msg.className='full request-message';msg.textContent='Enviando...';
   try{
     const modalidade=$('pmModalidade')?.value||'ASSUNCAO',meu=$('pmExtraMeu')?.selectedOptions?.[0],outro=$('pmExtraOutro')?.selectedOptions?.[0],dataOrd=$('pmData')?.value||'',turnoEl=$('pmTurno'),turnoAtual=turnoEl?.value||'A',turno=turnoEl?.dataset?.gcmbsTurnoSelecionado||turnoAtual;
     const req=modalidade==='TROCA_EXTRA'?{
@@ -2033,7 +2066,15 @@ async function enviarPermuta(ev){
     }
     const r=permutaEditingId?await provider.updatePermutaRequest(permutaEditingId,req):await provider.requestPermuta(req);
     msg.textContent=r.warning||r.message||(permutaEditingId?'Solicitação atualizada. Aguardando decisão do Comando.':'Solicitação enviada. Acompanhe o histórico nesta tela.');msg.classList.add('success');resetPermutaForm();renderTudo(false);setView('permutas');
-  }catch(e){msg.textContent=e.message;msg.classList.add('error')}
+  }catch(e){msg.textContent=e.message||'Falha ao enviar. Confira sua sessão e os serviços selecionados.';msg.classList.add('error')}
+  finally{
+    if(btn){
+      delete btn.dataset.gcmbsEnviandoPermuta;
+      const m=$('pmModalidade')?.value||'ASSUNCAO';
+      btn.disabled=!['CESSAO_EXTRA','TROCA_EXTRA','TROCA_ORDINARIO_EXTRA'].includes(m)
+        &&(!$('pmData')?.value||$('pmSubstituto')?.disabled);
+    }
+  }
 }
 
 async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,nivel:$('msgNivel')?.value||'NORMAL',fim_em:$('msgFim')?.value||null,destino,data_servico:$('msgDataServico')?.value||null,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';if($('msgFim'))$('msgFim').value='';if($('msgNivel'))$('msgNivel').value='NORMAL';await provider.load();renderAvisosInstitucionais();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
