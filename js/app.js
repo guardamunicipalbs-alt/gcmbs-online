@@ -9,7 +9,7 @@ window.setInterval=(fn,delay,...args)=>{
   if(Number(delay)===60000&&(src.includes('atualizarAoVivo')||src.includes('gcmbsFreqLoad')))delay=1800000;
   return GCMBS_SET_INTERVAL_ORIGINAL(fn,delay,...args);
 };
-await import('./app-core.js?v=100299-r2-permutas-auditoria');
+await import('./app-core.js?v=100300-cessao-extra-liberada');
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;
