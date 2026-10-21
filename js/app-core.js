@@ -641,19 +641,20 @@ async function atualizarSubstituidosPermuta(){
   const sel=$('pmSubstituto'),data=$('pmData')?.value,turno=$('pmTurno')?.value,msg=$('pmMsg'),btn=$('pmEnviar');
   const modalidade=$('pmModalidade')?.value||'ASSUNCAO';
   const consulta=++gcmbsPermutaConsultaOrdinariaSeq;
+  const agendadaOrd=modalidade==='AGENDADA'&&($('pmAgTipoV259')?.value||'ORDINARIO')==='ORDINARIO';
   // V300: um bloqueio do formulário ordinário não pode permanecer após a escolha de Extra.
-  if(!['ASSUNCAO','TROCA_ORDINARIO'].includes(modalidade))return;
+  if(!['ASSUNCAO','TROCA_ORDINARIO'].includes(modalidade)&&!agendadaOrd)return;
   if(!sel)return;
   sel.disabled=true;if(btn)btn.disabled=true;sel.innerHTML='<option value="">Consultando escala...</option>';
   if(msg){msg.className='full request-message';msg.textContent='';}
   if(!data||!turno){sel.innerHTML='<option value="">Selecione data e turno</option>';return;}
   try{
     const r=await provider.permutaCandidatesFor(data,turno);
-    if(consulta!==gcmbsPermutaConsultaOrdinariaSeq||!['ASSUNCAO','TROCA_ORDINARIO'].includes($('pmModalidade')?.value||''))return;
+    if(consulta!==gcmbsPermutaConsultaOrdinariaSeq||!(['ASSUNCAO','TROCA_ORDINARIO'].includes($('pmModalidade')?.value||'')||($('pmModalidade')?.value==='AGENDADA'&&($('pmAgTipoV259')?.value||'ORDINARIO')==='ORDINARIO')))return;
     if(r.bloqueado){sel.innerHTML='<option value="">Indisponível neste período</option>';if(msg){msg.textContent=r.message;msg.classList.add('error');}return;}
     const lista=r.candidates||[];sel.innerHTML='<option value="">Selecione...</option>'+lista.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');
     if(!lista.length)sel.innerHTML='<option value="">Nenhum GCM escalado neste período</option>';else{sel.disabled=false;if(btn)btn.disabled=false;}
-  }catch(e){if(consulta!==gcmbsPermutaConsultaOrdinariaSeq)return;sel.innerHTML='<option value="">Não foi possível consultar</option>';if(msg){msg.textContent=e.message;msg.classList.add('error');}}
+  }catch(e){if(consulta!==gcmbsPermutaConsultaOrdinariaSeq||($('pmModalidade')?.value==='AGENDADA'&&$('pmAgTipoV259')?.value==='EXTRA'))return;sel.innerHTML='<option value="">Não foi possível consultar</option>';if(msg){msg.textContent=e.message;msg.classList.add('error');}}
 }
 function optionExtraPermuta(x, incluirNome=false){
   const tipo=String(x.extra_tipo||x.tipo||'MANUAL').toUpperCase()==='EVENTO'?'EVENTO':'MANUAL';
@@ -710,10 +711,10 @@ async function carregarTrocaExtraOpcoes(){
   }
 }
 async function atualizarModoPermuta(){
-  const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',mista=m==='TROCA_ORDINARIO_EXTRA',ordord=m==='TROCA_ORDINARIO',usaExtra=swap||cessao||mista;
+  const m=$('pmModalidade')?.value||'ASSUNCAO',swap=m==='TROCA_EXTRA',cessao=m==='CESSAO_EXTRA',mista=m==='TROCA_ORDINARIO_EXTRA',ordord=m==='TROCA_ORDINARIO',usaExtra=swap||cessao||mista,ag=m==='AGENDADA',agExtra=ag&&$('pmAgTipoV259')?.value==='EXTRA',agOrd=ag&&!agExtra;
   // V300: a opção de extra é independente da consulta ao ordinário.
   // Essa consulta desabilita "Enviar" enquanto não houver data/turno; restaurar no modo extra.
-  if(usaExtra){
+  if(usaExtra||agExtra){
     gcmbsPermutaConsultaOrdinariaSeq++;
     const enviar=$('pmEnviar'),aviso=$('pmMsg');
     if(enviar)enviar.disabled=false;
@@ -721,10 +722,10 @@ async function atualizarModoPermuta(){
       aviso.textContent='';aviso.classList.remove('error');
     }
   }
-  document.querySelectorAll('.pm-ordinary').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||mista||ordord)));
-  document.querySelectorAll('.pm-assuncao').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||ordord)));
+  document.querySelectorAll('.pm-ordinary').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||mista||ordord||agOrd)));
+  document.querySelectorAll('.pm-assuncao').forEach(x=>x.classList.toggle('hidden',!(m==='ASSUNCAO'||ordord||agOrd)||(agOrd&&x.matches('div.notice'))));
   document.querySelectorAll('.pm-troca-ordinario').forEach(x=>x.classList.toggle('hidden',!ordord));
-  document.querySelectorAll('.pm-extra').forEach(x=>x.classList.toggle('hidden',!usaExtra));
+  document.querySelectorAll('.pm-extra').forEach(x=>x.classList.toggle('hidden',!(usaExtra||agExtra)));
   document.querySelectorAll('.pm-mista').forEach(x=>x.classList.toggle('hidden',!mista));
   $('pmExtraMeuLabel')?.classList.toggle('hidden',!swap);
   if(usaExtra){
@@ -733,7 +734,8 @@ async function atualizarModoPermuta(){
     if(['CESSAO_EXTRA','TROCA_EXTRA','TROCA_ORDINARIO_EXTRA'].includes($('pmModalidade')?.value||'')){
       const enviar=$('pmEnviar');if(enviar)enviar.disabled=false;
     }
-  }else await atualizarSubstituidosPermuta();
+  }else if(agExtra){const enviar=$('pmEnviar');if(enviar)enviar.disabled=false;}
+  else await atualizarSubstituidosPermuta();
 }
 function descricaoTrocaExtra(q){
   const o=q.extra_origem||{},c=q.extra_contrapartida||{},to=String(o.tipo||q.extra_tipo_origem||q.extra_tipo||'MANUAL').toUpperCase(),tc=String(c.tipo||q.extra_tipo_contrapartida||q.extra_contrapartida_tipo||'MANUAL').toUpperCase(),ro=to==='EVENTO'?'Extra por Evento':'Extra Manual',rc=tc==='EVENTO'?'Extra por Evento':'Extra Manual';
@@ -2003,7 +2005,7 @@ function renderSolicitacoes(){
 }
 function renderPermutaCandidates(){
   const el=$('pmSubstituto');if(!el)return;
-  if(['CESSAO_EXTRA','TROCA_EXTRA','TROCA_ORDINARIO_EXTRA'].includes($('pmModalidade')?.value||'')){
+  if(['CESSAO_EXTRA','TROCA_EXTRA','TROCA_ORDINARIO_EXTRA'].includes($('pmModalidade')?.value||'')||($('pmModalidade')?.value==='AGENDADA'&&$('pmAgTipoV259')?.value==='EXTRA')){
     const btn=$('pmEnviar');if(btn)btn.disabled=false;
     return;
   }
