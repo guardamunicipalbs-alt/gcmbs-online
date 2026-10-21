@@ -203,6 +203,8 @@ async function abrirModuloPrincipal(modulo){
     // V298: reler o servidor ao abrir a tela, sem depender do filtro ou do refresh global.
     provider.load().then(()=>{
       if(!document.querySelector('section[data-view="permutas"]')?.classList.contains('hidden')){
+        // Atualização forçada do espelho; não reutilizar o snapshot da visita anterior.
+        permutasEspelho=[];permutasAgendadasCarregadas=false;permutasAgendadasEspelho=[];
         renderPermutas();renderPermutasGestao();
       }
     }).catch(e=>console.warn('[GCMBS] falha ao atualizar aceites:',e?.message||e));
@@ -750,7 +752,7 @@ function renderAceitesPendentesPermuta(){
     return String(x.tipo||'').toUpperCase()==='PERMUTA'&&modalidades.has(modal)
       &&Number(p.contraparte_id||0)===gid
       &&Number(p.aceite_contraparte||0)!==1
-      &&!Number(x.desktop_referencia_id||0)
+      &&!['APROVADA','REPROVADA','NEGADA','RECUSADA','CANCELADA'].includes(String(x.status||'').toUpperCase())
       &&(status==='AGUARDANDO_ACEITE'||(modal!=='TROCA_ORDINARIO'&&status==='PENDENTE'));
   }):[];
   const agendadas=gid?(window.gcmbsAgendadaEstadoV298?.requests||[]).filter(x=>
@@ -810,6 +812,7 @@ function renderAceitesPendentesPermuta(){
       }else{
         await provider.acceptExtraSwap(id,aceitou,pedido.payload?.modalidade||'');
       }
+      permutasEspelho=[];permutasAgendadasCarregadas=false;
       renderTudo(false);
     }catch(e){alert(e?.message||'Falha ao registrar sua resposta. Nenhum aceite foi confirmado.')}
     finally{enviando=false;card.querySelectorAll('[data-v298-accept],[data-v298-reject]').forEach(b=>b.disabled=false)}
@@ -819,6 +822,18 @@ function renderAceitesPendentesPermuta(){
 }
 window.addEventListener('gcmbs:agendadas-atualizadas',()=>renderAceitesPendentesPermuta());
 
+let gcmbsPermutasEspelhoCarregando=null;
+function gcmbsCarregarPermutasEspelho(){
+  if(gcmbsPermutasEspelhoCarregando)return gcmbsPermutasEspelhoCarregando;
+  gcmbsPermutasEspelhoCarregando=provider.entityList('permutas',500,0)
+    .then(r=>{
+      permutasEspelho=(r.records||[]).map(x=>x.data||{});
+      renderPermutas();renderPermutasGestao();
+    })
+    .catch(e=>console.warn('[GCMBS] falha ao recarregar o espelho de permutas:',e?.message||e))
+    .finally(()=>{gcmbsPermutasEspelhoCarregando=null;});
+  return gcmbsPermutasEspelhoCarregando;
+}
 function renderPermutas(){
   renderAceitesPendentesPermuta();
   const el=$('listaPermutasSolicitadas');if(!el)return;
@@ -834,7 +849,7 @@ function renderPermutas(){
   const agHtml=agendadas.map(renderPermutaAgendadaV256).join('');
   const gestor=provider.gestor();
   if(gestor){
-    if(!permutasEspelho.length){provider.entityList('permutas',500,0).then(r=>{permutasEspelho=(r.records||[]).map(x=>x.data||{});renderPermutas();}).catch(e=>console.warn('[GCMBS] espelho de permutas:',e?.message||e));}
+    if(!permutasEspelho.length)gcmbsCarregarPermutasEspelho();
     const espelho=filtraCompetencia(permutasEspelho.slice(),'pmCompetenciaFiltro').sort((a,b)=>String(b.data||b.criado_em||'').localeCompare(String(a.data||a.criado_em||'')));
     const pendentes=filtraCompetencia(provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA'),'pmCompetenciaFiltro');
     const espelhoIds=new Set(espelho.map(x=>String(x.id||x.desktop_id||'')));
@@ -877,7 +892,7 @@ function renderPermutas(){
 }
 function renderPermutasGestao(){
   const card=$('permutaGestaoCard'),el=$('listaPermutasGestao');if(!card||!el)return;const gestor=provider.gestor()&&provider.pode('permutas','EDICAO');card.classList.toggle('hidden',!gestor);if(!gestor)return;
-  if(!permutasEspelho.length){provider.entityList('permutas',500,0).then(r=>{permutasEspelho=(r.records||[]).map(x=>x.data||{});renderPermutasGestao();}).catch(e=>console.warn('[GCMBS] espelho de permutas:',e?.message||e));}
+  if(!permutasEspelho.length)gcmbsCarregarPermutasEspelho();
   const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
   const actionAll=provider.actionRequests().filter(x=>String(x.tipo||'').toUpperCase()==='PERMUTA');
   const actionReady=actionAll.filter(x=>String(x.status||'').toUpperCase()==='PENDENTE').sort((a,b)=>String(a.payload?.data||'9999-99-99').slice(0,10).localeCompare(String(b.payload?.data||'9999-99-99').slice(0,10))||Number(a.id)-Number(b.id));
@@ -888,7 +903,12 @@ function renderPermutasGestao(){
     const q=x.payload||{},modal=String(q.modalidade||'ASSUNCAO').toUpperCase(),troca=modal==='TROCA_EXTRA',mista=modal==='TROCA_ORDINARIO_EXTRA',ordord=modal==='TROCA_ORDINARIO',assuncaoExtra=modal==='CESSAO_EXTRA',sol=x.nome_guerra||pessoaPorId(x.guarda_id)||'GCM',sub=pessoaPorId(q.substituido_id)||nomeCandidato(q.substituido_id)||'GCM',dt=troca?descricaoTrocaExtra(q):null,dm=mista?descricaoTrocaMista(q):null,data=String(q.data||'').slice(0,10),passada=!!data&&data<hoje;
     const tit=troca?`Troca bilateral de extras · ${esc(sol)}`:mista?`Troca ordinário ↔ extra · ${esc(sol)}`:ordord?`Troca ordinário ↔ ordinário · ${esc(sol)} ↔ ${esc(sub)}`:`${esc(sol)} assume serviço de ${esc(sub)}`;
     const detalhes=troca?`<div class="record-meta">Origem: ${dt.a}<br>Contrapartida: ${dt.b}</div>`:mista?`<div class="record-meta">Ordinário oferecido: ${dm.ordinario}<br>Extra recebido: ${dm.extra}</div>`:ordord?`<div class="record-meta"><b>Serviço de ${esc(sub)} que ${esc(sol)} cumprirá:</b> ${fmt(q.data)} · Turno ${esc(q.turno||'-')}<br><b>Serviço de ${esc(sol)} que ${esc(sub)} cumprirá:</b> ${fmt(q.data_contrapartida)} · Turno ${esc(q.turno_contrapartida||'-')}</div><div class="record-warning">Os dois serviços foram identificados no ato da solicitação.</div>`:`<div class="record-meta">${fmt(data)} · Turno ${esc(q.turno||'-')} · ${Number(q.servico_extra)?'Serviço extra':'Serviço ordinário'}</div>`;
-    return `<article class="record-card"><div class="record-card-head"><strong>${tit}</strong><span class="status-pill status-PENDENTE">PENDENTE</span></div>${detalhes}${passada?'<div class="record-warning"><b>Serviço já ocorrido.</b> A solicitação permanece para decisão, porém não pode ser aprovada retroativamente porque a escala histórica é imutável.</div>':''}${q.observacao?`<div>${esc(q.observacao)}</div>`:''}<div class="request-actions">${passada?'':`<button class="mini" data-cmd-pm-ok="${x.id}">Aprovar</button>`}<button class="mini" data-cmd-pm-no="${x.id}">Recusar</button><button class="mini danger-soft" data-cmd-pm-del="${x.id}">Excluir solicitação</button></div></article>`;
+    const exigeAceite=['TROCA_ORDINARIO','TROCA_EXTRA','CESSAO_EXTRA','TROCA_ORDINARIO_EXTRA'].includes(mod);
+    const temAceite=Number(q.aceite_contraparte||0)===1&&Number(q.aceite_por||0)===Number(q.contraparte_id||q.substituido_id||0);
+    const pronto=Number(x.desktop_referencia_id||0)>0&&(!exigeAceite||temAceite);
+    const naoHabilita=passada||!pronto;
+    const avisoFluxo=exigeAceite&&!temAceite?'Aceite da contraparte ainda não confirmado.':!x.desktop_referencia_id?'Aguardando recebimento e validação no Desktop.':'';
+    return `<article class="record-card"><div class="record-card-head"><strong>${tit}</strong><span class="status-pill status-PENDENTE">PENDENTE</span></div>${detalhes}${avisoFluxo?'<div class="record-warning">'+esc(avisoFluxo)+'</div>':''}${passada?'<div class="record-warning"><b>Serviço já ocorrido.</b> A solicitação permanece para decisão, porém não pode ser aprovada retroativamente porque a escala histórica é imutável.</div>':''}${q.observacao?`<div>${esc(q.observacao)}</div>`:''}<div class="request-actions">${naoHabilita?'':`<button class="mini" data-cmd-pm-ok="${x.id}">Aprovar</button>`}<button class="mini" data-cmd-pm-no="${x.id}">Recusar</button><button class="mini danger-soft" data-cmd-pm-del="${x.id}">Excluir solicitação</button></div></article>`;
   };
   const renderMirror=x=>{
     const id=Number(x.id||x.desktop_id||0),data=String(x.data||'').slice(0,10),passada=!!data&&data<hoje,substituido=pessoaPorId(x.substituido_id)||x.substituido_nome||'GCM',substituto=pessoaPorId(x.substituto_id)||x.substituto_nome||'GCM',modal=String(x.modalidade||'ASSUNCAO').toUpperCase();
