@@ -260,6 +260,17 @@ async function enrichActionRequests(rows:any[]){
     }else if(finalStatus==='CANCELAMENTO_PENDENTE_DESKTOP'){
       finalStatus='CANCELAMENTO_PENDENTE';finalResponse=finalResponse||'Cancelamento enviado ao Desktop e aguardando sincronização.';
     }
+    // V299 R3: decisão ainda não aplicada não pode reaparecer como solicitação aguardando análise.
+    if(r.tipo==='PERMUTA'&&finalStatus==='PENDENTE'){
+      const raw=String(r.status||'').toUpperCase();
+      if(raw==='DECISAO_PENDENTE_DESKTOP'){
+        finalStatus='DECISAO_PENDENTE_DESKTOP';
+        finalResponse='Decisão do Comando registrada; aguardando aplicação e conciliação pelo Desktop.';
+      }else if(['CANCELAMENTO_COMANDO_PENDENTE','CANCELAMENTO_PENDENTE_DESKTOP'].includes(raw)){
+        finalStatus=raw;
+        finalResponse='Cancelamento registrado; aguardando confirmação do Desktop.';
+      }
+    }
     const bankDecision=
       r.tipo==='BANCO_HORAS_CORRECAO'
         ? bankDecisionByRequest.get(Number(r.id))
