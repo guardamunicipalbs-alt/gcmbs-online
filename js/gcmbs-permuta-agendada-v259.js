@@ -7,6 +7,7 @@ const GATEWAY='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-commu
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-scheduled-permuta-v258';
 
 const TERM_VERSION='V255-AGENDADA-1';
+// V301: data do serviço inicial visível; data futura permanece a definir.
 const TERM_TEXT=[
   'TROCA DE SERVICO AGENDADA / COMPENSACAO FUTURA.',
   'A troca deve ser quitada por servico da mesma natureza e mesma duracao: Ordinario por Ordinario e Extra por Extra.',
@@ -50,6 +51,7 @@ function optionExtra(x){
 }
 
 let extraLoading=false;
+let ultimoModoAgendadoV301='';
 async function carregarExtrasAgendados(){
   const sel=$('pmExtraOutro');if(!sel||extraLoading)return;
   extraLoading=true;sel.disabled=true;sel.innerHTML='<option value="">Consultando serviços extras...</option>';
@@ -83,7 +85,7 @@ function garantirUi(){
   if(!$('gcmbsAgCfgV259')){
     const box=document.createElement('div');
     box.id='gcmbsAgCfgV259';box.className='full hidden';
-    box.innerHTML=`<div class="notice"><b>Troca de serviço agendada:</b> você cobre agora um serviço de outro GCM. Se o primeiro serviço for efetivamente cumprido e confirmado pela Frequência, o titular original ficará obrigado a compensar depois com serviço do <b>mesmo tipo e mesma duração</b>. Não existe crédito ou débito imediato no Banco de Horas.</div>
+    box.innerHTML=`<div class="notice"><b>Troca de serviço agendada:</b> escolha abaixo a <b>data, o turno e o GCM titular</b> do serviço que você assumirá agora (ou selecione o Extra com sua data). A <b>data da compensação futura ainda não é definida</b> nesta solicitação. Após o primeiro serviço efetivamente cumprido e confirmado pela Frequência, o titular deverá compensar com serviço do mesmo tipo e mesma duração. Não há crédito ou débito imediato no Banco de Horas.</div>
       <label style="display:grid;gap:6px;margin-top:10px">Tipo do serviço inicial
         <select id="pmAgTipoV259">
           <option value="ORDINARIO">Serviço ordinário</option>
@@ -129,6 +131,13 @@ function aplicarModo(){
   const modal=$('pmModalidade'),ag=modal?.value==='AGENDADA';
   const cfg=$('gcmbsAgCfgV259'),term=$('gcmbsAgTermV259');
   const generic=[...$('formPermuta').querySelectorAll('.responsibility-term')].find(x=>x.id!=='gcmbsAgTermV259');
+  const tipoSelecionado=$('pmAgTipoV259')?.value||'ORDINARIO';
+  const chaveModo=ag?`AGENDADA:${tipoSelecionado}`:modal?.value||'';
+  if(chaveModo!==ultimoModoAgendadoV301){
+    const msg=$('pmMsg');
+    if(msg&&msg.classList.contains('error')){msg.textContent='';msg.classList.remove('error');}
+    ultimoModoAgendadoV301=chaveModo;
+  }
   if(cfg)cfg.classList.toggle('hidden',!ag);
   if(term)term.classList.toggle('hidden',!ag);
   if(generic)generic.classList.toggle('hidden',ag);
@@ -137,10 +146,15 @@ function aplicarModo(){
   const strong=checkLabel?.querySelector('b');
   if(strong)strong.textContent=ag?'LI E CONCORDO COM O TERMO DA TROCA AGENDADA / COMPENSAÇÃO FUTURA.':'CONCORDO COM OS TERMOS.';
 
-  if(!ag)return;
-  const tipo=$('pmAgTipoV259')?.value||'ORDINARIO',ord=tipo==='ORDINARIO',extra=tipo==='EXTRA';
+  if(!ag){
+    const d=$('pmData')?.closest('label'),g=$('pmSubstituto')?.closest('label');
+    if(d?.firstChild?.nodeType===Node.TEXT_NODE)d.firstChild.textContent='Data do serviço ordinário';
+    if(g?.firstChild?.nodeType===Node.TEXT_NODE)g.firstChild.textContent='GCM substituído';
+    return;
+  }
+  const tipo=tipoSelecionado,ord=tipo==='ORDINARIO',extra=tipo==='EXTRA';
   document.querySelectorAll('.pm-ordinary').forEach(x=>x.classList.toggle('hidden',!ord));
-  document.querySelectorAll('.pm-assuncao').forEach(x=>x.classList.toggle('hidden',!ord));
+  document.querySelectorAll('.pm-assuncao').forEach(x=>x.classList.toggle('hidden',!ord||x.matches('div.notice')));
   document.querySelectorAll('.pm-extra').forEach(x=>x.classList.toggle('hidden',!extra));
   document.querySelectorAll('.pm-mista').forEach(x=>x.classList.add('hidden'));
   $('pmExtraMeuLabel')?.classList.add('hidden');
@@ -151,9 +165,21 @@ function aplicarModo(){
     aviso.classList.remove('hidden');
     aviso.innerHTML='<b>Regra da troca agendada por Extra:</b> você executará o Extra selecionado, mas o crédito financeiro original permanece com o titular. Se a Frequência confirmar sua execução, o titular ficará devendo posteriormente um Extra de mesma duração. A classe financeira original não é transferida.';
   }
-  if(extra)carregarExtrasAgendados();
-  else{
-    const data=$('pmData');if(data?.value)data.dispatchEvent(new Event('change',{bubbles:true}));
+  const dataLabel=$('pmData')?.closest('label');
+  if(dataLabel?.firstChild?.nodeType===Node.TEXT_NODE)dataLabel.firstChild.textContent=ord?'Data do serviço que você vai assumir':'Data do serviço ordinário';
+  const gcmLabel=$('pmSubstituto')?.closest('label');
+  if(gcmLabel?.firstChild?.nodeType===Node.TEXT_NODE)gcmLabel.firstChild.textContent=ord?'GCM titular do serviço que você vai assumir':'GCM substituído';
+  if(extra){
+    const enviar=$('pmEnviar');if(enviar)enviar.disabled=false;
+    carregarExtrasAgendados();
+  }else{
+    const data=$('pmData');
+    if(data?.value)data.dispatchEvent(new Event('change',{bubbles:true}));
+    else{
+      const sel=$('pmSubstituto'),enviar=$('pmEnviar');
+      if(sel){sel.disabled=true;sel.innerHTML='<option value="">Selecione primeiro data e turno</option>';}
+      if(enviar)enviar.disabled=true;
+    }
   }
 }
 
