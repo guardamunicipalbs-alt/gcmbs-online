@@ -231,7 +231,7 @@ function renderCloud(){
 
 async function refreshCloud(force=false){
   if(cloudLoading||!token())return;
-  if(!force&&Date.now()-lastLoad<15000)return;
+  if(!force&&Date.now()-lastLoad<60000)return;
   cloudLoading=true;
   try{
     const r=await call(API,'list');
@@ -324,13 +324,15 @@ function boot(){
   agTipo?.addEventListener('change',aplicarModo);
   $('gcmbsAgRefreshV259')?.addEventListener('click',()=>refreshCloud(true));
   document.addEventListener('click',e=>{if(e.target.closest?.('[data-go="permutas"]'))setTimeout(()=>refreshCloud(true),250)});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloud(true)});
-  window.addEventListener('gcmbs:v110-refreshed',()=>refreshCloud(true));
-  aplicarModo();refreshCloud(true);
-  setInterval(()=>{
+  const moduloAberto=()=>{
     const sec=document.querySelector('section[data-view="permutas"]');
-    if(sec&&!sec.classList.contains('hidden'))refreshCloud(false);
-  },30000);
+    return !!sec&&!sec.classList.contains('hidden');
+  };
+  // V302: sincronizacao sob demanda e revalidacao moderada, sem polling em telas fechadas.
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&moduloAberto())refreshCloud(false)});
+  window.addEventListener('gcmbs:v110-refreshed',()=>{if(moduloAberto())refreshCloud(false)});
+  aplicarModo();refreshCloud(true); // 1 leitura inicial para manter a caixa de aceites
+  setInterval(()=>{if(!document.hidden&&moduloAberto())refreshCloud(false)},120000);
   console.info('[GCMBS V259] Troca agendada / compensacao futura liberada com fluxo protegido.');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
