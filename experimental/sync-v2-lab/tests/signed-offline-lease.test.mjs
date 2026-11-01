@@ -139,13 +139,13 @@ test("chamador nao pode ampliar prazo de dados pessoais como institucionais",asy
   assert.equal(result.reason,"CLASSIFICATION_MISMATCH");
 });
 test("entidade sensivel assinada adota prazo de 6 horas, nao 24",async()=>{
-  const lease=await signedLease();
+  const lease=await signedLease({issuedAt:"2026-10-31T18:00:00.000Z"});
   const result=await authorizeSignedOfflineRead({
     ...context(),entity:"permutas",classification:"SENSITIVE",
     lastSyncAt:"2026-11-01T04:00:00.000Z",signedLease:lease,
   });
   assert.equal(result.allowed,false);
-  assert.equal(result.reason,"INVALID_LAST_SYNC");
+  assert.equal(result.reason,"CACHE_STALE");
 });
 test("lista e classificacoes divergentes nunca geram lease valido",async()=>{
   await assert.rejects(
