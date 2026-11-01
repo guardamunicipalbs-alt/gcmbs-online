@@ -37,7 +37,12 @@ export class AuthenticatedProvider {
     }
     let body={};
     try{body=await r.json()}catch{}
-    if(!r.ok) throw new Error(body.message||`Erro ${r.status}`);
+    if(!r.ok){
+      const error=new Error(body.message||`Erro ${r.status}`);
+      error.httpStatus=r.status;
+      error.errorCode=body.code||null;
+      throw error;
+    }
     return body;
   }
 
@@ -62,8 +67,10 @@ export class AuthenticatedProvider {
       this.session=body.session;
       if(Number(this.session?.senha_trocada||0)!==0) await this.load();
       return this.session;
-    }catch{
-      localStorage.removeItem('gcmbs.mobile.token');
+    }catch(error){
+      // Erros de rede, HTTP 402 (franquia), timeout e falhas 5xx
+      // NAO invalidam a sessao. Apenas uma resposta autenticada 401 confirma revogacao/expiracao.
+      if(Number(error?.httpStatus)===401) localStorage.removeItem('gcmbs.mobile.token');
       this.session=null;this.data=null;
       return null;
     }
