@@ -117,3 +117,26 @@ test("cursor falso nao avanca",async()=>{
   );
   assert.equal(store.table.size,0);
 });
+
+
+test("duas capturas simultaneas nao podem sobrescrever checkpoint",async()=>{
+  const store=memoryStore();
+  let arrived=0,release;
+  const ready=new Promise(resolve=>{release=resolve});
+  const fetchPage=async()=>{
+    arrived++;
+    if(arrived===2) release();
+    await ready;
+    return page([row("1")],true,"1");
+  };
+  const outputs=await Promise.allSettled([
+    resumeBootstrap({store,fetchPage,guardaId:7,entity:"escalas",maxPages:1}),
+    resumeBootstrap({store,fetchPage,guardaId:7,entity:"escalas",maxPages:1}),
+  ]);
+  assert.equal(outputs.filter(x=>x.status==="fulfilled").length,1);
+  assert.equal(outputs.filter(x=>x.status==="rejected").length,1);
+  assert.match(String(outputs.find(x=>x.status==="rejected").reason),/Checkpoint divergente/);
+  const saved=store.table.get(key);
+  assert.equal(saved.cursor,"1");
+  assert.equal(saved.records.size,1);
+});
