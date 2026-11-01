@@ -58,3 +58,19 @@ O modelo simulado **não replica os ~15 gatilhos reais** de `mobile_entity_recor
 
 ## Princípio de segurança
 O objetivo é **diminuir Egress sem perder registros**. Não é aceitável obter economia removendo histórico, afrouxando autorização ou pulando a confirmação de transações.
+
+
+## Auditoria complementar: conflito de revisão entre dois computadores (01/11/2026)
+**Problema:** atomicidade do registro+fila e idempotência por `client_change_id` NÃO impedem perda de atualização se duas alterações diferentes no mesmo registro partirem de uma mesma versão antiga.
+
+**Proteção experimental adicionada ao PostgreSQL descartável:**
+- `apply_change(..., p_base_revision)` aceita revisão-base esperada e a compara com a revisão atual **após** adquirir a trava transacional do registro.
+- `base_revision=0` significa criação de registro ainda inexistente; revisões positivas exigem correspondência exata.
+- Se houve atualização entre a leitura do cliente e a tentativa de escrita, deve retornar `STALE_BASE_REVISION`; não incrementar revisão nem inserir recibo.
+- O recibo já gravado é consultado **antes** dessa verificação. Dessa forma, reenvio do mesmo ID previamente confirmado mantém a resposta original, mesmo se outros dispositivos já avançaram a revisão.
+- Testes de duas conexões PostgreSQL em paralelo: com `base_revision=1` igual, **apenas uma** das alterações pode ser aceita.
+- O contrato laboratorial ainda permite omitir `p_base_revision` por compatibilidade de testes legados. **Esta omissão não pode ser considerada segura para escrita concorrente no produto final.** Em produção, exigir versão-base sempre que se edita/exclui um registro sensível.
+
+**Comportamento a homologar na aplicação:** um conflito NÃO é uma autorização para sobrescrever. Mostrar registro atualizado, manter rascunho do pedido original, permitir revisão humana e reenvio com NOVO identificador apenas após autorização e nova versão-base. Para Banco de Horas e permutas, nunca resolver conflitos simplesmente com `last write wins`; preservar regras das seis modalidades, 20–19, 84h e valores históricos.
+
+**Não houve alteração na API v6, no Supabase oficial ou no Desktop.** Isto testa só um contrato mínimo em banco descartável, sem replicar todos os gatilhos reais ou garantir o tratamento correto por Android.
