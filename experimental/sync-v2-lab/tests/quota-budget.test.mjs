@@ -24,9 +24,9 @@ test("detecta extrapolacao projetada de Egress",()=>{
  assert.equal(r.status,"PROJECTED_LIMIT");
  assert.ok(r.projectedCycleBytes>5*GB);
 });
-test("alerta ao atingir apenas a meta",()=>{
- const r=assess({billedBytes:1*GB,elapsedDays:5});
- assert.equal(r.status,"PROJECTED_LIMIT");
+test("alerta quando projecao supera a meta mas ainda nao o limite",()=>{
+ const r=assess({billedBytes:0.7*GB,elapsedDays:5});
+ assert.equal(r.status,"PROJECTED_TARGET");
 });
 test("identifica tendencia dentro do orcamento",()=>{
  const r=assess({billedBytes:0.2*GB,elapsedDays:10});
