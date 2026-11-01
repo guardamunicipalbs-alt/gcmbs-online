@@ -44,3 +44,39 @@ jobs:
             $issues | Format-List | Out-String | Write-Error
             exit 1
           }
+
+  postgres-contract:
+    name: PostgreSQL descartavel - teste transacional sem dados reais
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gcmbs_lab_test
+          POSTGRES_PASSWORD: ephemeral_ci_only
+          POSTGRES_DB: gcmbs_lab_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gcmbs_lab_test -d gcmbs_lab_db"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar apenas cliente PostgreSQL se necessario
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Testar atomicidade e duplicidade em banco efemero
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "5432"
+          PGUSER: gcmbs_lab_test
+          PGPASSWORD: ephemeral_ci_only
+          PGDATABASE: gcmbs_lab_db
+        run: |
+          psql -X --no-psqlrc -v ON_ERROR_STOP=1             -f experimental/sync-v2-lab/tests/transactional-idempotency.postgres.sql
