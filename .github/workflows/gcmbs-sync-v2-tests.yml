@@ -80,3 +80,4 @@ jobs:
           PGDATABASE: gcmbs_lab_db
         run: |
           psql -X --no-psqlrc -v ON_ERROR_STOP=1             -f experimental/sync-v2-lab/tests/transactional-idempotency.postgres.sql
+          bash experimental/sync-v2-lab/tests/transactional-concurrency.sh
