@@ -61,7 +61,11 @@ function base64urlBytes(value) {
   try {
     const base64=value.replace(/-/g,"+").replace(/_/g,"/");
     const bytes=Uint8Array.from(atob(base64+"=="),x=>x.charCodeAt(0));
-    return bytes.length===64 ? bytes : null;
+    if(bytes.length!==64)return null;
+    let raw="";
+    for(const b of bytes)raw+=String.fromCharCode(b);
+    const canonical=btoa(raw).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    return canonical===value ? bytes : null;
   } catch { return null; }
 }
 function signedBytes(envelope) {
