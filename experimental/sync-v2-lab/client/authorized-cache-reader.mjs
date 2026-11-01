@@ -13,6 +13,7 @@
  * - Uso de dados sensiveis, permissoes e cache offline exige politica formal.
  */
 import { authorizeSignedOfflineRead } from "./signed-offline-lease.mjs";
+import { verifySnapshotAttestation } from "./snapshot-attestation.mjs";
 
 function fail(reason) {
   return Object.freeze({ok:false, reason, records:[], stale:true});
@@ -52,7 +53,7 @@ function stableRecordRows(state,entity) {
  */
 export async function readAuthorizedOfflineCache({
   store,guardaId,deviceId,entity,
-  deviceUnlock,trustedClock,verifySnapshot,
+  deviceUnlock,trustedClock,
   signedLease,trustedJwks,lastKnownAclRevision,
   lastSyncAt,attestation,subtle,
 }={}) {
@@ -60,7 +61,7 @@ export async function readAuthorizedOfflineCache({
   if(!store || typeof store.transaction!=="function")return fail("STORE_UNAVAILABLE");
   if(typeof deviceUnlock!=="function")return fail("LOCAL_UNLOCK_REQUIRED");
   if(typeof trustedClock!=="function")return fail("TRUSTED_CLOCK_REQUIRED");
-  if(typeof verifySnapshot!=="function")return fail("SNAPSHOT_VERIFIER_REQUIRED");
+  if(!subtle || typeof subtle.verify!=="function")return fail("CRYPTO_UNAVAILABLE");
 
   let unlocked=false,nowMs=NaN;
   try {
@@ -87,13 +88,15 @@ export async function readAuthorizedOfflineCache({
          typeof active.captureId!=="string" || !active.captureId)
         return fail("CAPTURE_NOT_VERIFIED");
       if(!attestation || typeof attestation!=="object" ||
-         attestation.captureId!==active.captureId ||
-         attestation.guardaId!==guardaId ||
-         attestation.entity!==entity)
+         attestation.claims?.captureId!==active.captureId ||
+         attestation.claims?.guardaId!==guardaId ||
+         attestation.claims?.entity!==entity)
         return fail("CAPTURE_ATTESTATION_MISMATCH");
-      // A verificação real DEVE incluir hash dos registros em 'active'.
-      const proven=await verifySnapshot({
-        attestation,active,guardaId,entity,deviceId,
+      // Criptografia obrigatoria: callback externo nao pode responder true.
+      // Digests/assinatura sao verificados neste proprio modulo.
+      const proven=await verifySnapshotAttestation({
+        attestation,active,guardaId,entity,deviceId,nowMs,
+        trustedJwks,subtle,
       });
       if(proven!==true)return fail("CAPTURE_ATTESTATION_INVALID");
       const data=stableRecordRows(active,entity);
