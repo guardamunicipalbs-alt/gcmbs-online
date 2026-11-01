@@ -95,9 +95,11 @@ test("lease expirado nunca autoriza leitura",async()=>{
   assert.equal(result.allowed,false);
   assert.equal(result.reason,"LEASE_EXPIRED");
 });
-test("lease com duracao maior que limite institucional e rejeitado",async()=>{
-  const lease=await signedLease({expiresAt:"2026-11-06T12:00:00.000Z"});
-  assert.equal(await verifySignedOfflineLease(lease,{trustedJwks:trust,subtle}),false);
+test("nao admite sequer assinar lease acima do limite de 72 horas",async()=>{
+  await assert.rejects(
+    signedLease({expiresAt:"2026-11-06T12:00:00.000Z"}),
+    /Claims invalidas/
+  );
 });
 test("claims extras nao assinadas sao rejeitadas",async()=>{
   const lease=await signedLease();
