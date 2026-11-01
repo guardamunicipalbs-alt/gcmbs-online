@@ -6,12 +6,12 @@ import { fileURLToPath } from "node:url";
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(dir, "../index.ts"), "utf8")
-  .replace(/^import .*;\\s*$/gm, "");
+  .replace(/^import .*;\s*$/gm, "");
 function makeApp({ active = false, permissions = [], rows = [] } = {}) {
   let handler;
   let queries = [];
   const db = (strings, ...values) => {
-    const query = strings.join("?").replace(/\\s+/g, " ");
+    const query = strings.join("?").replace(/\s+/g, " ");
     queries.push({ query, values });
     if (query.includes("private.mobile_sessions")) return [{ guarda_id: 7, senha_trocada: 1 }];
     if (query.includes("public.mobile_permissions")) return permissions;
