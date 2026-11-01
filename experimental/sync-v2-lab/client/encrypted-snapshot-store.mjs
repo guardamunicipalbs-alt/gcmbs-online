@@ -27,10 +27,12 @@ function checkBytes(value) {
     throw new Error("Formato criptografado invalido");
   return value;
 }
-export function createEncryptedSnapshotStore({rawStore,seal,unseal}) {
+export function createEncryptedSnapshotStore({rawStore,seal,unseal,deviceId}) {
   if(!rawStore || typeof rawStore.transaction!=="function") throw new Error("Store bruto nao transacional");
   if(typeof seal!=="function" || typeof unseal!=="function")
     throw new Error("Criptografia obrigatoria, sem modo plaintext");
+  if(typeof deviceId!=="string" || !/^[A-Za-z0-9._:-]{12,128}$/.test(deviceId))
+    throw new Error("Identidade do aparelho obrigatoria");
   return Object.freeze({
     async transaction(fn) {
       if(typeof fn!=="function") throw new TypeError("Callback invalido");
@@ -44,7 +46,7 @@ export function createEncryptedSnapshotStore({rawStore,seal,unseal}) {
             const cipher=await raw.read(key);
             if(cipher==null)return null;
             const encrypted=checkBytes(cipher);
-            const associatedData=encoder.encode(key);
+            const associatedData=encoder.encode("gcmbs-sync-v2|v1|device:"+deviceId+"|"+key);
             const clear=await unseal(encrypted,associatedData);
             if(!(clear instanceof Uint8Array) || clear.length>MAX_CACHE_BYTES)
               throw new Error("Descriptografia retornou payload invalido");
@@ -53,7 +55,7 @@ export function createEncryptedSnapshotStore({rawStore,seal,unseal}) {
           async write(key,state) {
             checkKey(key);
             const plain=encoder.encode(encodeCacheState(state));
-            const associatedData=encoder.encode(key);
+            const associatedData=encoder.encode("gcmbs-sync-v2|v1|device:"+deviceId+"|"+key);
             const cipher=checkBytes(await seal(plain,associatedData));
             await raw.write(key,cipher);
           },
