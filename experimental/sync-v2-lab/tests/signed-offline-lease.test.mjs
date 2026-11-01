@@ -153,3 +153,12 @@ test("lista e classificacoes divergentes nunca geram lease valido",async()=>{
     /Claims invalidas/
   );
 });
+
+test("ordem das chaves de classificacao nao muda o documento assinado",async()=>{
+  const lease=await signedLease();
+  lease.claims.classifications={
+    permutas:"SENSITIVE",escalas:"PERSONAL",
+  };
+  assert.equal(await verifySignedOfflineLease(lease,{trustedJwks:trust,subtle}),true);
+  assert.equal((await authorizeSignedOfflineRead({...context(),signedLease:lease})).allowed,true);
+});
