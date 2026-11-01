@@ -29,3 +29,18 @@ jobs:
         run: node --check experimental/sync-v2-lab/client/merge-snapshot.mjs
       - name: Executar testes offline (sem secrets)
         run: node --test experimental/sync-v2-lab/tests/*.test.mjs
+      - name: Validar sintaxe de PowerShell sem executar o levantamento
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $issues = $null
+          $file = 'experimental/sync-v2-lab/handoff/LEVANTAMENTO_LOCAL_SOMENTE_LEITURA.ps1'
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path (Get-Location) $file),
+            [ref]$tokens,
+            [ref]$issues
+          ) | Out-Null
+          if ($issues.Count -gt 0) {
+            $issues | Format-List | Out-String | Write-Error
+            exit 1
+          }
