@@ -162,3 +162,16 @@ test("ordem das chaves de classificacao nao muda o documento assinado",async()=>
   assert.equal(await verifySignedOfflineLease(lease,{trustedJwks:trust,subtle}),true);
   assert.equal((await authorizeSignedOfflineRead({...context(),signedLease:lease})).allowed,true);
 });
+
+test("rejeita texto Base64URL alternativo que representa os mesmos bytes",async()=>{
+  const lease=await signedLease();
+  const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  const last=lease.signature.at(-1);
+  const idx=alphabet.indexOf(last);
+  assert.ok(idx>=0 && idx%16===0);
+  // O ultimo caractere de uma assinatura de 64 bytes possui 4 bits de padding;
+  // trocar apenas esses bits nao altera os bytes originais decodificados.
+  const nonCanonical=lease.signature.slice(0,-1)+alphabet[idx+1];
+  assert.equal(await verifySignedOfflineLease({...lease,signature:nonCanonical},
+    {trustedJwks:trust,subtle}),false);
+});
