@@ -25,7 +25,8 @@ CREATE TABLE gcmbs_sync_v2_lab.changes(
 
 CREATE OR REPLACE FUNCTION gcmbs_sync_v2_lab.apply_change(
   p_id text,p_entity text,p_key text,
-  p_operation text,p_payload jsonb,p_actor bigint
+  p_operation text,p_payload jsonb,p_actor bigint,
+  p_base_revision bigint default null
 )
 RETURNS TABLE(record_key text, revision bigint, duplicate boolean)
 LANGUAGE plpgsql
@@ -34,6 +35,7 @@ AS $fn$
 DECLARE
   prior gcmbs_sync_v2_lab.changes%rowtype;
   v_revision bigint;
+  v_observed_revision bigint;
   v_op text := upper(p_operation);
 BEGIN
   if p_id is null or length(p_id)<20 or length(p_id)>80 or
@@ -62,6 +64,19 @@ BEGIN
 
   -- A segunda trava impede conflito entre IDs diferentes no MESMO registro.
   perform pg_advisory_xact_lock(hashtextextended('gcmbs-record:'||p_entity||':'||p_key,1));
+
+  -- Revision otimista protege alteracoes concorrentes de clientes desconectados.
+  -- Prior receipt e verificado ANTES: retry com ID identico nao vira conflito
+  -- apenas porque outro GCM alterou o registro entre a primeira chamada e retry.
+  if p_base_revision is not null then
+    select r.revision into v_observed_revision
+    from gcmbs_sync_v2_lab.records r
+    where r.entity=p_entity and r.record_key=p_key;
+    if coalesce(v_observed_revision,0) <> p_base_revision
+       or p_base_revision<0 then
+      raise exception 'STALE_BASE_REVISION';
+    end if;
+  end if;
   if v_op='UPSERT' then
     insert into gcmbs_sync_v2_lab.records(entity,record_key,revision,deleted,data)
       values(p_entity,p_key,1,false,p_payload)
@@ -148,15 +163,40 @@ BEGIN
     raise exception 'TEST_PHANTOM_QUEUE_ENTRY';
   end if;
 
+  -- Criar com base 0 falha se chave ja existe.
+  begin
+    perform * from gcmbs_sync_v2_lab.apply_change(
+      '00000000-0000-4000-8000-000000000006','escalas','fake-A',
+      'UPSERT','{"turno":"C"}'::jsonb,7,0);
+    raise exception 'TEST_EXPECTED_STALE_BASE';
+  exception when others then
+    if sqlerrm<>'STALE_BASE_REVISION' then raise; end if;
+  end;
+  if (select revision from gcmbs_sync_v2_lab.records where
+    entity='escalas' and record_key='fake-A')<>2 then
+      raise exception 'TEST_STALE_BASE_CHANGED_RECORD';
+  end if;
+
+  -- Atualizacao com base 2 e valida. ID igual refeito com base 2
+  -- confirma sem incrementar revisao.
+  select * into got from gcmbs_sync_v2_lab.apply_change(
+    '00000000-0000-4000-8000-000000000007','escalas','fake-A',
+    'UPSERT','{"turno":"C"}'::jsonb,7,2);
+  if got.revision<>3 or got.duplicate then raise exception 'TEST_OPTIMISTIC_UPSERT_FAILED'; end if;
+  select * into got from gcmbs_sync_v2_lab.apply_change(
+    '00000000-0000-4000-8000-000000000007','escalas','fake-A',
+    'UPSERT','{"turno":"C"}'::jsonb,7,2);
+  if got.revision<>3 or not got.duplicate then raise exception 'TEST_OPTIMISTIC_RETRY_FAILED'; end if;
+
   -- Excluir duas vezes com ID diferente precisa falhar; retry do MESMO ID idem.
   select * into got from gcmbs_sync_v2_lab.apply_change(
     '00000000-0000-4000-8000-000000000004','escalas','fake-A',
     'DELETE','{}'::jsonb,7);
-  if got.revision<>3 or got.duplicate then raise exception 'TEST_DELETE_FAILED'; end if;
+  if got.revision<>4 or got.duplicate then raise exception 'TEST_DELETE_FAILED'; end if;
   select * into got from gcmbs_sync_v2_lab.apply_change(
     '00000000-0000-4000-8000-000000000004','escalas','fake-A',
     'DELETE','{}'::jsonb,7);
-  if got.revision<>3 or not got.duplicate then raise exception 'TEST_DELETE_RETRY_FAILED'; end if;
+  if got.revision<>4 or not got.duplicate then raise exception 'TEST_DELETE_RETRY_FAILED'; end if;
   begin
     perform * from gcmbs_sync_v2_lab.apply_change(
       '00000000-0000-4000-8000-000000000005','escalas','fake-A',
@@ -166,13 +206,13 @@ BEGIN
     if sqlerrm<>'CANNOT_DELETE_ABSENT_RECORD' then raise; end if;
   end;
   if (select revision from gcmbs_sync_v2_lab.records where
-      entity='escalas' and record_key='fake-A')<>3 then
+      entity='escalas' and record_key='fake-A')<>4 then
     raise exception 'TEST_DELETE_REVISION_CHANGED';
   end if;
-  if (select count(*) from gcmbs_sync_v2_lab.changes)<>3 then
+  if (select count(*) from gcmbs_sync_v2_lab.changes)<>4 then
     raise exception 'TEST_WRONG_RECEIPT_COUNT';
   end if;
-  raise notice 'PASS: atomicity, duplicate receipts, payload conflicts, rollback, revision, delete';
+  raise notice 'PASS: atomicity, duplicate receipts, payload conflicts, rollback, base_revision conflicts, delete';
 END;
 $test$;
 -- O banco e totalmente DESCARTAVEL no GitHub Actions. A definicao fica
