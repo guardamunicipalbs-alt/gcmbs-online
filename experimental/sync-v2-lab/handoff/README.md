@@ -63,3 +63,12 @@ Este diretório reúne o que poderá ser feito quando o usuário voltar ao Windo
 
 ### Atencao para dados institucionais do GCMBS
 Nao presumir que escalas institucionais sao publicas. Mesmo dados de nome de guerra, servicos e rotinas de patrulhamento podem exigir controles de acesso. Nenhuma copia de dados reais deve entrar no repositorio publico ou no cache compartilhado da CDN.
+
+
+## 7. Continuidade da preparação remota (01/11/2026)
+- `client/durable-outbox.mjs` e respectivos testes simulados de transação, falha de gravação, IDs únicos, ACK repetido e mudança de estado sem retrocesso.
+- `client/cache-json-codec.mjs` e testes de Map para JSON versionado, limites de 2 MiB, exclusões lógicas, revisões inválidas, registro duplicado e rejeição de JSON corrompido. JSON NÃO é cifragem.
+- `client/encrypted-snapshot-store.mjs`: barreira de criptografia obrigatória para futura integração com SQLite. Funções de cifra `seal`/`unseal` são injetadas; implementação Android Keystore permanece pendente. Testes usam AES-GCM com CHAVE EFÊMERA gerada no CI, AAD vinculado a dispositivo, GCM e chave do registro; adulterações/replays são rejeitados.
+- `handoff/INTEGRACAO_ANDROID_SQLITE.md`: contrato de integração, riscos, recuperação e testes de instalação/aparelho.
+- Funcões e gatilhos Supabase oficiais permanecem intocados; nenhuma função adicional implantada. PR #30 ainda é rascunho.
+- A segurança real exige chave persistente no Keystore, transações SQLite duráveis, autorização de acesso offline criptograficamente válida e feed incremental consistente. Nenhum dos testes atuais equivale a homologação do APK.
