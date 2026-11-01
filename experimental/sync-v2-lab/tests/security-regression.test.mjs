@@ -22,3 +22,14 @@ test("a feature experimental nao altera action:data da API corrente",()=>{
   const dataAction=api.split("\n").find(x=>x.includes("if(action==='data')"));
   assert.ok(dataAction,"a acao data legada deve ficar intacta");
 });
+
+
+test("extras pessoais filtrados no SQL antes da serializacao",()=>{
+  const normalized=api.replace(/\s+/g," ");
+  assert.ok(normalized.includes("where entity='escalas_extras_manuais' and deleted=false and (${management} or (${gid}::bigint=any(scope_guard_ids) and data->>'guarda_id'=${String(gid)}))"));
+});
+test("permutas pessoais usam scope_guard_ids no servidor",()=>{
+  const normalized=api.replace(/\s+/g," ");
+  assert.ok(normalized.includes("where entity='permutas' and deleted=false and (${management} or ${gid}::bigint=any(scope_guard_ids))"));
+  assert.ok(normalized.includes("if(!management) permutas=permutas.filter"));
+});
