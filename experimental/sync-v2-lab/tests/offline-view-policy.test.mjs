@@ -54,7 +54,10 @@ test("nao autoriza depois que o lease expira",async()=>{
   assert.equal(r.reason,"LEASE_EXPIRED");
 });
 test("dados pessoais muito antigos exigem nova validacao",async()=>{
-  const r=await check({lastSyncAt:"2026-10-31T19:00:00.000Z"});
+  const r=await check({
+    lease:{...lease,issuedAt:"2026-10-30T12:00:00.000Z"},
+    lastSyncAt:"2026-10-31T17:00:00.000Z",
+  });
   assert.equal(r.allowed,false);
   assert.equal(r.reason,"CACHE_STALE");
 });
