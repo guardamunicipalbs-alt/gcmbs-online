@@ -63,7 +63,7 @@ function store(active){
   return {async transaction(fn){return fn({read:async key=>data.get(key)});}};
 }
 async function read({active=activeState(),signedLease,attestation,guard=7,device=deviceId,
-  unlock=async()=>true,clock=async()=>nowMs,verifier,aclRevision=12,
+  unlock=async()=>true,clock=async()=>nowMs,aclRevision=12,
   lastSync="2026-11-01T11:00:00.000Z"}={}){
   return readAuthorizedOfflineCache({
     store:store(active),guardaId:guard,deviceId:device,entity:"escalas",
@@ -71,9 +71,7 @@ async function read({active=activeState(),signedLease,attestation,guard=7,device
     signedLease:signedLease??await lease(),trustedJwks,
     lastKnownAclRevision:aclRevision,lastSyncAt:lastSync,
     attestation:attestation??await proof(active),subtle,
-    verifySnapshot:verifier??(args=>verifySnapshotAttestation({
-      ...args,nowMs,trustedJwks,subtle,
-    })),
+
   });
 }
 test("assinatura de snapshot valida e digest correto",async()=>{
