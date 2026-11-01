@@ -58,3 +58,20 @@ O prototipo criado nesta etapa implementa SOMENTE um endpoint paginado de leitur
 ## Reversao
 - Nao houve alteracao de rotas de producao. Remover/desabilitar a funcao de laboratorio e a branch experimental basta para desfazer esta etapa.
 - Na implantacao futura, manter a API v6 ate homologar a V2. Nao apagar filas nem compactar historicos durante rollout.
+
+
+## Auditoria remota complementar (01/11/2026)
+- 89 Edge Functions registradas no Supabase, incluindo `gcmbs-sync-v2-lab`. **Nao significa 89 funcoes em uso.**
+- Os gateways v74 e v131 compoem cadeia para algumas operacoes: v74 -> v131 -> API v6. O frontend ja realiza bypass de algumas acoes.
+- Nesta branch, `entity_catalog` e `entity_list` de entidades comuns passam direto ao CORE. `justificativas_faltas`, `ocorrencias_operacionais` e `eventos_extras` preservam o gateway v74. Escritas e decisoes nao mudaram de rota.
+- API v6 nesta branch usa filtro SQL para extras e permutas de GCM comum antes da transmissao do PostgreSQL para a funcao. Gestores preservam a consulta institucional.
+- Verificacao de consistencia em banco (somente leitura): 336 extras ativos possuem `scope_guard_ids` compatível com `data.guarda_id`; 121 permutas ativas contem participantes no escopo. Registros futuros precisam manter esse contrato.
+- Em 25 perfis ativos nao gestores foram observados, em media, 13,4 extras e 9,6 permutas no escopo individual. Filtros melhoram eficiencia SQL, **mas nao ha prova de economia de Egress faturado**.
+- A tabela `public.mobile_diagnostic_access_audit` possui RLS desabilitado. Os grants atualmente consultados foram `postgres` e `service_role`, e nao `anon` nem `authenticated`. Ainda avaliar defesa em profundidade; nao alterar sem impacto conhecido.
+- Novo laboratorio `ReadRetryGate` limita o polling automatico quando ocorre 402 (uma hora entre novas sondagens), 429, 5xx e falha de rede, com reset apos sucesso. **Nao integrado a nenhum cliente e nao deve bloquear operacoes manuais.**
+- Os testes de roteamento, escopo SQL, falhas HTTP e retry foram adicionados ao CI do pull request em rascunho.
+- Nenhuma alteracao no `main`, nem na Edge Function principal publicada; nada foi enviado para os dispositivos dos GCMs.
+- Ainda depende de auditoria do Android e Desktop atuais, teste de carga real e medicao do dashboard de Billing/Egress do Supabase.
+
+### Gate de release adicional
+Nao declarar resolvida a indisponibilidade por cota apenas com otimizacao de consultas internas. Uma resposta final menor e cache local offline comprovado sao obrigatorios, assim como Egress <= 3,5 GB por ciclo medido com margem.
