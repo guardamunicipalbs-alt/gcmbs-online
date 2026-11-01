@@ -36,9 +36,13 @@ export function acknowledgeServer(operation,{ clientChangeId, serverId, pendingD
     throw new Error("Operacao nao pode receber ACK");
   if (operation.server_id!==null && operation.server_id!==serverId)
     throw new Error("Servidor retornou outra identidade");
+  // Repeticoes/reordenacao de ACKs nunca podem rebaixar um estado confirmado.
+  // A resposta mais antiga (SERVER_RECEIVED) nao desfaz AWAITING_DESKTOP.
+  const alreadyWaiting=operation.status===STATES.AWAITING_DESKTOP;
   return Object.freeze({
     ...operation,server_id:serverId,
-    status:pendingDesktop?STATES.AWAITING_DESKTOP:STATES.SERVER_RECEIVED,last_error:null,
+    status:(alreadyWaiting || pendingDesktop)?STATES.AWAITING_DESKTOP:STATES.SERVER_RECEIVED,
+    last_error:null,
   });
 }
 export function finalizeAfterReconciliation(operation,{serverId, outcome}) {
