@@ -48,7 +48,9 @@ function fromUrl(str,length) {
   if(typeof str!=="string"||!new RegExp(`^[A-Za-z0-9_-]{${length}}$`).test(str))return null;
   try{
     const decoded=atob(str.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-str.length%4)%4));
-    return Uint8Array.from(decoded,c=>c.charCodeAt(0));
+    const bytes=Uint8Array.from(decoded,c=>c.charCodeAt(0));
+    if(bytes.length===0 || toUrl(bytes)!==str)return null;
+    return bytes;
   }catch{return null}
 }
 function claimsValid(c){
