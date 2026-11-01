@@ -68,3 +68,33 @@ test("ACK atrasado nao pode reabrir solicitacao concluida",()=>{
   const final=finalizeAfterReconciliation(first,{serverId:123,outcome:"CONFIRMED"});
   assert.throws(()=>acknowledgeServer(final,{clientChangeId:id,serverId:123,pendingDesktop:false}),/nao pode receber ACK/);
 });
+
+
+test("nao armazena senha nem token em fila offline",()=>{
+  const kwargs={clientChangeId:id,guardaId:7,type:"PERMUTA",
+    createdAt:"2026-11-01T00:00:00Z"};
+  for(const payload of [
+    {senha:"NAO_ARMAZENAR"},
+    {token:"NAO_ARMAZENAR"},
+    {authorization:"NAO_ARMAZENAR"},
+    {solicitacao:{password:"NAO_ARMAZENAR"}},
+    {eventos:[{api_key:"NAO_ARMAZENAR"}]},
+  ]){
+    assert.throws(()=>newPendingOperation({...kwargs,payload}),/Credencial proibida/);
+  }
+});
+test("fila rejeita payload muito grande e estruturas profundas",()=>{
+  const kwargs={clientChangeId:id,guardaId:7,type:"PERMUTA",
+    createdAt:"2026-11-01T00:00:00Z"};
+  assert.throws(()=>newPendingOperation({...kwargs,payload:{texto:"x".repeat(40000)}}),/limite seguro/);
+  let recursive={};
+  let current=recursive;
+  for(let i=0;i<13;i++){current.child={};current=current.child;}
+  assert.throws(()=>newPendingOperation({...kwargs,payload:recursive}),/profundo/);
+});
+test("fila preserva operacao sem credenciais apos verificacao",()=>{
+  const r=newPendingOperation({clientChangeId:id,guardaId:7,type:"PERMUTA",
+    payload:{tipo:"ASSUNCAO",meta:{turno:"A"}},createdAt:"2026-11-01T00:00:00Z"});
+  assert.equal(r.status,STATES.PENDING_SEND);
+  assert.equal(r.payload.meta.turno,"A");
+});
