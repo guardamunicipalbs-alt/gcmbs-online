@@ -17,7 +17,8 @@ test.before(async()=>{
 function claims(){
   return {
     issuer:"GCMBS",audience:"gcmbs-android-offline",guardaId:7,
-    deviceId,entities:["escalas","permutas"],aclRevision:12,
+    deviceId,entities:["escalas","permutas"],
+    classifications:{escalas:"PERSONAL",permutas:"SENSITIVE"},aclRevision:12,
     issuedAt,expiresAt,
   };
 }
@@ -122,4 +123,33 @@ test("nao permitir ser usada como aprovacao de permuta offline",async()=>{
     ...context(),entity:"autorizar_permuta",signedLease:lease,
   });
   assert.equal(r.allowed,false);
+});
+
+test("categoria de dados alterada depois da assinatura e rejeitada",async()=>{
+  const lease=await signedLease();
+  lease.claims.classifications.escalas="INSTITUTIONAL";
+  assert.equal(await verifySignedOfflineLease(lease,{trustedJwks:trust,subtle}),false);
+});
+test("chamador nao pode ampliar prazo de dados pessoais como institucionais",async()=>{
+  const lease=await signedLease();
+  const result=await authorizeSignedOfflineRead({
+    ...context(),classification:"INSTITUTIONAL",signedLease:lease,
+  });
+  assert.equal(result.allowed,false);
+  assert.equal(result.reason,"CLASSIFICATION_MISMATCH");
+});
+test("entidade sensivel assinada adota prazo de 6 horas, nao 24",async()=>{
+  const lease=await signedLease();
+  const result=await authorizeSignedOfflineRead({
+    ...context(),entity:"permutas",classification:"SENSITIVE",
+    lastSyncAt:"2026-11-01T04:00:00.000Z",signedLease:lease,
+  });
+  assert.equal(result.allowed,false);
+  assert.equal(result.reason,"INVALID_LAST_SYNC");
+});
+test("lista e classificacoes divergentes nunca geram lease valido",async()=>{
+  await assert.rejects(
+    signedLease({classifications:{escalas:"PERSONAL"}}),
+    /Claims invalidas/
+  );
 });
