@@ -29,9 +29,9 @@ function memoryRawStore() {
     },
   };
 }
-async function secureStore(rawStore) {
+async function secureStore(rawStore,deviceId="android-device-test-0001",encryptionKey=null) {
   // Chave EFEMERA dos testes, nunca credencial institucional.
-  const key=await crypto.subtle.generateKey({name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+  const key=encryptionKey??await crypto.subtle.generateKey({name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
   let calls=0;
   const seal=async (clear,associatedData)=>{
     calls++;
@@ -52,7 +52,7 @@ async function secureStore(rawStore) {
     },key,cipher.slice(12));
     return new Uint8Array(plain);
   };
-  return {store:createEncryptedSnapshotStore({rawStore,seal,unseal}),calls:()=>calls};
+  return {store:createEncryptedSnapshotStore({rawStore,seal,unseal,deviceId}),calls:()=>calls};
 }
 const k="gcmbs:sync-v2:7:escalas";
 const state=()=>({
@@ -117,4 +117,19 @@ test("adaptador criptografado suporta captura de duas geracoes",async()=>{
   assert.equal(view.activeCaptureId,props.captureId);
   assert.equal(view.pendingCaptureId,null);
   assert.equal(raw.rows.size,1);
+});
+
+test("mesma chave criptografica em aparelhos diferentes nao permite replay",async()=>{
+  const raw=memoryRawStore();
+  const shared=await crypto.subtle.generateKey({name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+  const a=await secureStore(raw,"android-device-test-A",shared);
+  const b=await secureStore(raw,"android-device-test-B",shared);
+  await a.store.transaction(tx=>tx.write(k,state()));
+  await assert.rejects(b.store.transaction(tx=>tx.read(k)));
+  assert.equal((await a.store.transaction(tx=>tx.read(k))).cursor,"chave-001");
+});
+test("identidade do aparelho e obrigatoria para armazenamento cifrado",()=>{
+  const raw=memoryRawStore();
+  const stub=async bytes=>bytes;
+  assert.throws(()=>createEncryptedSnapshotStore({rawStore:raw,seal:stub,unseal:stub}),/aparelho obrigatoria/);
 });
