@@ -86,7 +86,12 @@ function cleanString(value, max) {
 }
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin") || "";
-  if (req.method === "OPTIONS") {\n    const headers = origin === "https://guardamunicipalbs-alt.github.io"\n      ? { "access-control-allow-origin": origin, "access-control-allow-headers": "authorization, content-type", "access-control-allow-methods": "POST, OPTIONS", "vary": "Origin" }\n      : { "vary": "Origin" };\n    return new Response(null, { status: 204, headers });\n  }
+  if (req.method === "OPTIONS") {
+    const headers = origin === "https://guardamunicipalbs-alt.github.io"
+      ? { "access-control-allow-origin": origin, "access-control-allow-headers": "authorization, content-type", "access-control-allow-methods": "POST, OPTIONS", "vary": "Origin" }
+      : { "vary": "Origin" };
+    return new Response(null, { status: 204, headers });
+  }
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" }, origin);
   const len = Number(req.headers.get("content-length") || 0);
   if (len > MAX_REQUEST_BYTES) return json(413, { error: "request_too_large" }, origin);
