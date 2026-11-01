@@ -850,6 +850,7 @@ Deno.serve(async(req:Request)=>{
           from public.mobile_entity_records
           where entity='escalas_extras_manuais'
             and deleted=false
+            and (${management} or (${gid}::bigint=any(scope_guard_ids) and data->>'guarda_id'=${String(gid)}))
           order by coalesce(data->>'data',''),
                    coalesce(data->>'horario_inicio',''),
                    record_key
@@ -904,7 +905,7 @@ Deno.serve(async(req:Request)=>{
       }
       let permutas:any[]=[];
       if(can(u,p,'permutas')){
-        const mirrorRows=await db`select data from public.mobile_entity_records where entity='permutas' and deleted=false order by coalesce(data->>'data','') desc, record_key desc`;
+        const mirrorRows=await db`select data from public.mobile_entity_records where entity='permutas' and deleted=false and (${management} or ${gid}::bigint=any(scope_guard_ids)) order by coalesce(data->>'data','') desc, record_key desc`;
         permutas=mirrorRows.map((x:any)=>x.data||{});
         if(!management) permutas=permutas.filter((x:any)=>Number(x.substituido_id)===gid||Number(x.substituto_id)===gid||Number(x.solicitante_guarda_id)===gid);
         const ids=[...new Set(permutas.flatMap((x:any)=>[Number(x.substituido_id),Number(x.substituto_id),Number(x.solicitante_guarda_id)]).filter((x:number)=>x>0))];
