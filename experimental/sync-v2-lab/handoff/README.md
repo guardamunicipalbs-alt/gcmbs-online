@@ -51,3 +51,15 @@ Este diretório reúne o que poderá ser feito quando o usuário voltar ao Windo
 - Contingência: o cache finalizado previamente permanece acessível conforme política mesmo se novas páginas falharem.
 - Egress: medição real e projeção mensal com margem, não inferência a partir da quantidade de requisições.
 - Reversão: restauração demonstrada, com conciliação de mudanças efetuadas durante o piloto.
+
+
+## 6. Entregas da sexta rodada remota (01/11/2026)
+- `client/offline-view-policy.mjs`: politica **fail-closed** para consultas privadas offline. Exige lease validado por callback criptografico confiavel, vínculo ao GCM e ao dispositivo, permissoes por entidade e expiracao. **Ainda nao ha emissor de lease nem verificador criptografico implementado no Android**, portanto nao pode ser conectado ao app.
+- Prazo experimental de cache: institucional 72 horas, pessoal 24 horas e sensivel 6 horas. Estes prazos NAO sao regra final e nao resolvem consultas durante 20 dias sem internet. Requer decisao institucional antes do rollout e plano de revogacao.
+- `client/offline-outbox-state.mjs`: recusa credenciais por nome de campo, payload com mais de 32 KiB e estruturas invalidas. Isso **nao garante** que nenhum segredo passe em campo com nome disfarçado; a fila so deve aceitar payloads estruturados e tipados por modalidade após a homologacao.
+- `client/quota-budget.mjs`: calcula alertas/projecoes a partir de **Egress faturado** no painel Supabase, nunca inferido apenas do tamanho das tabelas. A projecao linear nao cobre picos ou sazonalidade.
+- `handoff/LEVANTAMENTO_LOCAL_SOMENTE_LEITURA.ps1`: inventario das unidades F, G e D quando o usuario estiver no computador, sem ler conteudo dos bancos. Foi incluido passo de CI para validar somente a sintaxe com `pwsh`, sem executar a auditoria.
+- Em 01/11/2026 o Supabase tinha 89 Edge Functions para limite Free de 100; **nao criar mais funcoes** salvo necessidade e planejamento. Nenhuma funcao adicional foi implantada nesta rodada.
+
+### Atencao para dados institucionais do GCMBS
+Nao presumir que escalas institucionais sao publicas. Mesmo dados de nome de guerra, servicos e rotinas de patrulhamento podem exigir controles de acesso. Nenhuma copia de dados reais deve entrar no repositorio publico ou no cache compartilhado da CDN.
