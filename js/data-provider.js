@@ -48,7 +48,15 @@ export class AuthenticatedProvider {
 
   async call(action,payload={},authenticated=true){
     const a=String(action||'').toLowerCase();
-    return this.endpoint(CORE_DIRECT_ACTIONS.has(a)?CORE_API:API,action,payload,authenticated);
+    // V2-dev: `entity_catalog` e listagens de entidades nao especiais
+    // sao simplesmente repassadas por v74 -> v131 -> v6 na implementacao atual.
+    // Preservar gateway v74 para listagens com filtros/contratos especificos.
+    const entity=String(payload?.entity||'').trim();
+    const specialList=entity==='justificativas_faltas'
+      ||entity==='ocorrencias_operacionais'
+      ||entity==='eventos_extras';
+    const directRead=a==='entity_catalog'||(a==='entity_list'&&!specialList);
+    return this.endpoint((CORE_DIRECT_ACTIONS.has(a)||directRead)?CORE_API:API,action,payload,authenticated);
   }
 
   async login(identificador,senha,remember=false){
