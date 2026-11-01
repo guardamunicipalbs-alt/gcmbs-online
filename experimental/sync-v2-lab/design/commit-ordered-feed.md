@@ -55,3 +55,26 @@
 - `client/read-retry-gate.mjs`: proteção contra polling agressivo ao atingir 402/429.
 - `tests/*.test.mjs`: regressões de estados, páginas, permissões e falhas.
 - Edge Function `gcmbs-sync-v2-lab`: publicada em modo desligado, exclusivamente para desenvolvimento.
+
+
+## 8. Auditoria do mecanismo de histórico já instalado (01/11/2026)
+
+Consultas **somente leitura** confirmaram:
+- O gatilho `trg_gcmbs_entity_history` já captura `INSERT`, `UPDATE` e `DELETE` de `public.mobile_entity_records` por meio de `private.gcmbs_capture_entity_history()`.
+- `private.gcmbs_entity_history`: **31.056 eventos**, 36 entidades, cerca de **51 MB**, 850 eventos de exclusão física/lógica (medição atual).
+- Existem índices por `id`, `changed_at` e `(entity, record_key, revision, changed_at)`.
+- O histórico contém `id,entity,record_key,revision,operation,data,source,snapshot_id,deleted,changed_by_guard_id,changed_by_device,content_hash,changed_at`.
+- **Não contém** `scope_guard_ids`, escopo anterior, escopo posterior ou `commit_seq`. Uma mudança somente de escopo pode provocar o gatilho, mas o registro histórico não preserva esses campos.
+- Em `public.mobile_entity_changes`, já existe `UNIQUE(client_change_id)`, bem como índices para estados/retentativas; isso ajuda a evitar duplicidade da FILA, mas não substitui idempotência transacional de cada serviço nem ordenação de confirmação.
+
+### Correção do plano inicial
+**NÃO criar agora um segundo histórico JSON completo.** Antes de propor migração:
+1. Investigar se o histórico existente pode receber um *journal leve de metadados*, preservando `old_scope_guard_ids`, `new_scope_guard_ids` e watermark de commit, sem replicar todo o JSON.
+2. Comparar cenários sem mutação em clone/ambiente isolado, inclusive operações feitas por triggers e múltiplos computadores.
+3. Escolher estratégia de versionamento que não crie buracos invisíveis em concorrência (sequência por transação serializada, CDC consistente ou equivalente). `id`/timestamp sem garantia de commit não é suficiente.
+4. Verificar retenção compatível com dispositivos que ficam **20 dias ou mais** sem sincronizar; se o histórico for compactado, usar rebootstrap consistente e seguro.
+5. Validar comportamento em mudanças de permissão: ao perder acesso, excluir do cache local os dados não autorizados sem enviar o conteúdo sensível atualizado.
+6. Medir impacto no tamanho total do banco (limite Free 500 MB), nos índices e no Egress antes de aplicar qualquer mudança em produção.
+
+### Atenção
+A existência do histórico não comprova que ele seja um feed de sincronização utilizável. O gatilho também é responsável por auditoria; não deve ser desabilitado ou reescrito sem testes e backup.
