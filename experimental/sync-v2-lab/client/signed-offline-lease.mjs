@@ -18,7 +18,8 @@ const EXPECTED_ISSUER="GCMBS";
 const EXPECTED_AUDIENCE="gcmbs-android-offline";
 const MAX_DURATION_MS=72*60*60*1000;
 const FIELDS=["issuer","audience","guardaId","deviceId","entities",
-              "aclRevision","issuedAt","expiresAt"];
+              "classifications","aclRevision","issuedAt","expiresAt"];
+const CLASSIFICATION_LEVELS=["INSTITUTIONAL","PERSONAL","SENSITIVE"];
 const HEADER_FIELDS=["version","alg","keyId","claims","signature"];
 const textEncoder=new TextEncoder();
 
@@ -45,6 +46,12 @@ function validClaims(claims) {
   // Enforce uma unica representacao canonica das permissoes.
   const canonical=[...new Set(claims.entities)].sort();
   if(JSON.stringify(canonical)!==JSON.stringify(claims.entities)) return false;
+  if(!claims.classifications || typeof claims.classifications!=="object" ||
+     Array.isArray(claims.classifications)) return false;
+  const classKeys=Object.keys(claims.classifications).sort();
+  if(JSON.stringify(classKeys)!==JSON.stringify(canonical)) return false;
+  if(!canonical.every(entity=>CLASSIFICATION_LEVELS.includes(claims.classifications[entity])))
+    return false;
   if(!validDate(claims.issuedAt) || !validDate(claims.expiresAt)) return false;
   const duration=Date.parse(claims.expiresAt)-Date.parse(claims.issuedAt);
   return duration>0 && duration<=MAX_DURATION_MS;
@@ -115,10 +122,18 @@ export async function authorizeSignedOfflineRead({
   if(signedLease.claims.aclRevision!==lastKnownAclRevision)
     return deny("ACL_REVISION_MISMATCH");
   const claims=signedLease.claims;
+  const permittedClassification=claims.classifications[requestContext.entity];
+  if(!CLASSIFICATION_LEVELS.includes(permittedClassification))
+    return deny("UNCLASSIFIED_ENTITY");
+  // O chamador nao pode reclassificar "SENSITIVE" como "INSTITUTIONAL".
+  if(requestContext.classification!==undefined &&
+     requestContext.classification!==permittedClassification)
+    return deny("CLASSIFICATION_MISMATCH");
   return authorizeOfflineRead({
     ...requestContext,
     guardaId:requestContext.guardaId,
     deviceId:requestContext.deviceId,
+    classification:permittedClassification,
     lease:claims,
     verifyLease:async candidate=>
       candidate===claims && await verifySignedOfflineLease(
