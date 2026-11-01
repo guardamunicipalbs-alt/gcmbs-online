@@ -78,3 +78,20 @@ Consultas **somente leitura** confirmaram:
 
 ### Atenção
 A existência do histórico não comprova que ele seja um feed de sincronização utilizável. O gatilho também é responsável por auditoria; não deve ser desabilitado ou reescrito sem testes e backup.
+
+
+## 9. Continuidade de consulta durante novo bootstrap — duas geracoes (01/11/2026)
+
+Risco encontrado na auditoria do prototipo: gravar diretamente as novas paginas na copia ativa pode deixar o cliente com dados apenas parcialmente atualizados caso a API retorne 402 entre paginas.
+
+**Componente criado:** `client/two-generation-cache.mjs`, com testes `two-generation-cache.test.mjs`.
+
+- `active`: ultima captura PAGINADA concluida, nunca sobrescrita por paginas parciais de outra captura.
+- `staging`: copia nova ainda em construcao, com cursor associado a `captureId`.
+- Apenas quando a ultima pagina for recebida, uma transacao local promove `staging` para `active` e descarta a geracao parcial.
+- Se surgir erro 402, timeout ou uma captura antiga chegar atrasada, a ultima `active` permanece intocada.
+- Testes cobrem interrupcao, retomada, reenvio, resposta de outro GCM, falha de commit e capturas concorrentes.
+
+**Bloqueios importantes:** terminar a paginacao NAO garante snapshot coerente no servidor. O campo `serverSnapshotConsistent:false` permanece propositalmente como salvaguarda para impedir declaracao indevida de consistencia. Nao ligar o componente ao fluxo de permutas, autorizacoes e banco de horas antes de implementar contrato de captura consistente e autorizacao/cancelamento de acesso offline.
+
+A implementacao do adaptador SQLite/IndexedDB real exige transacoes serializadas e duraveis, criptografia/isolamento por usuario e politica para mudanca de acesso. Sem isso, somente os testes em memoria foram aprovados. Nao publicar cache de dados privados em GitHub Pages ou Cloudflare publico.
