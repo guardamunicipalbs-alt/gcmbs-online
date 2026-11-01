@@ -175,4 +175,6 @@ BEGIN
   raise notice 'PASS: atomicity, duplicate receipts, payload conflicts, rollback, revision, delete';
 END;
 $test$;
-ROLLBACK;
+-- O banco e totalmente DESCARTAVEL no GitHub Actions. A definicao fica
+-- disponivel APENAS para o teste de concorrencia deste mesmo job.
+COMMIT;
