@@ -67,7 +67,14 @@ function base64urlBytes(value) {
 function signedBytes(envelope) {
   // Campos fixos e ordenados; nenhum dado extra e incorporado silenciosamente.
   const claims={};
-  for(const key of FIELDS) claims[key]=envelope.claims[key];
+  for(const key of FIELDS) {
+    if(key==="classifications") {
+      // Canoniza a ordem das chaves para assinaturas identicas entre JS/Android.
+      claims[key]=Object.fromEntries(
+        envelope.claims.entities.map(entity=>[entity,envelope.claims.classifications[entity]])
+      );
+    } else claims[key]=envelope.claims[key];
+  }
   const canonical=JSON.stringify({
     version:FORMAT_VERSION,alg:"ES256",keyId:envelope.keyId,claims,
   });
