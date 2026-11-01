@@ -65,15 +65,15 @@ BEGIN
   if v_op='UPSERT' then
     insert into gcmbs_sync_v2_lab.records(entity,record_key,revision,deleted,data)
       values(p_entity,p_key,1,false,p_payload)
-    on conflict(entity,record_key) do update
+    on conflict on constraint records_pkey do update
       set revision=gcmbs_sync_v2_lab.records.revision+1,deleted=false,
           data=excluded.data
     returning gcmbs_sync_v2_lab.records.revision into v_revision;
   else
-    update gcmbs_sync_v2_lab.records set
-      revision=gcmbs_sync_v2_lab.records.revision+1,deleted=true
-      where entity=p_entity and record_key=p_key and deleted=false
-    returning gcmbs_sync_v2_lab.records.revision into v_revision;
+    update gcmbs_sync_v2_lab.records as r set
+      revision=r.revision+1,deleted=true
+      where r.entity=p_entity and r.record_key=p_key and r.deleted=false
+    returning r.revision into v_revision;
     if not found then raise exception 'CANNOT_DELETE_ABSENT_RECORD'; end if;
   end if;
 
