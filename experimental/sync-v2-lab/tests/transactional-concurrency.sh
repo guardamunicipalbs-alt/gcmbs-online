@@ -32,11 +32,11 @@ test "${revs[1]}" = "3"
 
 # Agora dois dispositivos com a MESMA base_revision=1 tentam mudar o registro.
 # Apenas um commit pode ser aceito; o outro deve ser conflito explicito.
-run_sql "select revision from gcmbs_sync_v2_lab.apply_change('00000000-0000-4000-8000-000000000110','escalas','fake-stale','UPSERT','{\\"turno\\":\\"A\\"}'::jsonb,7,0)" >/tmp/gcmbs_stale_base.txt
+run_sql "select revision from gcmbs_sync_v2_lab.apply_change('00000000-0000-4000-8000-000000000110','escalas','fake-stale','UPSERT','{\"turno\":\"A\"}'::jsonb,7,0)" >/tmp/gcmbs_stale_base.txt
 test "$(cat /tmp/gcmbs_stale_base.txt)" = "1"
-run_sql "select revision from gcmbs_sync_v2_lab.apply_change('00000000-0000-4000-8000-000000000111','escalas','fake-stale','UPSERT','{\\"turno\\":\\"B\\"}'::jsonb,7,1)" >/tmp/gcmbs_stale_writer_1.txt 2>/tmp/gcmbs_stale_writer_1.err &
+run_sql "select revision from gcmbs_sync_v2_lab.apply_change('00000000-0000-4000-8000-000000000111','escalas','fake-stale','UPSERT','{\"turno\":\"B\"}'::jsonb,7,1)" >/tmp/gcmbs_stale_writer_1.txt 2>/tmp/gcmbs_stale_writer_1.err &
 pid1=$!
-run_sql "select revision from gcmbs_sync_v2_lab.apply_change('00000000-0000-4000-8000-000000000112','escalas','fake-stale','UPSERT','{\\"turno\\":\\"C\\"}'::jsonb,7,1)" >/tmp/gcmbs_stale_writer_2.txt 2>/tmp/gcmbs_stale_writer_2.err &
+run_sql "select revision from gcmbs_sync_v2_lab.apply_change('00000000-0000-4000-8000-000000000112','escalas','fake-stale','UPSERT','{\"turno\":\"C\"}'::jsonb,7,1)" >/tmp/gcmbs_stale_writer_2.txt 2>/tmp/gcmbs_stale_writer_2.err &
 pid2=$!
 if wait "$pid1"; then status1=0; else status1=$?; fi
 if wait "$pid2"; then status2=0; else status2=$?; fi
