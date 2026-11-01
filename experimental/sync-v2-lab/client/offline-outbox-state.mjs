@@ -18,8 +18,28 @@ export function newPendingOperation({ clientChangeId, guardaId, type, payload, c
   if (typeof type!=="string"||!type||type.length>70) throw new Error("Tipo invalido");
   if (!payload||typeof payload!=="object"||Array.isArray(payload)) throw new Error("Payload invalido");
   if (typeof createdAt!=="string"||!Number.isFinite(Date.parse(createdAt))) throw new Error("Data invalida");
-  // Fonte deve ser JSON serializavel. Nao colocar segredo/senha literal em payload offline.
-  const data=JSON.parse(JSON.stringify(payload));
+  // Credenciais/senhas NUNCA entram na fila SQLite local. Rotinas de reset
+  // de senha V296 precisam de canal autenticado especifico, nao desta fila.
+  // Inspecionar o objeto de entrada ANTES da serializacao, sem circularidade.
+  const stack=[{value:payload,depth:0}],seen=new WeakSet();
+  while(stack.length){
+    const {value,depth}=stack.pop();
+    if(!value||typeof value!=="object")continue;
+    if(seen.has(value))throw new Error("Referencia circular/repetida no payload");
+    seen.add(value);
+    if(depth>10)throw new Error("Payload profundo demais");
+    for(const [key,entry] of Object.entries(value)){
+      if(/(?:^|_)(?:senha|password|passwd|token|secret|authorization|credential|api[_-]?key|pin)(?:$|_)/i.test(key))
+        throw new Error("Credencial proibida na fila offline");
+      if(typeof entry==="function"||typeof entry==="symbol"||typeof entry==="bigint")
+        throw new Error("Payload nao JSON");
+      if(entry&&typeof entry==="object")stack.push({value:entry,depth:depth+1});
+    }
+  }
+  const encoded=JSON.stringify(payload);
+  if(typeof encoded!=="string"||new TextEncoder().encode(encoded).length>32*1024)
+    throw new Error("Payload excede limite seguro");
+  const data=JSON.parse(encoded);
   return Object.freeze({
     client_change_id:clientChangeId,guarda_id:guardaId,type,payload:data,
     created_at:createdAt,status:STATES.PENDING_SEND,attempts:0,server_id:null,last_error:null,
