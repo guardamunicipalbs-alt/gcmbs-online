@@ -50,3 +50,21 @@ test("conflito permanece distinguivel de recusa",()=>{
   assert.equal(finalizeAfterReconciliation(ack,{serverId:123,outcome:"CONFLICT"}).status,STATES.CONFLICT);
   assert.equal(finalizeAfterReconciliation(ack,{serverId:123,outcome:"REJECTED"}).status,STATES.REJECTED);
 });
+
+
+test("ACK antigo nao rebaixa operacao aguardando Desktop",()=>{
+  const first=acknowledgeServer(pending(),{clientChangeId:id,serverId:123,pendingDesktop:true});
+  const delayed=acknowledgeServer(first,{clientChangeId:id,serverId:123,pendingDesktop:false});
+  assert.equal(delayed.status,STATES.AWAITING_DESKTOP);
+  assert.equal(delayed.server_id,123);
+});
+test("ACK de Desktop pode elevar operacao ja recebida",()=>{
+  const first=acknowledgeServer(pending(),{clientChangeId:id,serverId:123,pendingDesktop:false});
+  const second=acknowledgeServer(first,{clientChangeId:id,serverId:123,pendingDesktop:true});
+  assert.equal(second.status,STATES.AWAITING_DESKTOP);
+});
+test("ACK atrasado nao pode reabrir solicitacao concluida",()=>{
+  const first=acknowledgeServer(pending(),{clientChangeId:id,serverId:123,pendingDesktop:true});
+  const final=finalizeAfterReconciliation(first,{serverId:123,outcome:"CONFIRMED"});
+  assert.throws(()=>acknowledgeServer(final,{clientChangeId:id,serverId:123,pendingDesktop:false}),/nao pode receber ACK/);
+});
