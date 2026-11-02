@@ -130,6 +130,13 @@ BEGIN
 END;
 $fn$;
 
+-- Hardening de laboratorio: por padrao nenhuma role publica pode executar
+-- funcao de leitura recebendo p_guard_id. Em producao, a identidade deve
+-- ser sempre derivada de sessao validada no SERVIDOR.
+REVOKE ALL ON SCHEMA gcmbs_sync_v2_lab FROM PUBLIC;
+REVOKE ALL ON ALL TABLES IN SCHEMA gcmbs_sync_v2_lab FROM PUBLIC;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA gcmbs_sync_v2_lab FROM PUBLIC;
+
 DO $test$
 DECLARE
   n bigint;
