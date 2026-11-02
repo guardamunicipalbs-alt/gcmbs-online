@@ -19,6 +19,7 @@ Foram adicionados e aprovados pelo CI:
 
 ## O que NÃO foi implementado
 - Nenhuma alteração na função `gcmbs-mobile-api-v6` publicada, no Android, no Desktop ou no PostgreSQL oficial.
+- O SQL de laboratório revoga privilégios de `PUBLIC` no esquema, nas tabelas e nas funções; isso é defesa em profundidade, **não substitui autenticação/ACL no backend real**.
 - **O modelo de laboratório não grava o dado canônico e o journal numa mesma transação**: a prova cobre apenas a ordem entre entradas do journal. Falta integrar esse contador à rotina transacional existente que grava registro + recibo, preservando todos os gatilhos e regras reais.
 - Não há endpoint autenticado de delta, assinatura de cursor, watermark do snapshot nem snapshot congelado.
 - `scan_journal(p_guard_id,...)` recebe um GCM de teste. **Isto NÃO seria seguro como endpoint público:** a versão real deve derivar identidade do token/sessão do servidor e consultar permissões atualizadas; restringir EXECUTE, manter em schema privado, sem Data API aberta e com limitação de chamada/tamanho.
