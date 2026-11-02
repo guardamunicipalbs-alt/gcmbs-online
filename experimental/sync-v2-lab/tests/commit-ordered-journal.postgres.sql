@@ -5,7 +5,8 @@
 
 CREATE TABLE gcmbs_sync_v2_lab.journal_counter(
   singleton boolean primary key default true check(singleton),
-  next_seq bigint not null check(next_seq>=0)
+  next_seq bigint not null check(next_seq>=0),
+  retained_after bigint not null default 0 check(retained_after>=0 and retained_after<=next_seq)
 );
 INSERT INTO gcmbs_sync_v2_lab.journal_counter(singleton,next_seq)
 VALUES(true,0);
@@ -74,6 +75,12 @@ BEGIN
      p_limit is null or p_limit<1 or p_limit>25 then
     raise exception 'INVALID_SCAN_PARAMS';
   end if;
+  -- Cursor anterior ao limiar de retencao NAO pode receber pagina vazia.
+  -- Deve iniciar novo bootstrap consistente apos aviso CURSOR_EXPIRED.
+  if p_after < (select c.retained_after from gcmbs_sync_v2_lab.journal_counter c
+                where c.singleton=true) then
+    raise exception 'CURSOR_EXPIRED';
+  end if;
   return query
   with batch as materialized (
     select j.seq,j.entity,j.record_key,j.revision,j.operation,
@@ -95,6 +102,31 @@ BEGIN
   select coalesce((select max(b.seq) from batch b),p_after),
     coalesce((select jsonb_agg(v.item order by v.seq) from visible v),'[]'::jsonb),
     (select count(*) from batch)::bigint;
+END;
+$fn$;
+
+-- Nunca rodar rotina de compactacao na base GCMBS oficial.
+-- Prototipo de retencao SOMENTE em banco EFEMERO. Operacao atomica:
+-- avanca limiar e remove metadados antigos sob o MESMO lock de versao.
+CREATE OR REPLACE FUNCTION gcmbs_sync_v2_lab.prune_through(p_until bigint)
+RETURNS bigint
+LANGUAGE plpgsql
+SET search_path=pg_catalog,gcmbs_sync_v2_lab
+AS $fn$
+DECLARE
+  current_seq bigint;
+  floor_seq bigint;
+  rows_removed bigint;
+BEGIN
+  if p_until is null or p_until<0 then raise exception 'INVALID_PRUNE'; end if;
+  select c.next_seq,c.retained_after into current_seq,floor_seq
+    from gcmbs_sync_v2_lab.journal_counter c
+    where c.singleton=true for update;
+  if p_until<floor_seq or p_until>current_seq then raise exception 'INVALID_PRUNE'; end if;
+  update gcmbs_sync_v2_lab.journal_counter c set retained_after=p_until where c.singleton=true;
+  delete from gcmbs_sync_v2_lab.commit_journal j where j.seq<=p_until;
+  get diagnostics rows_removed=ROW_COUNT;
+  return rows_removed;
 END;
 $fn$;
 
