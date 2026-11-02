@@ -81,3 +81,5 @@ jobs:
         run: |
           psql -X --no-psqlrc -v ON_ERROR_STOP=1             -f experimental/sync-v2-lab/tests/transactional-idempotency.postgres.sql
           bash experimental/sync-v2-lab/tests/transactional-concurrency.sh
+          psql -X --no-psqlrc -v ON_ERROR_STOP=1 -f experimental/sync-v2-lab/tests/commit-ordered-journal.postgres.sql
+          bash experimental/sync-v2-lab/tests/commit-ordered-journal-concurrency.sh
