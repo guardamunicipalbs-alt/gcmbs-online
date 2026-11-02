@@ -471,7 +471,7 @@ Deno.serve(async(req:Request)=>{
       const eventos=peopleAllowed?await db`select data->>'id' id,data->>'nome' nome,data->>'data' data,data->>'local' local from public.mobile_entity_records where entity='eventos_extras' and deleted=false order by data->>'data' desc`:[];
       const oficios=peopleAllowed?await db`select data->>'id' id,data->>'numero_oficio' numero_oficio,data->>'data_demanda' data_demanda,data->>'local_demanda' local_demanda from public.mobile_entity_records where entity='oficios' and deleted=false order by data->>'data_demanda' desc`:[];
       const grupos_ativacao=can(u,p,'postos')?await db`select data->>'id' id,data->>'nome' nome,data->>'ativo' ativo from public.mobile_entity_records where entity='grupos_ativacao_conjunta' and deleted=false order by data->>'nome'`:[];
-      const justificativas=can(u,p,'frequencia')||can(u,p,'justificativas_faltas')?await db`select data->>'id' id,data->>'guarda_id' guarda_id,data->>'data_inicial' data_inicial,data->>'data_final' data_final,data->>'motivo' motivo from public.mobile_entity_records where entity='justificativas_faltas' and deleted=false order by data->>'data_inicial' desc`:[];
+      const justificativas=can(u,p,'frequencia')||can(u,p,'justificativas_faltas')?await db`select data->>'id' id,data->>'guarda_id' guarda_id,data->>'data_inicial' data_inicial,data->>'data_final' data_final,data->>'motivo' motivo from public.mobile_entity_records where entity='justificativas_faltas' and deleted=false and (${gestor(u)} or data->>'guarda_id'=${String(gid)}) order by data->>'data_inicial' desc`:[];
       return reply(200,{viaturas,guardas,equipes,postos,tipos_escalas,eventos,oficios,grupos_ativacao,justificativas});
     }
     if(action==='quadro_operacional')return reply(200,await quadroOperacional(norm(body.data)));
@@ -850,6 +850,7 @@ Deno.serve(async(req:Request)=>{
           from public.mobile_entity_records
           where entity='escalas_extras_manuais'
             and deleted=false
+            and (${management} or (${gid}::bigint=any(scope_guard_ids) and data->>'guarda_id'=${String(gid)}))
           order by coalesce(data->>'data',''),
                    coalesce(data->>'horario_inicio',''),
                    record_key
@@ -904,7 +905,7 @@ Deno.serve(async(req:Request)=>{
       }
       let permutas:any[]=[];
       if(can(u,p,'permutas')){
-        const mirrorRows=await db`select data from public.mobile_entity_records where entity='permutas' and deleted=false order by coalesce(data->>'data','') desc, record_key desc`;
+        const mirrorRows=await db`select data from public.mobile_entity_records where entity='permutas' and deleted=false and (${management} or ${gid}::bigint=any(scope_guard_ids)) order by coalesce(data->>'data','') desc, record_key desc`;
         permutas=mirrorRows.map((x:any)=>x.data||{});
         if(!management) permutas=permutas.filter((x:any)=>Number(x.substituido_id)===gid||Number(x.substituto_id)===gid||Number(x.solicitante_guarda_id)===gid);
         const ids=[...new Set(permutas.flatMap((x:any)=>[Number(x.substituido_id),Number(x.substituto_id),Number(x.solicitante_guarda_id)]).filter((x:number)=>x>0))];

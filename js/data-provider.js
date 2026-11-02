@@ -37,13 +37,26 @@ export class AuthenticatedProvider {
     }
     let body={};
     try{body=await r.json()}catch{}
-    if(!r.ok) throw new Error(body.message||`Erro ${r.status}`);
+    if(!r.ok){
+      const error=new Error(body.message||`Erro ${r.status}`);
+      error.httpStatus=r.status;
+      error.errorCode=body.code||null;
+      throw error;
+    }
     return body;
   }
 
   async call(action,payload={},authenticated=true){
     const a=String(action||'').toLowerCase();
-    return this.endpoint(CORE_DIRECT_ACTIONS.has(a)?CORE_API:API,action,payload,authenticated);
+    // V2-dev: `entity_catalog` e listagens de entidades nao especiais
+    // sao simplesmente repassadas por v74 -> v131 -> v6 na implementacao atual.
+    // Preservar gateway v74 para listagens com filtros/contratos especificos.
+    const entity=String(payload?.entity||'').trim();
+    const specialList=entity==='justificativas_faltas'
+      ||entity==='ocorrencias_operacionais'
+      ||entity==='eventos_extras';
+    const directRead=a==='entity_catalog'||(a==='entity_list'&&!specialList);
+    return this.endpoint((CORE_DIRECT_ACTIONS.has(a)||directRead)?CORE_API:API,action,payload,authenticated);
   }
 
   async login(identificador,senha,remember=false){
@@ -62,8 +75,10 @@ export class AuthenticatedProvider {
       this.session=body.session;
       if(Number(this.session?.senha_trocada||0)!==0) await this.load();
       return this.session;
-    }catch{
-      localStorage.removeItem('gcmbs.mobile.token');
+    }catch(error){
+      // Erros de rede, HTTP 402 (franquia), timeout e falhas 5xx
+      // NAO invalidam a sessao. Apenas uma resposta autenticada 401 confirma revogacao/expiracao.
+      if(Number(error?.httpStatus)===401) localStorage.removeItem('gcmbs.mobile.token');
       this.session=null;this.data=null;
       return null;
     }

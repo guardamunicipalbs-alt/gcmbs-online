@@ -1,0 +1,86 @@
+name: GCMBS Sync V2 - testes isolados
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "experimental/sync-v2-lab/**"
+      - "js/data-provider.js"
+      - ".github/workflows/gcmbs-sync-v2-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gcmbs-sync-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Testes de contrato e seguranca sem acesso a producao
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verificar sintaxe do cliente isolado
+        run: node --check experimental/sync-v2-lab/client/merge-snapshot.mjs
+      - name: Executar testes offline (sem secrets)
+        run: node --test experimental/sync-v2-lab/tests/*.test.mjs
+      - name: Validar sintaxe de PowerShell sem executar o levantamento
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $issues = $null
+          $file = 'experimental/sync-v2-lab/handoff/LEVANTAMENTO_LOCAL_SOMENTE_LEITURA.ps1'
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path (Get-Location) $file),
+            [ref]$tokens,
+            [ref]$issues
+          ) | Out-Null
+          if ($issues.Count -gt 0) {
+            $issues | Format-List | Out-String | Write-Error
+            exit 1
+          }
+
+  postgres-contract:
+    name: PostgreSQL descartavel - teste transacional sem dados reais
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gcmbs_lab_test
+          POSTGRES_PASSWORD: ephemeral_ci_only
+          POSTGRES_DB: gcmbs_lab_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gcmbs_lab_test -d gcmbs_lab_db"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar apenas cliente PostgreSQL se necessario
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Testar atomicidade e duplicidade em banco efemero
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "5432"
+          PGUSER: gcmbs_lab_test
+          PGPASSWORD: ephemeral_ci_only
+          PGDATABASE: gcmbs_lab_db
+        run: |
+          psql -X --no-psqlrc -v ON_ERROR_STOP=1             -f experimental/sync-v2-lab/tests/transactional-idempotency.postgres.sql
+          bash experimental/sync-v2-lab/tests/transactional-concurrency.sh
+          psql -X --no-psqlrc -v ON_ERROR_STOP=1 -f experimental/sync-v2-lab/tests/commit-ordered-journal.postgres.sql
+          bash experimental/sync-v2-lab/tests/commit-ordered-journal-concurrency.sh
+          psql -X --no-psqlrc -v ON_ERROR_STOP=1 -f experimental/sync-v2-lab/tests/journal-retention-expiry.postgres.sql
