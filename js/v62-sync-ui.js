@@ -351,6 +351,10 @@ function corrigirData(){
 }
 
 function instalarSync(){
+  // SYNCV3 Modelo B: nenhuma sincronização manual pode ser acionada pelo Online.
+  // O Desktop/servidor executará os ciclos programados e coordenados.
+  return;
+
 
   const canonical=document.getElementById('syncAgoraOnline');
   if(canonical){document.getElementById('onlineSyncNow')?.remove();return;}
@@ -1076,7 +1080,7 @@ window.addEventListener(
     atualizarBadge();
     setInterval(
       atualizarBadge,
-      15000
+      1800000
     );
     setTimeout(aplicar,100);
     setTimeout(aplicar,800);
