@@ -2336,7 +2336,7 @@ $('pmTurno')?.addEventListener('change',e=>{
     aplicarIdentidadeVisualRemota().catch(()=>{});
     carregarOnlineCatalog().catch(()=>{});carregarQuadro().catch(()=>{});
   }
-  setInterval(()=>{if(!document.hidden)atualizarAoVivo()},60000);
+  setInterval(()=>{if(!document.hidden)atualizarAoVivo()},1800000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)atualizarAoVivo()});
 }
 boot();

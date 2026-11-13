@@ -3,12 +3,7 @@ import './communication-workflows-v74.js?v=100085';
 // GCMBS V293 - economia de invocações Edge Functions.
 // Mantém ações manuais/imediatas, mas alonga apenas os dois timers automáticos conhecidos
 // (atualização global e frequência) de 60 segundos para 30 minutos.
-const GCMBS_SET_INTERVAL_ORIGINAL=window.setInterval.bind(window);
-window.setInterval=(fn,delay,...args)=>{
-  const src=typeof fn==='function'?Function.prototype.toString.call(fn):'';
-  if(Number(delay)===60000&&(src.includes('atualizarAoVivo')||src.includes('gcmbsFreqLoad')))delay=1800000;
-  return GCMBS_SET_INTERVAL_ORIGINAL(fn,delay,...args);
-};
+// Temporizadores especificos sao configurados diretamente em cada modulo.
 await import('./app-core.js?v=100325-historico-duas-datas');
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
@@ -89,7 +84,7 @@ function gcmbsFreqEnsureControls(){
   wrap.querySelector('#gcmbsFreqTipo')?.addEventListener('change',gcmbsFreqRender);
   wrap.querySelector('#gcmbsFreqGcm')?.addEventListener('change',gcmbsFreqRender);
   for(const id of ['gcmbsFreqIni','gcmbsFreqFim'])wrap.querySelector('#'+id)?.addEventListener('change',()=>{gcmbsFreqLoadedKey='';});
-  if(!gcmbsFreqTimer)gcmbsFreqTimer=setInterval(()=>{if(String(document.getElementById('onlineTitulo')?.textContent||'').trim()==='Frequência'&&!gcmbsFreqDirty.size&&!gcmbsFreqLoading)gcmbsFreqLoad(true,true);},60000);
+  if(!gcmbsFreqTimer)gcmbsFreqTimer=setInterval(()=>{if(String(document.getElementById('onlineTitulo')?.textContent||'').trim()==='Frequência'&&!gcmbsFreqDirty.size&&!gcmbsFreqLoading)gcmbsFreqLoad(true,true);},1800000);
   return wrap;
 }
 function gcmbsFreqFiltered(){
