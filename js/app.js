@@ -4,7 +4,7 @@ import './communication-workflows-v74.js?v=100085';
 // Mantém ações manuais/imediatas, mas alonga apenas os dois timers automáticos conhecidos
 // (atualização global e frequência) de 60 segundos para 30 minutos.
 // Temporizadores especificos sao configurados diretamente em cada modulo.
-await import('./app-core.js?v=100325-historico-duas-datas');
+await import('./app-core.js?v=100326-sync30');
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;
