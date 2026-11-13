@@ -231,7 +231,7 @@ function renderCloud(){
 
 async function refreshCloud(force=false){
   if(cloudLoading||!token())return;
-  if(!force&&Date.now()-lastLoad<60000)return;
+  if(!force&&Date.now()-lastLoad<1800000)return;
   cloudLoading=true;
   try{
     const r=await call(API,'list');
@@ -323,7 +323,7 @@ function boot(){
   modal.addEventListener('change',()=>queueMicrotask(aplicarModo));
   agTipo?.addEventListener('change',aplicarModo);
   $('gcmbsAgRefreshV259')?.addEventListener('click',()=>refreshCloud(true));
-  document.addEventListener('click',e=>{if(e.target.closest?.('[data-go="permutas"]'))setTimeout(()=>refreshCloud(true),250)});
+  document.addEventListener('click',e=>{if(e.target.closest?.('[data-go="permutas"]'))setTimeout(()=>refreshCloud(false),250)});
   const moduloAberto=()=>{
     const sec=document.querySelector('section[data-view="permutas"]');
     return !!sec&&!sec.classList.contains('hidden');
@@ -332,7 +332,7 @@ function boot(){
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&moduloAberto())refreshCloud(false)});
   window.addEventListener('gcmbs:v110-refreshed',()=>{if(moduloAberto())refreshCloud(false)});
   aplicarModo();refreshCloud(true); // 1 leitura inicial para manter a caixa de aceites
-  setInterval(()=>{if(!document.hidden&&moduloAberto())refreshCloud(false)},120000);
+  setInterval(()=>{if(!document.hidden&&moduloAberto())refreshCloud(false)},1800000);
   console.info('[GCMBS V259] Troca agendada / compensacao futura liberada com fluxo protegido.');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
