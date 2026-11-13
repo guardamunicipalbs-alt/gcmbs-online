@@ -361,7 +361,7 @@
           r.message||
           'Decisão registrada.';
 
-      await refresh();
+      await refresh(true);
 
     }catch(e){
 
@@ -373,9 +373,14 @@
   }
 
 
-  async function refresh(){
+  let lastAutoLoad=0;
+  let refreshBusy=false;
+  async function refresh(force=false){
 
-    if(!token())return;
+    if(!token()||refreshBusy)return;
+    if(!force&&lastAutoLoad&&Date.now()-lastAutoLoad<1800000)return;
+    lastAutoLoad=Date.now();
+    refreshBusy=true;
 
     try{
 
@@ -396,18 +401,18 @@
 
       if(msg)
         msg.textContent=e.message;
-    }
+    }finally{refreshBusy=false;}
   }
 
 
   function start(){
 
     ensure();
-    refresh();
+    refresh(true);
 
     setInterval(
-      refresh,
-      15000
+      ()=>{if(!document.hidden&&!document.querySelector('section[data-view="permutas"]')?.classList.contains('hidden'))refresh(false)},
+      1800000
     );
   }
 
