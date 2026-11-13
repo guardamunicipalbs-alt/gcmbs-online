@@ -1971,9 +1971,27 @@ async function excluirOnline(key){
 function voltarOnline(){
   $('onlineRegistrosCard').classList.add('hidden');$('onlineEntidades').closest('.card').classList.remove('hidden');onlineCurrent=null;onlineRecords=[];$('onlineFiltro').value='';renderCatalogoOnline();
 }
+// MODELO B: somente atualizações automáticas gerais, com uma janela única de 30 minutos.
+// Ações iniciadas pelo usuário (salvar, login, decisões) permanecem independentes.
+const GCMBS_AUTO_REFRESH_MS=30*60*1000;
+let gcmbsUltimaAtualizacaoAuto=0;
+let gcmbsAtualizacaoAutoEmCurso=false;
 async function atualizarAoVivo(){
-  if(!provider.session)return;
-  try{await provider.load();renderTudo(false);await aplicarIdentidadeVisualRemota();if(onlineCurrent)await abrirEntidadeOnline(onlineCurrent.entity)}catch{}
+  if(!provider.session||gcmbsAtualizacaoAutoEmCurso)return false;
+  const agora=Date.now();
+  if(agora-gcmbsUltimaAtualizacaoAuto<GCMBS_AUTO_REFRESH_MS)return false;
+  gcmbsUltimaAtualizacaoAuto=agora;
+  gcmbsAtualizacaoAutoEmCurso=true;
+  try{
+    await provider.load();
+    renderTudo(false);
+    await aplicarIdentidadeVisualRemota();
+    if(onlineCurrent)await abrirEntidadeOnline(onlineCurrent.entity);
+    return true;
+  }catch(e){
+    console.warn('[GCMBS Modelo B] Falha na atualizacao automatica:',e?.message||e);
+    return false;
+  }finally{gcmbsAtualizacaoAutoEmCurso=false;}
 }
 
 function renderAvisosInstitucionais(){
@@ -2324,8 +2342,8 @@ $('pmTurno')?.addEventListener('change',e=>{
   document.querySelectorAll('[data-quadro-detail]').forEach(b=>b.addEventListener('click',()=>abrirQuadroDetalhe(b.dataset.title,b.dataset.quadroDetail)));
   $('quadroModalFechar')?.addEventListener('click',()=>$('quadroModal').classList.add('hidden'));
   $('quadroModal')?.addEventListener('click',e=>{if(e.target===$('quadroModal'))$('quadroModal').classList.add('hidden')});
-  window.addEventListener('gcmbs:push-received',async()=>{try{await provider.load();renderTudo();}catch{}});
-  window.addEventListener('gcmbs:v110-refresh',async()=>{try{await atualizarAoVivo();await carregarQuadro();window.dispatchEvent(new Event('gcmbs:v110-refreshed'));}catch(e){console.warn('[GCMBS V110] Falha ao recarregar dados apos sincronizacao:',e?.message||e);}});
+  window.addEventListener('gcmbs:push-received',()=>{if(!document.hidden)atualizarAoVivo().catch(()=>{});});
+  window.addEventListener('gcmbs:v110-refresh',async()=>{try{if(await atualizarAoVivo()){await carregarQuadro();window.dispatchEvent(new Event('gcmbs:v110-refreshed'));}}catch(e){console.warn('[GCMBS V110] Falha ao recarregar dados:',e?.message||e);}});
   const s=await provider.restore();
   if(s){
     configurarPushNativo(provider).catch(()=>{});
