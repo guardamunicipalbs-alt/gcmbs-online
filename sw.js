@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100161-smart-data-cache';
+const VERSION='gcmbs-online-100162-sync30';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -15,9 +15,9 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.161-prep');
+    headers.set('x-gcmbs-version','10.0.162-sync30');
     headers.set('x-gcmbs-banco-competencia','20-19-v294-paid-cutoff-20260930');
-    headers.set('x-gcmbs-runtime','smart-data-cache-v161');
+    headers.set('x-gcmbs-runtime','smart-data-cache-v162');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   }));
 });

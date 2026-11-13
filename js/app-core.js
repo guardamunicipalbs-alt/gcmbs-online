@@ -2345,6 +2345,6 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100160',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100162',{updateViaCache:'none'}).catch(()=>{});}
 
 $('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);
