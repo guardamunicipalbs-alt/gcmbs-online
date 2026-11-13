@@ -218,7 +218,6 @@ function makeStructure(home){
     </div>
     <div class="gc118-controls">
       <label>Data <input class="gc118-date" type="date"></label>
-      <button class="gc118-sync primary" type="button">↻ Sincronizar agora</button>
     </div>
     <section class="gc118-hero">
       <div class="gc118-hero-copy">
@@ -281,13 +280,6 @@ function makeStructure(home){
     setTimeout(update,80);
   });
 
-  $('.gc118-sync',main).addEventListener('click',()=>{
-    const btn=document.getElementById('syncAgoraOnline');
-    if(btn)btn.click();
-    else document.getElementById('quadroData')?.dispatchEvent(new Event('change',{bubbles:true}));
-    refsCache.postos=null;extrasCache.date='';
-    setTimeout(update,250);
-  });
 
   // Usa os elementos reais do Quadro de Avisos para preservar o mecanismo atual.
   const list=document.getElementById('avisosHomeLista');
