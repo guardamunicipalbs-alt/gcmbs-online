@@ -21,7 +21,7 @@ const sourceCard=id=>{
   return e&&e.closest('[data-quadro-detail],.dashboard-card,button,.card');
 };
 
-let refsCache={postos:null};
+let refsCache={postos:null,lastAttempt:0};
 let extrasCache={date:'',value:0,items:[],busy:false};
 
 function greeting(){
@@ -74,6 +74,8 @@ async function apiExtrasEvento(data){
 }
 async function loadPostosTotal(){
   if(Number.isFinite(refsCache.postos))return refsCache.postos;
+  if(refsCache.lastAttempt&&Date.now()-refsCache.lastAttempt<1800000)return null;
+  refsCache.lastAttempt=Date.now();
   try{
     const b=await api('references');
     const refs=b?.references||b||{};
