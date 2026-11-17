@@ -243,11 +243,7 @@ function makeStructure(home){
         <div class="gc118-section-head"><strong>Distribuição Operacional</strong><span>Dados da data selecionada</span></div>
         <div class="gc118-bars"></div>
       </section>
-      <section class="gc118-notices">
-        <div class="gc118-section-head"><strong>📢 Quadro de Avisos</strong><span>Institucional</span></div>
-        <div class="gc118-notice-body"></div>
-        <div class="gc118-notice-actions"></div>
-      </section>
+
     </div>`;
   home.appendChild(main);
 
@@ -283,23 +279,6 @@ function makeStructure(home){
   });
 
 
-  // Usa os elementos reais do Quadro de Avisos para preservar o mecanismo atual.
-  const list=document.getElementById('avisosHomeLista');
-  const noticeBody=$('.gc118-notice-body',main);
-  if(list)noticeBody.appendChild(list);
-  else noticeBody.innerHTML='<div class="notice">Nenhum aviso institucional ativo.</div>';
-
-  const originalNoticeButton=document.querySelector('#quadroAvisosHome [data-go="avisos"]');
-  const actions=$('.gc118-notice-actions',main);
-  if(originalNoticeButton){
-    originalNoticeButton.textContent='Ver todos os avisos';
-    originalNoticeButton.className='secondary';
-    actions.appendChild(originalNoticeButton);
-  }else{
-    const btn=document.createElement('button');btn.type='button';btn.className='secondary';btn.textContent='Abrir Quadro de Avisos';
-    btn.onclick=()=>document.querySelector('#mainNav [data-go="avisos"]')?.click();
-    actions.appendChild(btn);
-  }
 
   return main;
 }
