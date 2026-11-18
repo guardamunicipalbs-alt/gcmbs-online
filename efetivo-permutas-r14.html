@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>GCMBS | Efetivo com Permutas Aprovadas</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#ecf2f9;color:#162e49;font:14px Segoe UI,Arial,sans-serif}
+header{background:#0b2848;color:#fff;padding:19px 24px;display:flex;justify-content:space-between;gap:16px;align-items:center}
+header h1{margin:0;font-size:20px}header a{color:#d9eaff}
+main{max-width:1280px;margin:24px auto;padding:0 16px}
+.card{background:#fff;border:1px solid #d3e1ed;border-radius:14px;padding:23px;margin-bottom:15px}
+h2{font-size:19px;margin:0 0 11px}.muted{color:#56708a}.label{font-size:12px;color:#59758f}
+form{display:flex;flex-wrap:wrap;align-items:end;gap:12px}label{display:flex;flex-direction:column;gap:7px;font-weight:600}
+input,button{font:inherit;border-radius:8px;padding:10px 13px}input{border:1px solid #a9c0d4}
+button{background:#1765b6;color:#fff;border:0;font-weight:600;cursor:pointer}button:disabled{opacity:.55}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:15px 0}
+.summary div{background:#f1f6fb;padding:15px;border-radius:10px;border:1px solid #dce6f0}
+.summary strong{display:block;font-size:21px;margin-top:5px}#alert{color:#a2510a;font-weight:600}#status{min-height:20px}
+.scroll{overflow:auto;border:1px solid #d5e0eb;border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:870px}th,td{padding:12px 10px;border-bottom:1px solid #e0e8f0;text-align:left}
+th{background:#e9f1f8;font-size:12px}tbody tr:nth-child(even){background:#f8fbfe}
+.tag{display:inline-block;padding:5px 8px;background:#e5f3e8;color:#14652e;border-radius:7px;font-size:12px;font-weight:700}
+.original{color:#627b92}.updated{font-weight:700;color:#125daa}.note{font-size:12px;color:#617a94}
+@media(max-width:680px){.summary{grid-template-columns:1fr}header{display:block}}
+</style></head>
+<body>
+<header><h1>GCMBS · Efetivo de Serviço com Permutas</h1><a href="./index.html">Voltar ao GCMBS Online</a></header>
+<main>
+<section class="card">
+<h2>Quem está efetivamente de serviço?</h2>
+<p class="muted">Consulta operacional baseada na escala ativa e nas permutas aprovadas do Google Forms. A escala original e o banco de horas não são modificados.</p>
+<form id="form"><label>Data do serviço<input id="data" type="date" min="2026-11-18" required></label><button type="submit" id="buscar">Consultar efetivo</button></form>
+<p id="status" role="status">Verificando sessão…</p><p id="alert" role="alert"></p>
+<div class="summary">
+<div><span class="label">Registros de serviço</span><strong id="total">—</strong></div>
+<div><span class="label">Postos/turnos com substituição</span><strong id="trocas">—</strong></div>
+<div><span class="label">Última importação Forms</span><strong id="ultima" style="font-size:14px">—</strong></div>
+</div>
+</section>
+<section class="card"><h2>Escala operacional efetiva</h2>
+<div class="scroll"><table><thead><tr><th>Turno</th><th>Posto</th><th>Escalado originalmente</th><th>GCM em serviço</th><th>Permuta</th><th>Motorista</th></tr></thead><tbody id="linhas"><tr><td colspan="6">Consulte uma data para visualizar o efetivo.</td></tr></tbody></table></div>
+<p class="note">Substituições são calculadas por data, matrícula e turno; uma permuta de 24 horas cobre A e B. Em conflito ou ausência de escala ativa, o registro original é preservado até conferência.</p>
+</section>
+</main>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),api='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-permutas-efetivas-read-r14';
+$('data').value=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});
+if($('data').value<'2026-11-18')$('data').value='2026-11-18';
+const col=(tr,value,cls)=>{const td=document.createElement('td');td.textContent=String(value??'—');if(cls)td.className=cls;tr.append(td);};
+async function consultar(ev){
+if(ev)ev.preventDefault();
+const date=$('data').value,token=localStorage.getItem('gcmbs.mobile.token');
+$('linhas').replaceChildren();$('alert').textContent='';
+if(!token){$('status').textContent='Entre no GCMBS Online com uma sessão autorizada do Comando.';return}
+if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<'2026-11-18'){$('status').textContent='Selecione uma data a partir de 18/11/2026.';return}
+$('buscar').disabled=true;$('status').textContent='Consultando escala ativa e permutas aprovadas…';
+try{
+const r=await fetch(api,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({data:date}),cache:'no-store'});
+if(r.status===401)throw Error('Sessão expirada. Entre novamente no GCMBS Online.');
+if(r.status===403)throw Error('Consulta restrita ao Comando autorizado.');
+if(!r.ok)throw Error('Falha HTTP '+r.status);
+const p=await r.json();
+if(!p.ok||!Array.isArray(p.alocacoes))throw Error('Resposta de dados inválida.');
+$('total').textContent=String(p.total_escalados);
+$('trocas').textContent=String(p.total_substituicoes);
+$('status').textContent='Consulta concluída. Nenhuma escala ou permuta foi alterada.';
+const fmt=v=>new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Fortaleza'}).format(new Date(v));
+$('ultima').textContent=p.ultima_sincronizacao?fmt(p.ultima_sincronizacao):'Não confirmada';
+if(p.ultima_sincronizacao && Date.now()-new Date(p.ultima_sincronizacao).getTime()>75*60000)$('alert').textContent='Atenção: o último snapshot do Google Forms tem mais de 75 minutos; confirme novas decisões no Forms.';
+const rows=$('linhas');for(const x of p.alocacoes){
+const tr=document.createElement('tr'),alterou=x.situacao==='PERMUTA_APROVADA';
+col(tr,x.turno);col(tr,x.posto);col(tr,x.guarda_original,'original');
+col(tr,x.guarda_efetivo,alterou?'updated':'');col(tr,alterou?'Aprovada · '+x.protocolo_permutado:'—');col(tr,x.motorista||'—');rows.append(tr);
+}
+if(!p.alocacoes.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent='Nenhuma escala ativa localizada para a data.';tr.append(td);rows.append(tr)}
+}catch(e){$('status').textContent=e.message||'Consulta indisponível.';const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent='Não foi possível confirmar o efetivo agora.';tr.append(td);$('linhas').append(tr)}
+finally{$('buscar').disabled=false}
+}
+$('form').addEventListener('submit',consultar);consultar();
+})();
+</script></body></html>
