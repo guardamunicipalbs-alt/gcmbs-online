@@ -22,3 +22,14 @@ section[data-view="permutas"] .gcmbs-permutas-legacy-notice {
   font-size:13px;
   margin:12px 0 16px;
 }
+
+/* R9-R2 — corrigir duplicação visual e impedir decisões locais na tela de histórico. */
+section[data-view="permutas"] > .desktop-page-head {
+  display:none !important; /* título principal já existe no cabeçalho do módulo */
+}
+section[data-view="permutas"] #gcmbsAgendadaComandoV275 {
+  display:none !important; /* formulário de decisão legado, mantido em memória */
+}
+section[data-view="permutas"] #gcmbsAgRefreshV259 {
+  display:none !important; /* sem atualização manual paralela */
+}
