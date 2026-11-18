@@ -8,7 +8,7 @@ section[data-view="permutas"] #gcmbs-forms-historico-r6-link > h2{
 section[data-view="permutas"] #gcmbs-forms-historico-r6-link > p.muted{
  margin:0 0 11px!important; line-height:1.45;
 }
-section[data-view="permutas"] #gcmbs-forms-inline-frame{display:block;min-height:680px}
+section[data-view="permutas"] #gcmbs-forms-inline-frame{min-height:680px}
 section[data-view="permutas"] #gcmbs-legado-toggle-r11{
  display:inline-flex;align-items:center;justify-content:center;
  margin:6px 0 13px; padding:9px 15px; border:1px solid #bbd0e6;
