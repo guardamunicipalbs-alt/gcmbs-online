@@ -1,0 +1,33 @@
+/* GCMBS Online R11 — paridade visual de Permutas, sem alteração de dados. */
+section[data-view="permutas"] #gcmbs-forms-historico-r6-link{
+ padding:20px 20px 14px!important; margin-bottom:10px;
+}
+section[data-view="permutas"] #gcmbs-forms-historico-r6-link > h2{
+ margin:0 0 5px!important; font-size:20px; line-height:1.25;
+}
+section[data-view="permutas"] #gcmbs-forms-historico-r6-link > p.muted{
+ margin:0 0 11px!important; line-height:1.45;
+}
+section[data-view="permutas"] #gcmbs-forms-inline-frame{display:block;min-height:680px}
+section[data-view="permutas"] #gcmbs-legado-toggle-r11{
+ display:inline-flex;align-items:center;justify-content:center;
+ margin:6px 0 13px; padding:9px 15px; border:1px solid #bbd0e6;
+ border-radius:9px;background:#f5f9fd;color:#17426c;font-weight:600;cursor:pointer;
+}
+section[data-view="permutas"] #gcmbs-legado-toggle-r11:focus-visible{
+ outline:3px solid #78b7f2; outline-offset:2px;
+}
+section[data-view="permutas"]:not(.gcmbs-legado-aberto-r11) > .card:not(#gcmbs-forms-historico-r6-link),
+section[data-view="permutas"]:not(.gcmbs-legado-aberto-r11) > .gcmbs-permutas-legacy-notice{
+ display:none!important;
+}
+/* Áreas operacionais desativadas permanecem ocultas inclusive no legado. */
+section[data-view="permutas"] #permutaCard,
+section[data-view="permutas"] #permutaGestaoCard,
+section[data-view="permutas"] #gcmbsAgendadaComandoV275,
+section[data-view="permutas"] #gcmbsAceitesPendentesV297{
+ display:none!important;
+}
+@media(max-width:720px){
+ section[data-view="permutas"] #gcmbs-forms-historico-r6-link{padding:12px!important}
+}
