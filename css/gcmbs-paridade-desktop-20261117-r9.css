@@ -1,0 +1,24 @@
+/* GCMBS Online 10.0.329-R9 — paridade visual Permutas com Desktop 17/11/2026.
+   Esta folha NÃO altera ações no servidor, entidades nem fluxos legados de sincronização.
+   O histórico do Forms continua protegido pelo endpoint de consulta R6. */
+section[data-view="permutas"] #permutaCard,
+section[data-view="permutas"] #permutaGestaoCard {
+  display:none !important;
+}
+/* Não disponibilizar ações mutáveis das solicitações legadas. Os registros permanecem para consulta. */
+section[data-view="permutas"] #listaPermutasSolicitadas button,
+section[data-view="permutas"] #listaPermutasSolicitadas [role="button"] {
+  display:none !important;
+}
+section[data-view="permutas"] #gcmbs-forms-historico-r6-link {
+  border:1px solid #bed4e9;
+  box-shadow:0 3px 14px rgba(14,44,78,.06);
+}
+section[data-view="permutas"] #gcmbs-forms-historico-r6-link a {
+  text-decoration:none;
+}
+section[data-view="permutas"] .gcmbs-permutas-legacy-notice {
+  color:#536782;
+  font-size:13px;
+  margin:12px 0 16px;
+}
