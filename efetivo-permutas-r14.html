@@ -27,17 +27,17 @@ th{background:#e9f1f8;font-size:12px}tbody tr:nth-child(even){background:#f8fbfe
 <header><h1>GCMBS · Efetivo de Serviço com Permutas</h1><a href="./index.html">Voltar ao GCMBS Online</a></header>
 <main>
 <section class="card">
-<h2>Quem está efetivamente de serviço?</h2>
-<p class="muted">Consulta operacional baseada na escala ativa e nas permutas aprovadas do Google Forms. A escala original e o banco de horas não são modificados.</p>
+<h2>Efetivo ordinário após permutas aprovadas</h2>
+<p class="muted">Consulta operacional baseada na escala ativa e nas permutas aprovadas do Google Forms. Esta versão cobre somente as escalas ordinárias. Extras, escalas originais e banco de horas não são modificados.</p>
 <form id="form"><label>Data do serviço<input id="data" type="date" min="2026-11-18" required></label><button type="submit" id="buscar">Consultar efetivo</button></form>
 <p id="status" role="status">Verificando sessão…</p><p id="alert" role="alert"></p>
 <div class="summary">
-<div><span class="label">Registros de serviço</span><strong id="total">—</strong></div>
+<div><span class="label">Escalas ordinárias ativas</span><strong id="total">—</strong></div>
 <div><span class="label">Postos/turnos com substituição</span><strong id="trocas">—</strong></div>
 <div><span class="label">Última importação Forms</span><strong id="ultima" style="font-size:14px">—</strong></div>
 </div>
 </section>
-<section class="card"><h2>Escala operacional efetiva</h2>
+<section class="card"><h2>Escala ordinária efetiva</h2>
 <div class="scroll"><table><thead><tr><th>Turno</th><th>Posto</th><th>Escalado originalmente</th><th>GCM em serviço</th><th>Permuta</th><th>Motorista</th></tr></thead><tbody id="linhas"><tr><td colspan="6">Consulte uma data para visualizar o efetivo.</td></tr></tbody></table></div>
 <p class="note">Substituições são calculadas por data, matrícula e turno; uma permuta de 24 horas cobre A e B. Em conflito ou ausência de escala ativa, o registro original é preservado até conferência.</p>
 </section>
