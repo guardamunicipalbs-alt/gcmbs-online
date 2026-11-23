@@ -22,102 +22,132 @@ async function api(action,competencia=''){
  if(!response.ok||!data.success)throw Error(data.message||'Falha ao consultar folha fechada.');
  return data;
 }
-function baseCanvas(folha){
+const MONTHS=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+function periodo(comp){
+ const m=/^(\d{4})-(\d{2})$/.exec(String(comp||''));
+ if(!m)return {label:String(comp||''),dates:[]};
+ const year=Number(m[1]),month=Number(m[2]);if(month<1||month>12)return {label:String(comp),dates:[]};
+ const dates=[];
+ // Os fechamentos anteriores a novembro/2026 ainda usavam competencia mensal.
+ // Excecao confirmada: outubro/2026 foi fechado de 01 a 19/10.
+ if(year<2026||(year===2026&&month<=10)){
+  const last=year===2026&&month===10?19:new Date(Date.UTC(year,month,0)).getUTCDate();
+  for(let d=1;d<=last;d++)dates.push({day:d,month,year});
+ }else{
+  const prevMonth=month===1?12:month-1,prevYear=month===1?year-1:year;
+  const last=new Date(Date.UTC(prevYear,prevMonth,0)).getUTCDate();
+  for(let d=20;d<=last;d++)dates.push({day:d,month:prevMonth,year:prevYear});
+  for(let d=1;d<=19;d++)dates.push({day:d,month,year});
+ }
+ const first=dates[0],last=dates[dates.length-1];
+ const label=first&&last?String(first.day).padStart(2,'0')+'/'+String(first.month).padStart(2,'0')+'/'+first.year+' A '+String(last.day).padStart(2,'0')+'/'+String(last.month).padStart(2,'0')+'/'+last.year:'';
+ return {dates,label,month,year};
+}
+function paint(folha){
  const rows=Array.isArray(folha.linhas)?folha.linhas:[];
- const days=31,nameWidth=232,dayWidth=31,summaryWidths=[82,82,96,96,110,122,72,65];
- const totalWidth=nameWidth+days*dayWidth+summaryWidths.reduce((a,b)=>a+b,0)+50;
- const lineHeight=36,top=200,bottom=170;
- const can=document.createElement('canvas');
- can.width=totalWidth;
- can.height=Math.max(590,top+rows.length*lineHeight+bottom);
- const ctx=can.getContext('2d');
- const c=ctx;
- c.fillStyle='#fff';c.fillRect(0,0,can.width,can.height);
- c.fillStyle='#133968';c.fillRect(0,0,can.width,12);
- c.fillStyle='#18334f';
- c.font='bold 27px Arial';
- c.fillText('GUARDA CIVIL MUNICIPAL DE BREJO SANTO',28,58);
- c.font='bold 23px Arial';c.fillText('FOLHA DE PAGAMENTO',28,100);
- c.font='16px Arial';
- c.fillText('Competência '+onlyText(folha.competencia)+'   •   FECHADA',28,132);
- c.font='14px Arial';c.fillStyle='#536b83';
- c.fillText('Informações preservadas do fechamento do Desktop • consulta somente leitura',28,155);
- const left=25,headY=top-38,contentWidth=can.width-50;
- c.fillStyle='#dbe9f8';c.fillRect(left,headY,contentWidth,38);
- const defs=[['H 50%',summaryWidths[0],'horas50','number'],['H 100%',summaryWidths[1],'horas100','number'],
- ['Realiz.',summaryWidths[2],'horasRealizadas','number'],['Pagáveis',summaryWidths[3],'horasPagaveis','number'],
- ['Exced.',summaryWidths[4],'excedente','number'],['Valor total',summaryWidths[5],'valorTotal','money'],
- ['Faltas',summaryWidths[6],'faltas','number'],['FJ',summaryWidths[7],'faltasJustificadas','number']];
- c.font='bold 13px Arial';c.fillStyle='#244565';
- c.fillText('GCM',left+7,headY+24,nameWidth-12);
- for(let i=1;i<=days;i++){
-   const dx=left+nameWidth+(i-1)*dayWidth;
-   c.fillText(String(i).padStart(2,'0'),dx+6,headY+24,dayWidth-4);
+ const per=periodo(folha.competencia);
+ const cols=per.dates;
+ const scale=2, left=16, nameWidth=322,warWidth=112,noWidth=34,dayWidth=27;
+ const summaries=[
+  {title:'QT 50%',field:'horas50',w:72,type:'number'},
+  {title:'VALOR 50%',field:'valor50',w:103,type:'money'},
+  {title:'QT 100%',field:'horas100',w:76,type:'number'},
+  {title:'VALOR 100%',field:'valor100',w:104,type:'money'},
+  {title:'QT TOTAL',field:'horasPagaveis',w:86,type:'number'},
+  {title:'VALOR TOTAL',field:'valorTotal',w:106,type:'money'},
+  {title:'FALTAS',field:'faltas',w:73,type:'number'},
+  {title:'ADIC. NOT.',field:'adicionalNoturno',w:91,type:'text'}
+ ];
+ const tableWidth=noWidth+nameWidth+warWidth+cols.length*dayWidth+summaries.reduce((a,v)=>a+v.w,0);
+ const width=tableWidth+left*2;
+ const rowH=23,tableTop=134,bandH=23,headerH=36,bodyY=tableTop+bandH+headerH;
+ const extraLines=[];
+ const obs=folha.observacoes||{};
+ const list=(key,label,transform)=>{
+  const arr=Array.isArray(obs[key])?obs[key]:[];
+  if(arr.length)extraLines.push(label+': '+arr.map(transform||((x)=>typeof x==='string'?x:(x.nome||''))).filter(Boolean).join('  ·  '));
+ };
+ list('ferias','OBS. 1 — Férias');
+ const statuses=obs.status&&typeof obs.status==='object'?obs.status:{};
+ for(const [k,v]of Object.entries(statuses)){
+  if(Array.isArray(v)&&v.length)extraLines.push('OBS. 2 — '+String(k)+': '+v.join(', '));
  }
- let px=left+nameWidth+days*dayWidth;
- for(const [title,w]of defs){c.fillText(title,px+5,headY+24,w-6);px+=w;}
- for(let i=0;i<rows.length;i++){
-   const row=rows[i],y=top+i*lineHeight;
-   c.fillStyle=i%2?'#ffffff':'#f4f8fc';c.fillRect(left,y,contentWidth,lineHeight);
-   c.strokeStyle='#e1e9f2';c.beginPath();c.moveTo(left,y+lineHeight);c.lineTo(left+contentWidth,y+lineHeight);c.stroke();
-   c.font='bold 14px Arial';c.fillStyle='#203d5c';
-   c.fillText(onlyText(row.nome),left+7,y+23,nameWidth-15);
-   c.font='13px Arial';c.fillStyle='#1f3d5e';
-   const marked=row.dias&&typeof row.dias==='object'?row.dias:{};
-   for(let day=1;day<=days;day++){
-      const val=onlyText(marked[String(day)]||'');
-      if(val)c.fillText(val,left+nameWidth+(day-1)*dayWidth+5,y+23,dayWidth-8);
-   }
-   let x=left+nameWidth+days*dayWidth;
-   for(const [title,w,k,kind] of defs){
-     const val=kind==='money'?money(row[k]):num(row[k]);
-     c.fillText(val,x+5,y+23,w-7);x+=w;
-   }
- }
- const y=top+rows.length*lineHeight+27;
- c.font='14px Arial';c.fillStyle='#51677e';
- c.fillText(rows.length+' GCM(s) • marcações diárias e valores registrados na competência fechada.',28,y,can.width-60);
- c.fillText('Documento de consulta gerado a partir do snapshot fechado, não é a impressão original assinada do Desktop.',28,y+27,can.width-60);
- const sign=folha.assinaturas||{};
- const names=[sign.comandante,sign.subcomandante].filter(x=>x?.nome);
- if(names.length){
-  c.font='bold 15px Arial';c.fillStyle='#1d3552';
-  names.forEach((a,i)=>{
-   const x=30+i*650,yy=y+90;
-   c.strokeStyle='#8098ad';c.beginPath();c.moveTo(x,yy);c.lineTo(x+520,yy);c.stroke();
-   c.fillText(onlyText(a.nome),x+4,yy+23,515);
-   c.font='13px Arial';c.fillText(onlyText(a.cargo),x+4,yy+41,515);c.font='bold 15px Arial';
+ list('faltasJustificadas','Faltas justificadas',x=>x.nome+' ('+String(x.inicio||'')+(x.fim&&x.fim!==x.inicio?' a '+x.fim:'')+')');
+ list('faltas','Faltas',x=>typeof x==='string'?x:String(x.nome||''));
+ const notesStart=bodyY+rows.length*rowH+25;
+ const height=Math.max(450,notesStart+20+Math.max(3,extraLines.length)*23+31);
+ const canvas=document.createElement('canvas');canvas.width=width*scale;canvas.height=height*scale;
+ const c=canvas.getContext('2d');c.scale(scale,scale);c.fillStyle='white';c.fillRect(0,0,width,height);
+ const draw=(text,x,y,max,font='10px Georgia',color='#263e5b')=>{
+  c.font=font;c.fillStyle=color;c.fillText(String(text??''),x,y,Math.max(max,5));
+ };
+ c.fillStyle='#e9f2fa';c.fillRect(left,tableTop,tableWidth,bandH+headerH);
+ c.strokeStyle='#b9cddd';c.strokeRect(left,tableTop,tableWidth,bandH+headerH+rows.length*rowH);
+ draw('FOLHA DE PAGAMENTO — COMPETÊNCIA '+MONTHS[(per.month||1)-1]+' de '+per.year,left+4,31,width-40,'bold 19px Georgia','#071f45');
+ draw('PERÍODO: '+per.label,left+4,55,width-40,'bold 13px Georgia','#1c3150');
+ draw('DIAS ESCALADOS',left+noWidth+nameWidth+warWidth+7,tableTop+16,cols.length*dayWidth-15,'bold 11px Georgia','#36536c');
+ const sumX=left+noWidth+nameWidth+warWidth+cols.length*dayWidth;
+ draw('RESUMO FINAL',sumX+7,tableTop+16,width-sumX-20,'bold 11px Georgia','#36536c');
+ // Linhas do cabecalho.
+ const headers=[['Nº',noWidth],['NOME',nameWidth],['NOME DE GUERRA',warWidth]];
+ let x=left;
+ for(const [title,w]of headers){draw(title,x+3,tableTop+bandH+22,w-6,'bold 9px Georgia','#254465');x+=w;}
+ for(const date of cols){draw(String(date.day).padStart(2,'0'),x+4,tableTop+bandH+22,dayWidth-6,'bold 10px Georgia','#254465');x+=dayWidth;}
+ for(const h of summaries){draw(h.title,x+3,tableTop+bandH+22,h.w-5,'bold 9px Georgia','#254465');x+=h.w;}
+ // Linhas do efetivo, preenchidas somente com dados do fechamento.
+ rows.forEach((r,i)=>{
+  const y=bodyY+i*rowH;
+  const status=String(r.status||'').toUpperCase();
+  const commander=/COMANDANTE/i.test(String(r.cargo||''));
+  const away=!!r.afastado||status==='AFASTADO';
+  const vacation=!!r.emFerias;
+  c.fillStyle=away?'#f93b36':commander?'#1ac8f4':vacation?'#e8f0f7':i%2?'#fff':'#f2f7fb';
+  c.fillRect(left,y,tableWidth,rowH);
+  draw(String(i+1).padStart(2,'0'),left+3,y+15,noWidth-5,'9px Georgia',away?'#fff':'#35506d');
+  draw(r.nome_completo||r.nome,left+noWidth+3,y+15,nameWidth-6,'10px Georgia',away?'#fff':'#17314f');
+  draw(r.nome||'',left+noWidth+nameWidth+3,y+15,warWidth-6,'bold 9px Georgia',away?'#fff':'#17314f');
+  let dx=left+noWidth+nameWidth+warWidth;
+  const marks=r.dias&&typeof r.dias==='object'?r.dias:{};
+  cols.forEach(date=>{
+   const val=String(marks[String(date.day)]||'').slice(0,3);
+   draw(val||'-',dx+8,y+15,dayWidth-10,'10px Georgia',away?'#fff':'#284764');
+   dx+=dayWidth;
   });
+  for(const sum of summaries){
+   if(sum.type==='money'&&!away){c.fillStyle='#9cf18c';c.fillRect(dx,y,sum.w,rowH);}
+   const raw=r[sum.field];
+   const value=away?'—':sum.type==='money'?num(raw):sum.type==='number'?num(raw):String(raw||'—');
+   draw(value,dx+4,y+15,sum.w-7,'bold 9px Georgia',away?'#fff':'#17314f');
+   dx+=sum.w;
+  }
+  c.strokeStyle='#d5e0e9';c.beginPath();c.moveTo(left,y+rowH);c.lineTo(left+tableWidth,y+rowH);c.stroke();
+ });
+ c.strokeStyle='#ccdce9';let lx=left;
+ for(const w of [noWidth,nameWidth,warWidth,...cols.map(()=>dayWidth),...summaries.map(h=>h.w)]){
+  c.beginPath();c.moveTo(lx,tableTop+bandH);c.lineTo(lx,bodyY+rows.length*rowH);c.stroke();lx+=w;
  }
- const img=document.createElement('img');
- img.alt='Folha de Pagamento fechada, competência '+folha.competencia;
- img.src=can.toDataURL('image/png');
- img.style.cssText='display:block;width:100%;height:auto;border:1px solid #c7d8e9;border-radius:8px;background:#fff';
- return img;
+ draw('Legenda: X = serviço identificado; F = falta; FJ = falta justificada.',left,notesStart,width-left*2,'10px Georgia','#465b70');
+ for(let i=0;i<extraLines.length;i++)draw(extraLines[i],left+4,notesStart+24+i*23,width-left*2-8,'10px Georgia','#455b73');
+ draw('Consulta da folha fechada • Sem edição ou recálculo • Documento oficial permanece no Desktop.',left,height-17,width-left*2,'10px Georgia','#526b82');
+ const image=document.createElement('img');
+ image.alt='Folha de Pagamento fechada '+folha.competencia+' no formato do Desktop';
+ image.src=canvas.toDataURL('image/png');
+ image.style.cssText='display:block;width:100%;height:auto;background:#fff';
+ return image;
 }
 function renderSheet(folha,container){
  container.replaceChildren();
- const intro=document.createElement('p');
- intro.textContent='Folha '+folha.competencia+' · Fechada · '+(folha.quantidade||0)+' GCM(s)';
- intro.style.cssText='margin:0;color:#45617b;font-size:13px;font-weight:600';
- container.appendChild(intro);
  if(folha.cabecalho_imagem){
-  const image=document.createElement('img');
-  image.src=folha.cabecalho_imagem;
-  image.alt='Cabeçalho institucional registrado no fechamento';
-  image.style.cssText='width:100%;max-height:110px;object-fit:contain;object-position:left;background:white';
-  container.appendChild(image);
+  const head=document.createElement('img');head.src=folha.cabecalho_imagem;
+  head.alt='Cabeçalho institucional do fechamento';
+  head.style.cssText='display:block;width:100%;max-height:135px;object-fit:contain;background:#fff';
+  container.appendChild(head);
  }
- const sheet=document.createElement('div');
- sheet.className='gc390-sheet';
- sheet.style.cssText='width:100%;max-width:100%;min-width:0;overflow:auto';
- sheet.appendChild(baseCanvas(folha));
- container.appendChild(sheet);
- const label=document.createElement('p');
- label.textContent='Visualização da folha fechada conforme os registros do Desktop. A gestão e a impressão oficial permanecem exclusivamente no Desktop.';
- label.style.cssText='font-size:12px;color:#627a92;margin:0';
- container.appendChild(label);
+ const frame=document.createElement('div');frame.className='gc390-sheet';
+ frame.style.cssText='width:100%;max-width:100%;min-width:0;overflow:auto;border:1px solid #cad9e7;border-radius:6px;background:white';
+ frame.appendChild(paint(folha));container.appendChild(frame);
 }
+
 function close(){
  if(root)root.classList.add('hidden');
 }
