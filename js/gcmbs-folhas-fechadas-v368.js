@@ -124,6 +124,20 @@ function sheet(folha){
    part.appendChild(paintPage(folha,title,columns,rows.slice(i,i+MAX_ROWS),pageNo));wrap.appendChild(part);
   }
  }
+
+ const daily=[];
+ for(const r of rows){
+  const days=r?.dias&&typeof r.dias==='object'?r.dias:{};
+  const pairs=Object.entries(days).sort((a,b)=>Number(a[0])-Number(b[0]));
+  if(pairs.length)daily.push('GCM '+safely(r.nome)+': '+pairs.map(([dia,valor])=>String(dia).padStart(2,'0')+'='+safely(valor)).join('  ·  '));
+  if(r?.motivoArredondamento50)daily.push('Arredondamento de '+safely(r.nome)+': '+safely(r.motivoArredondamento50));
+ }
+ if(daily.length){
+  const groups=[];let group=[],used=0;
+  for(const line of daily){const cost=1+Math.ceil(String(line).length/140);if(used+cost>25&&group.length){groups.push(group);group=[];used=0}group.push(line);used+=cost}
+  if(group.length)groups.push(group);
+  groups.forEach(g=>wrap.appendChild(textPage(folha,'Dias de serviço e motivos de arredondamento',g,++pageNo)));
+ }
  const obs=folha.observacoes||{},sign=folha.assinaturas||{};
  const lines=[];
  if(Object.keys(obs).length){
