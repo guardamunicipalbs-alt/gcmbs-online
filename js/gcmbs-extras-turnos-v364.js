@@ -22,7 +22,7 @@ async function post(url,data,token){
 function join(auto,eventos){
  const found=new Map();
  for(const r of auto){if(!extra(r))continue;const key=identity(r)+'|AUTO';if(!found.has(key))found.set(key,{...r,tipo:'Extra automatica'});}
- for(const r of eventos){const key=identity(r)+'|EVENTO|'+String(r.evento_id||r.complemento||'');if(!found.has(key))found.set(key,{...r,tipo:'Extra por evento'});}
+ for(const r of eventos){const key=identity(r)+'|EVENTO|'+String(r.evento_id||r.complemento||'');if(!found.has(key))found.set(key,{...r,tipo:normal(r?.origem)==='EXTRA_MANUAL'?'Extra manual':'Extra por evento'});}
  return [...found.values()].sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
 }
 async function query(day,token){
