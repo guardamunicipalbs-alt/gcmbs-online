@@ -439,3 +439,50 @@ html.gc118-exact #appTela #gcmbs-folhas-fechadas-v368 img {
   max-width:100%!important;
   height:auto!important;
 }
+
+/* V392: Indicadores clicaveis de Servico/Extra/Faltas.
+   Evita a borda preta nativa de foco e o estilo de botao da navegacao,
+   preservando destaque acessivel para quem usa teclado. */
+html.gc118-exact #appTela .gc118-main .gc118-bars button.gc118-bar-col{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  min-width:0!important;
+  width:100%!important;
+  height:100%!important;
+  gap:3px!important;
+  padding:4px 2px!important;
+  border:0!important;
+  outline:0!important;
+  border-radius:9px!important;
+  background:transparent!important;
+  color:inherit!important;
+  box-shadow:none!important;
+  cursor:pointer!important;
+  text-align:center!important;
+}
+html.gc118-exact #appTela .gc118-main .gc118-bars button.gc118-bar-col:hover{
+  background:rgba(15,100,190,.045)!important;
+}
+html.gc118-exact #appTela .gc118-main .gc118-bars button.gc118-bar-col:focus{
+  outline:0!important;
+  box-shadow:none!important;
+}
+html.gc118-exact #appTela .gc118-main .gc118-bars button.gc118-bar-col:focus-visible{
+  outline:2px solid #2584e8!important;
+  outline-offset:-3px!important;
+  background:rgba(22,110,216,.055)!important;
+}
+html.gc118-exact #appTela .gc118-main .gc118-bars button.gc118-bar-col .gc118-bar{
+  flex:0 0 auto!important;
+  min-height:4px!important;
+  pointer-events:none!important;
+}
+html.gc118-exact #appTela .gc118-main .gc118-bars button.gc118-bar-col b,
+html.gc118-exact #appTela .gc118-main .gc118-bars button.gc118-bar-col small{
+  pointer-events:none!important;
+}
