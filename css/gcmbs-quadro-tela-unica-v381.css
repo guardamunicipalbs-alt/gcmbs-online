@@ -215,3 +215,13 @@
   /* Para janelas estreitas/baixas, nao cortar informacoes nem bloquear a rolagem. */
   html.gc118-exact #appTela main{overflow:visible!important}
 }
+
+/* V382: eliminar SOMENTE o cabecalho legado que sobrepoe a saudacao.
+   O titulo dentro de .gc118-main permanece unico e visivel.
+   Inputs da origem permanecem no DOM para os dados e eventos do Quadro. */
+html.gc118-exact #appTela section[data-view="inicio"].gc118-home .desktop-page-head{
+  display:none!important;
+}
+html.gc118-exact #appTela section[data-view="inicio"].gc118-home > .desktop-page-head{
+  display:none!important;
+}
