@@ -205,6 +205,7 @@
  }
  async function registeredPosts(date,ctx){
    const [ref,quad]=await Promise.all([remote('gcmbs-mobile-api-v6',{action:'references'}),quadro(date)]);
+   if(ctx.requestId!==serial)return;
    const refs=ref?.references||ref;
    const posts=Array.isArray(refs.postos)?refs.postos:[];
    const coverage=Array.isArray(quad?.postos?.detalhamento)?quad.postos.detalhamento:[];
@@ -224,6 +225,7 @@
  }
  async function detailsFor(key,date,ctx){
    const quad=await quadro(date,key==='qServicoA'||key==='qServicoB');
+   if(ctx.requestId!==serial)return;
    let rows=coalesceRow(quad,key);
    if(!quad?.efetivo||!quad?.viaturas)throw new Error('Resposta incompleta do Quadro Online.');
    ctx.list.replaceChildren();
@@ -233,6 +235,7 @@
    }
    if(key==='qViaturasUso'){
      const approved=await permutas(date);
+     if(ctx.requestId!==serial)return;
      vehicleRows(ctx.list,rows,quad,approved);
      return;
    }
@@ -241,6 +244,7 @@
      // Não alterar o snapshot; operar somente sobre cópias exibidas.
      rows=rows.map(x=>({...x}));
      const swaps=await permutas(date);
+     if(ctx.requestId!==serial)return;
      permutaDisplay(rows,swaps,turn,ctx.list);
      for(const r of rows){
        const nature=normal(r.tipo_servico||r.origem||r.complemento);
@@ -254,6 +258,7 @@
  }
  async function extraTurn(turn,date,ctx){
    const data=await extras(date);
+   if(ctx.requestId!==serial)return;
    const list=turn==='A'?data.extrasA:data.extrasB;
    if(!Array.isArray(list))throw new Error('Consulta de Extras não retornou lista do turno '+turn+'.');
    const grouped=new Map();
@@ -276,6 +281,7 @@
    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
    const key=id==='__extra_a__'?'Extra A':id==='__extra_b__'?'Extra B':id==='__postos_total__'?'Postos cadastrados':titleOf(id);
    const ctx=modal(key,date),current=++serial;
+   ctx.requestId=current;
    try{
      if(id==='__extra_a__'||id==='__extra_b__')await extraTurn(id==='__extra_a__'?'A':'B',date,ctx);
      else if(id==='__postos_total__')await registeredPosts(date,ctx);
@@ -289,6 +295,7 @@
  }
  document.addEventListener('keydown',e=>{
    if(e.key==='Escape'&&!q('#quadroModal')?.classList.contains('hidden')){
+     serial++;
      q('#quadroModal')?.classList.add('hidden');
    }
  },true);
