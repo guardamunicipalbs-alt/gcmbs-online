@@ -211,13 +211,6 @@ function makeStructure(home){
     <div class="gc118-top">
       <div class="gc118-title"><h1>Quadro Operacional</h1><p>Painel institucional e panorama do dia</p></div>
     </div>
-    <div class="gc118-related">
-      <span class="gc118-related-label">Acesso relacionado:</span>
-      <button class="gc118-quick" type="button" data-module="cadastro_guardas">Guardas</button>
-      <button class="gc118-quick" type="button" data-module="equipes">Equipes</button>
-      <button class="gc118-quick" type="button" data-module="postos">Postos</button>
-      <button class="gc118-quick" type="button" data-module="gerador_escala">Gerar escala</button>
-    </div>
     <div class="gc118-controls">
       <label>Data <input class="gc118-date" type="date"></label>
     </div>
@@ -263,8 +256,12 @@ function makeStructure(home){
     ['Indisponíveis','qViaturasBaixadas','Fora de operação','orange',''],
     ['Em manutenção','qViaturasManut','Acompanhamento da frota','red','']
   ].forEach(d=>fleet.appendChild(createMetric(...d)));
+  // Detalhes da Frota reutiliza a relacao operacional de viaturas, sem abrir Cadastro.
+  const details=createMetric('Detalhes da Frota','qViaturasTotal','Consultar situacao das viaturas','green','');
+  details.dataset.gc118Id='__detalhes_frota__';
+  details.addEventListener('click',e=>{e.stopImmediatePropagation();clickSource('qViaturasTotal');},true);
+  fleet.appendChild(details);
 
-  $$('.gc118-quick',main).forEach(b=>b.addEventListener('click',()=>clickModule(b.dataset.module,b.textContent)));
 
   const date=$('.gc118-date',main), originalDate=document.getElementById('quadroData');
   if(originalDate)date.value=originalDate.value;
@@ -368,7 +365,7 @@ new MutationObserver(()=>{
   clearTimeout(timer);
   timer=setTimeout(run,90);
 }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
-setInterval(run,3500);
+setInterval(run,1800000);
 
 console.info('[GCMBS] V118 Online/App no padrão exato do Desktop ativo');
 })();
