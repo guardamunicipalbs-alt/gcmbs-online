@@ -9,7 +9,10 @@ const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communica
 const styleId='gcmbs-quadro-desktop-v370';
 if(!document.getElementById(styleId)){
  const style=document.createElement('style');style.id=styleId;
- style.textContent=".gc118-main{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}\n.gc118-main>.gc118-hero{grid-column:1/-1;grid-row:1}\n.gc118-main>.gc118-top{grid-column:1;grid-row:2}\n.gc118-main>.gc118-controls{grid-column:2;grid-row:2}\n.gc118-main>.gc118-section,.gc118-main>.gc118-bottom{grid-column:1/-1}\n.gc118-main .gc118-grid.effective{grid-template-columns:repeat(4,minmax(0,1fr))}\n.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(5,minmax(0,1fr))}\n.gc118-main .gc118-bars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end}\n.gc118-main .gc118-metric{min-width:0}\n.gc118-main .gc118-chart{min-width:0;width:100%}\n@media(max-width:1030px){.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(3,minmax(0,1fr))}}\n@media(max-width:720px){.gc118-main{grid-template-columns:minmax(0,1fr)}.gc118-main>.gc118-top,.gc118-main>.gc118-controls{grid-column:1;grid-row:auto}.gc118-main .gc118-grid.effective,.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(2,minmax(0,1fr))}}\n@media(max-width:430px){.gc118-main .gc118-grid.effective,.gc118-main .gc118-grid.fleet{grid-template-columns:1fr}.gc118-main .gc118-bars{gap:3px}}";
+ style.textContent=".gc118-main{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}\n.gc118-main>.gc118-hero{grid-column:1/-1;grid-row:1}\n.gc118-main>.gc118-top{grid-column:1;grid-row:2}\n.gc118-main>.gc118-controls{grid-column:2;grid-row:2}\n.gc118-main>.gc118-section,.gc118-main>.gc118-bottom{grid-column:1/-1}\n.gc118-main .gc118-grid.effective{grid-template-columns:repeat(4,minmax(0,1fr))}\n.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(5,minmax(0,1fr))}\n.gc118-main .gc118-bars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end}\n.gc118-main .gc118-metric{min-width:0}
+.gc118-main .gc118-metric{position:relative;padding-left:52px!important}
+.gc118-main .gc118-metric-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;background:#e5eefb;color:#1556a9;font-size:18px;font-weight:bold}
+.gc118-main .gc118-metric[data-gc118-id="__detalhes_frota__"] .gc118-metric-value{display:none}\n.gc118-main .gc118-chart{min-width:0;width:100%}\n@media(max-width:1030px){.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(3,minmax(0,1fr))}}\n@media(max-width:720px){.gc118-main{grid-template-columns:minmax(0,1fr)}.gc118-main>.gc118-top,.gc118-main>.gc118-controls{grid-column:1;grid-row:auto}.gc118-main .gc118-grid.effective,.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(2,minmax(0,1fr))}}\n@media(max-width:430px){.gc118-main .gc118-grid.effective,.gc118-main .gc118-grid.fleet{grid-template-columns:1fr}.gc118-main .gc118-bars{gap:3px}}";
  document.head.appendChild(style);
 }
 
@@ -203,11 +206,13 @@ async function abrirDetalhesFrota(){
  }catch(e){alert('Não foi possível consultar a frota: '+(e?.message||e));}
 }
 function createMetric(label,id,sub,cls=''){
+ const icons={'GCM ativos':'👮','Afastados':'↪','Em férias':'▣','Postos cadastrados':'♧','Frota total':'🚓','Disponíveis':'✓','Em uso':'◉','Em manutenção':'⚙','Detalhes da Frota':'🔧'};
+ const icon=icons[label]||'•';
  const b=document.createElement('button');
  b.type='button';
  b.className=`gc118-metric ${cls}`.trim();
  b.dataset.gc118Id=id||'';
- b.innerHTML=`<span class="gc118-metric-label">${esc(label)}</span><b class="gc118-metric-value">0</b><small>${esc(sub)}</small>`;
+ b.innerHTML=`<span class="gc118-metric-icon" aria-hidden="true">${esc(icon)}</span><span class="gc118-metric-label">${esc(label)}</span><b class="gc118-metric-value">${id==='__detalhes_frota__'?'':0}</b><small>${esc(sub)}</small>`;
  b.addEventListener('click',()=>{
    if(id==='__postos_total__')return abrirPostosCadastrados();
    if(id==='__detalhes_frota__')return abrirDetalhesFrota();
@@ -351,6 +356,9 @@ async function update(){
   document.documentElement.classList.add('gc118-exact');
 
   const main=makeStructure(home);
+  const syncStatus=document.getElementById('gc365-status');
+  const titleRow=$('.gc118-top',main);
+  if(syncStatus&&titleRow&&!titleRow.contains(syncStatus))titleRow.appendChild(syncStatus);
   const date=$('.gc118-date',main);
   const originalDate=document.getElementById('quadroData');
   if(originalDate&&document.activeElement!==date&&date.value!==originalDate.value)date.value=originalDate.value;
