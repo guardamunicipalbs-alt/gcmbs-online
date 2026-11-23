@@ -116,7 +116,7 @@
    const raw=clean(service?.complemento).split(' · ')[0];
    return postos.length===0||postos.some(p=>normal(raw.split(', ').join(' | ')).split(' | ').includes(normal(p)));
  }
- function vehicleRows(list,rows,quad){
+ function vehicleRows(list,rows,quad,swaps=[]){
    if(!rows.length){empty(list,'Nenhuma viatura em uso no espelho para a data selecionada.');return}
    const effective={A:coalesceRow(quad,'qServicoA'),B:coalesceRow(quad,'qServicoB')};
    for(const v of rows){
@@ -131,7 +131,14 @@
      const per={A:[],B:[]};
      for(const name of names){
        const matches=['A','B'].filter(t=>turnList.includes(t)&&effective[t].some(x=>normal(x.nome)===normal(name)&&comparePosto(x,posts)));
-       if(matches.length)for(const t of matches)per[t].push(name);
+       if(matches.length)for(const t of matches){
+         const chosen=swaps.filter(p=>normal(p.guarda_original)===normal(name)&&
+           (normal(p.turno)===t||normal(p.turno)==='COMPLETO')&&
+           (!p.posto||posts.some(x=>normal(x)===normal(p.posto))));
+         const display=chosen.length===1&&clean(chosen[0].guarda_efetivo)?
+           clean(chosen[0].guarda_efetivo)+' (substitui '+name+')':name;
+         per[t].push(display);
+       }
        else if(turnList.length===1&&['A','B'].includes(turnList[0]))per[turnList[0]].push(name);
        else unmatched.push(name);
      }
@@ -149,7 +156,7 @@
  function permutaDisplay(rows,arr,turn,list){
    const target=arr.filter(p=>normal(p.turno)===turn||normal(p.turno)==='COMPLETO');
    if(!target.length)return;
-   let matched=0;
+   const unmatched=[];
    for(const p of target){
      const candidates=rows.filter(x=>normal(x.nome)===normal(p.guarda_original)&&(
        !p.posto||normal(x.complemento).includes(normal(p.posto))
@@ -159,14 +166,13 @@
        candidates[0].complemento=clean(candidates[0].complemento)+
           ' · Permuta aprovada: '+clean(p.guarda_original)+' → '+clean(p.guarda_efetivo)+
           (p.protocolo_permutado?' · Protocolo '+clean(p.protocolo_permutado):'');
-       matched++;
-     }
+     }else unmatched.push(p);
    }
-   if(matched<target.length){
+   if(unmatched.length){
      const section=document.createElement('section');
      section.style.cssText='padding:10px;margin-top:12px;border-top:1px solid #dce7f2';
      line(section,'strong','Permutas aprovadas com vínculo não conciliado à lista-base');
-     for(const p of target)panel(section,clean(p.guarda_original)+' → '+clean(p.guarda_efetivo),
+     for(const p of unmatched)panel(section,clean(p.guarda_original)+' → '+clean(p.guarda_efetivo),
        clean(p.posto)+' · Turno '+clean(p.turno)+' · '+clean(p.protocolo_permutado||''));
      list.appendChild(section);
    }
@@ -194,7 +200,14 @@
    let rows=coalesceRow(quad,key);
    if(!quad?.efetivo||!quad?.viaturas)throw new Error('Resposta incompleta do Quadro Online.');
    noteMeta(ctx.meta,date,rows.length);
-   if(key==='qViaturasUso'){vehicleRows(ctx.list,rows,quad);return}
+   if(quad.meta?.extras_consulta==='INDISPONIVEL'&&['qServicoA','qServicoB'].includes(key)){
+     line(ctx.list,'small','Aviso: a consulta de Extras não foi confirmada. Os totais deste turno podem estar incompletos.');
+   }
+   if(key==='qViaturasUso'){
+     const approved=await permutas(date);
+     vehicleRows(ctx.list,rows,quad,approved);
+     return;
+   }
    if(key==='qServicoA'||key==='qServicoB'){
      const turn=key==='qServicoA'?'A':'B';
      // Não alterar o snapshot; operar somente sobre cópias exibidas.
@@ -203,7 +216,7 @@
      permutaDisplay(rows,swaps,turn,ctx.list);
      for(const r of rows){
        const nature=normal(r.tipo_servico||r.origem||r.complemento);
-       const tipo=nature.includes('EXTRA')?'EXTRA':'ORDINÁRIO';
+       const tipo=nature.includes('EXTRA')?(nature.includes('ORDINARIO')?'ORDINÁRIO + EXTRA':'EXTRA'):'ORDINÁRIO';
        panel(ctx.list,clean(r.nome),clean(r.complemento),tipo);
      }
      if(!rows.length)empty(ctx.list,'Nenhum serviço confirmado neste turno na réplica Online.');
