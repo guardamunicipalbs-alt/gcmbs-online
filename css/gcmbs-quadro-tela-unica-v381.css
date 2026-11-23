@@ -384,3 +384,40 @@ html.gc118-exact #appTela main > section[data-view="inicio"].gc118-home.hidden {
     overflow:visible!important;
   }
 }
+
+/* V388 — navegacao dos demais modulos e contencao de formularios.
+   Nao altera a composicao do Quadro Operacional em tela unica. */
+html.gc118-exact #appTela main:has(> section[data-view="online"]:not(.hidden)) > section[data-view="online"],
+html.gc118-exact #appTela main:has(> section[data-view="online"]:not(.hidden)) .module-page-head,
+html.gc118-exact #appTela main:has(> section[data-view="online"]:not(.hidden)) #onlineRegistrosCard {
+  box-sizing:border-box!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+html.gc118-exact #appTela section[data-view="online"]:not(.hidden) :is(.gc107-table-wrap,.gc-table-wrap,.matrix-wrap,.table) {
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+}
+html.gc118-exact #appTela section[data-view="online"]:not(.hidden) table {
+  max-width:none!important;
+}
+/* Editor em linha so aparece no modulo que o habilitou, nunca sobre outra tela. */
+html.gc118-exact body:not(.gc107-cadastro) #onlineEditor.gc107-inline-editor:not([open]){
+  display:none!important;
+}
+html.gc118-exact body.gc107-cadastro #onlineEditor.gc107-inline-editor {
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:hidden!important;
+}
+html.gc118-exact body.gc107-cadastro #onlineEditor.gc107-inline-editor .module-editor-card{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+}
