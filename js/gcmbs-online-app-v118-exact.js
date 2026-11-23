@@ -199,7 +199,61 @@ async function abrirDetalhesFrota(){
  try{
   const response=await api('entity_list',{entity:'viaturas',limit:150,offset:0});
   const records=(Array.isArray(response.records)?response.records:[]).map(x=>x.data||{});
-  await abrirRelacaoSimples('Detalhes da Frota — consulta',records,x=>({name:[x.prefixo,x.modelo].filter(Boolean).join(' · '),details:['Placa '+(x.placa||'-'),'Situação '+(x.status||'-'),'Última troca de óleo '+(x.km_ultima_troca_oleo??'-')+' km'].join(' · ')}));
+  const modal=document.getElementById('quadroModal');
+  const head=document.getElementById('quadroModalTitulo');
+  const meta=document.getElementById('quadroModalMeta');
+  const list=document.getElementById('quadroModalLista');
+  if(!modal||!head||!meta||!list)return;
+  head.textContent='Detalhes da Frota — consulta';
+  meta.textContent=records.length+' veículo(s) · somente leitura · dados disponíveis na última sincronização';
+  list.replaceChildren();
+  list.style.maxHeight='min(65vh, 620px)';
+  list.style.overflowY='auto';
+  const fields=[
+   ['Prefixo','prefixo'],['Placa','placa'],['Situação','situacao'],['Status','status'],
+   ['Marca','marca'],['Modelo','modelo'],['Tipo','tipo'],['Categoria','categoria'],
+   ['Ano de fabricação','ano_fabricacao'],['Ano do modelo','ano_modelo'],
+   ['Cor','cor'],['Combustível','combustivel'],['Cilindrada','cilindrada'],
+   ['Potência','potencia'],['Motor','motor'],['Chassi','chassi'],['RENAVAM','renavam'],
+   ['Proprietário','proprietario_nome'],['Documento do proprietário','proprietario_documento'],
+   ['Endereço do proprietário','proprietario_endereco'],
+   ['KM da última troca de óleo','km_ultima_troca_oleo'],
+   ['Intervalo para troca de óleo (km)','intervalo_troca_oleo_km'],
+   ['Observações','observacao']
+  ];
+  const available=v=>v!==null&&v!==undefined&&String(v).trim()!=='';
+  for(const x of records){
+   const item=document.createElement('details');
+   item.className='item';
+   item.style.display='block';
+   item.style.padding='12px 14px';
+   const summary=document.createElement('summary');
+   summary.style.cursor='pointer';
+   summary.style.fontWeight='700';
+   summary.textContent=[x.prefixo,x.modelo].filter(available).join(' · ')||'Veículo sem identificação';
+   item.appendChild(summary);
+   const subtitle=document.createElement('div');
+   subtitle.style.cssText='font-size:12px;opacity:.75;margin:6px 0';
+   subtitle.textContent=['Placa '+(x.placa||'Não informado'),'Situação '+(x.situacao||x.status||'Não informado')].join(' · ');
+   item.appendChild(subtitle);
+   const grid=document.createElement('div');
+   grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #dce5ef';
+   for(const [label,key] of fields){
+    const cell=document.createElement('div');
+    cell.style.cssText='min-width:0;overflow-wrap:anywhere';
+    const lbl=document.createElement('div');lbl.textContent=label;lbl.style.cssText='font-size:11px;color:#64748b';
+    const val=document.createElement('div');val.textContent=available(x[key])?String(x[key]):'Não informado';
+    val.style.cssText='font-size:13px;font-weight:600;color:#193451';
+    cell.append(lbl,val);grid.appendChild(cell);
+   }
+   item.appendChild(grid);list.appendChild(item);
+  }
+  if(!records.length){
+   const empty=document.createElement('div');empty.className='empty';
+   empty.textContent='Nenhum veículo disponível na sincronização atual.';
+   list.appendChild(empty);
+  }
+  modal.classList.remove('hidden');
  }catch(e){alert('Não foi possível consultar a frota: '+(e?.message||e));}
 }
 function createMetric(label,id,sub,cls=''){
