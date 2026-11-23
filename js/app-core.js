@@ -189,12 +189,6 @@ async function abrirModuloPrincipal(modulo){
   if($('onlineModuloTitulo'))$('onlineModuloTitulo').textContent=metaModulo.nome||modulo;
   if($('onlineModuloDescricao'))$('onlineModuloDescricao').textContent=metaModulo.descricao||'Módulo autorizado conforme o Controle de Acesso.';
   const ativar=()=>document.querySelectorAll('#mainNav [data-module]').forEach(x=>x.classList.toggle('active',x.dataset.module===modulo));
-  if(modulo==='gerador_escala'){
-    onlineModuleFilter='gerador_escala'; setView('online'); ativar();
-    $('onlineEntidades').closest('.card').classList.remove('hidden'); $('onlineRegistrosCard').classList.add('hidden');
-    $('onlineEntidades').innerHTML='<div class="notice module-safe-note"><strong>Gerador de Escala protegido</strong>A interface reconhece sua permissão, mas a execução do gerador continua no Desktop nesta versão. A lógica existente não foi alterada.</div>';
-    return;
-  }
   const view=DEDICATED_VIEW[modulo];
   if(view){if(modulo==='justificativas_faltas'){await abrirModuloOnline(modulo);ativar();return;}setView(view);ativar();if(view==='permutas'){
     // V298: reler o servidor ao abrir a tela, sem depender do filtro ou do refresh global.
@@ -206,7 +200,7 @@ async function abrirModuloPrincipal(modulo){
       }
     }).catch(e=>console.warn('[GCMBS] falha ao atualizar aceites:',e?.message||e));
   }
-  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatoriosFrota')renderRelatoriosFrota();if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();if(view==='escala'){escalaModo='pessoal';renderEscalas();}return;}
+  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();if(view==='escala'){escalaModo='pessoal';renderEscalas();}return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -2130,12 +2124,6 @@ async function enviarPermuta(ev){
 
 async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,nivel:$('msgNivel')?.value||'NORMAL',fim_em:$('msgFim')?.value||null,destino,data_servico:$('msgDataServico')?.value||null,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';if($('msgFim'))$('msgFim').value='';if($('msgNivel'))$('msgNivel').value='NORMAL';await provider.load();renderAvisosInstitucionais();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
 function renderMensagemComando(){const card=$('mensagemComandoCard');if(!card)return;const permitido=provider.gestor()&&provider.pode('central_pendencias','EDICAO');card.classList.toggle('hidden',!permitido);if(!permitido)return;const sel=$('msgGcms');const pessoas=(refData().guardas||[]).map(x=>({guarda_id:x.guarda_id||x.id,nome_guerra:x.nome_guerra||x.nome_completo}));sel.innerHTML=pessoas.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');}
-function renderRelatoriosFrota(){
-  const el=$('frotaRelatorioAtalhos');if(!el)return;const mods=[['viaturas','Cadastro de Viaturas','Frota, tipo e situação'],['manutencao_viaturas','Manutenções','Baixas, oficinas e retornos'],['abastecimento_viaturas','Abastecimentos','Consumo, km e motorista'],['checklist_viaturas','Check-lists','Inspeções e pendências']].filter(x=>temAcesso(x[0]));
-  el.innerHTML=mods.map(x=>`<button class="report-launch" type="button" data-frota-open="${x[0]}"><strong>${x[1]}</strong><span>${x[2]}</span><b>ABRIR →</b></button>`).join('')||'<div class="empty">Nenhum conjunto da frota autorizado.</div>';
-  el.querySelectorAll('[data-frota-open]').forEach(b=>b.addEventListener('click',()=>abrirModuloPrincipal(b.dataset.frotaOpen)));
-  const refs=refData(),vs=refs.viaturas||[];if($('rfTotal'))$('rfTotal').textContent=String(vs.length);if($('rfAtivas'))$('rfAtivas').textContent=String(vs.filter(v=>!['MANUTENCAO','MANUTENÇÃO','INDISPONIVEL','INDISPONÍVEL','BAIXADA','INATIVA'].includes(String(v.situacao_operacional||v.status||'ATIVA').toUpperCase())).length);
-}
 function renderCentralPendencias(){
   const host=$('pendenciasLista');if(!host)return;
   const finais=new Set(['APROVADA','RECUSADA','REPROVADA','NEGADA','CANCELADA','CONCLUIDA']);
