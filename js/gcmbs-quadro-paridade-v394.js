@@ -48,6 +48,7 @@
    list.style.maxHeight='min(64vh,620px)';
    list.style.overflowY='auto';
    back.classList.remove('hidden');
+   q('#quadroModalFechar')?.focus?.();
    return {back,meta,list};
  }
  function line(parent,tag,value,cls){
@@ -243,6 +244,11 @@
      empty(ctx.list,'Não foi possível consultar este indicador: '+clean(e?.message||e));
    }
  }
+ document.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&!q('#quadroModal')?.classList.contains('hidden')){
+     q('#quadroModal')?.classList.add('hidden');
+   }
+ },true);
  document.addEventListener('click',e=>{
    const t=e.target;
    const btn=t?.closest?.('.gc118-main button.gc118-metric, .gc118-main button.gc118-bar-col');
