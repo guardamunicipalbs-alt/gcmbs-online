@@ -1,0 +1,199 @@
+/* GCMBS ONLINE V381 — Quadro em tela unica, referência Desktop 23/11/2026.
+   Escopo limitado à tela inicial, somente apresentação. Sem alterações de dados ou Modelo B.
+   Em telas pequenas ou zoom elevado o painel continua rolável para preservar acesso. */
+@media (min-width:1100px) and (min-height:650px) {
+  html.gc118-exact #appTela > header{
+    height:50px!important;min-height:50px!important;
+    padding:4px 14px!important;align-items:center!important;
+    box-sizing:border-box!important;
+  }
+  html.gc118-exact #appTela > header .brand-head{
+    padding:0!important;margin:0!important;
+  }
+  html.gc118-exact #appTela > header .brand-head h1{font-size:15px!important}
+  html.gc118-exact #appTela > header .brand-head p{font-size:10px!important}
+  html.gc118-exact #appTela > header .brand-head img{height:32px!important;width:32px!important}
+  html.gc118-exact #appTela > header .header-user button{
+    min-height:32px!important;padding:4px 12px!important;font-size:12px!important;
+  }
+  html.gc118-exact #appTela main{
+    max-width:none!important;
+    padding:50px 0 0!important;
+    height:100dvh!important;
+    min-height:0!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+  html.gc118-exact #appTela main > section[data-view="inicio"].gc118-home{
+    display:block!important;
+    height:calc(100dvh - 50px)!important;
+    max-height:calc(100dvh - 50px)!important;
+    overflow:hidden!important;
+    padding:0!important;margin:0!important;
+  }
+  html.gc118-exact #appTela main section[data-view="inicio"] .gc118-main{
+    box-sizing:border-box!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-rows:var(--gc381-banner) var(--gc381-toolbar) var(--gc381-effective) var(--gc381-fleet) minmax(0,1fr) 19px!important;
+    --gc381-banner:clamp(114px,20dvh,151px);
+    --gc381-toolbar:42px;
+    --gc381-effective:clamp(97px,14dvh,111px);
+    --gc381-fleet:clamp(97px,14dvh,111px);
+    width:100%!important;
+    max-width:none!important;
+    height:100%!important;
+    min-height:0!important;
+    padding:8px 12px 5px!important;
+    margin:0!important;
+    row-gap:7px!important;
+    column-gap:10px!important;
+    align-items:stretch!important;
+  }
+  html.gc118-exact #appTela .gc118-main>.gc118-hero{
+    grid-column:1/-1!important;grid-row:1!important;
+    height:100%!important;min-height:0!important;
+    margin:0!important;border-radius:15px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-hero-copy{
+    padding:clamp(9px,1.8dvh,18px) 24px!important;
+    max-width:55%!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-hero h2{
+    font-size:clamp(23px,3dvh,33px)!important;
+    margin:4px 0 5px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-hero p{
+    font-size:clamp(10px,1.45dvh,13px)!important;
+    line-height:1.28!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-gold{margin:7px 0 4px!important;height:3px!important}
+  html.gc118-exact #appTela .gc118-main>.gc118-top{
+    grid-row:2!important;grid-column:1!important;
+    display:flex!important;align-items:center!important;
+    min-height:0!important;margin:0!important;padding:0 4px!important;
+    gap:9px!important;
+  }
+  html.gc118-exact #appTela .gc118-main>.gc118-controls{
+    grid-row:2!important;grid-column:2!important;
+    margin:0!important;padding:0!important;align-self:center!important;
+    align-items:center!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-title h1{
+    font-size:19px!important;margin:0!important;line-height:1.1!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-title p{display:none!important}
+  html.gc118-exact #appTela .gc118-main .gc118-date{
+    height:34px!important;min-height:34px!important;width:165px!important;
+    min-width:165px!important;font-size:12px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-section{
+    display:flex!important;flex-direction:column!important;
+    min-height:0!important;overflow:hidden!important;
+    padding:8px 10px!important;margin:0!important;
+    border-radius:13px!important;
+  }
+  html.gc118-exact #appTela .gc118-main>.gc118-section:nth-of-type(2){
+    grid-column:1/-1!important;grid-row:3!important;
+  }
+  html.gc118-exact #appTela .gc118-main>.gc118-section:nth-of-type(3){
+    grid-column:1/-1!important;grid-row:4!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-section-head{
+    height:24px!important;flex:none!important;
+    margin:0 0 5px!important;align-items:center!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-section-head strong{
+    font-size:15px!important;line-height:1.1!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-section-head span{
+    font-size:10px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-grid{
+    min-height:0!important;flex:1!important;align-items:stretch!important;
+    gap:9px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-grid.effective{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-grid.fleet{
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-metric{
+    min-height:0!important;height:100%!important;max-height:none!important;
+    padding:6px 9px 6px 47px!important;
+    border-radius:10px!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    column-gap:6px!important;row-gap:1px!important;
+    align-items:center!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-metric-icon{
+    width:27px!important;height:27px!important;left:10px!important;
+    font-size:16px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-metric-label{
+    font-size:12px!important;line-height:1.08!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-metric small{
+    font-size:10px!important;line-height:1.08!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-metric-value{
+    font-size:23px!important;line-height:1!important;
+  }
+  html.gc118-exact #appTela .gc118-main>.gc118-bottom{
+    grid-row:5!important;grid-column:1/-1!important;
+    height:100%!important;min-height:0!important;
+    margin:0!important;padding:0!important;
+    display:block!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-chart{
+    box-sizing:border-box!important;
+    display:flex!important;flex-direction:column!important;
+    height:100%!important;min-height:0!important;overflow:hidden!important;
+    padding:8px 12px 6px!important;border-radius:13px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-bars{
+    box-sizing:border-box!important;
+    flex:1!important;min-height:0!important;
+    width:100%!important;height:auto!important;
+    padding:7px 8px 2px!important;gap:8px!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-bar-col{
+    height:100%!important;min-height:0!important;gap:2px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-bar-col b{font-size:13px!important}
+  html.gc118-exact #appTela .gc118-main .gc118-bar-col small{font-size:10px!important}
+  html.gc118-exact #appTela .gc118-main .gc118-bar{
+    max-height:calc(100% - 36px)!important;width:min(50px,65%)!important;
+  }
+  html.gc118-exact #appTela .gc118-main>.gc381-footer{
+    display:flex!important;align-items:center!important;
+    grid-row:6!important;grid-column:1/-1!important;
+    min-height:0!important;
+    font-size:10px!important;color:#66839c!important;
+    border-radius:7px!important;padding:0 9px!important;
+    background:#f9fcff!important;
+    white-space:nowrap!important;
+  }
+  html.gc118-exact #appTela .gc118-main #gc365-status{
+    font-size:11px!important;line-height:1.15!important;
+    max-width:390px!important;margin:0!important;
+  }
+}
+@media (min-width:1100px) and (min-height:650px) and (max-height:765px){
+  html.gc118-exact #appTela main section[data-view="inicio"] .gc118-main{
+    --gc381-banner:112px;--gc381-toolbar:34px;
+    --gc381-effective:91px;--gc381-fleet:91px;row-gap:5px!important;
+    padding-top:5px!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-hero-copy{padding:9px 19px!important}
+  html.gc118-exact #appTela .gc118-main .gc118-hero h2{font-size:24px!important}
+  html.gc118-exact #appTela .gc118-main .gc118-section-head{height:20px!important;margin-bottom:3px!important}
+  html.gc118-exact #appTela .gc118-main .gc118-section{padding:5px 9px!important}
+  html.gc118-exact #appTela .gc118-main .gc118-chart{padding:5px 10px 4px!important}
+}
+@media(max-width:1099px), (max-height:649px){
+  /* Para janelas estreitas/baixas, nao cortar informacoes nem bloquear a rolagem. */
+  html.gc118-exact #appTela main{overflow:visible!important}
+}
