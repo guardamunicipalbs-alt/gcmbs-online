@@ -179,6 +179,7 @@ function fecharMenu(){$('mainNav')?.classList.remove('open');$('navBackdrop')?.c
 function abrirMenu(){$('mainNav')?.classList.add('open');$('navBackdrop')?.classList.remove('hidden')}
 async function abrirModuloPrincipal(modulo){
   modulo=canonicalModule(modulo);
+  if(modulo!=='folha_pagamento')window.gcmbsFecharFolhasFechadas?.();
   if(modulo==='folha_pagamento'){
     if(!temAcesso(modulo)){alert('Modulo sem permissao.');return;}
     if(typeof window.gcmbsAbrirFolhasFechadas==='function')return window.gcmbsAbrirFolhasFechadas();
@@ -1409,6 +1410,7 @@ function configurarCabecalhoModulo(modulo){
 }
 async function abrirModuloOnline(modulo){
   modulo=canonicalModule(modulo);
+  if(modulo!=='folha_pagamento')window.gcmbsFecharFolhasFechadas?.();
   if(!temAcesso(modulo))throw new Error('Modulo exclusivo do Desktop ou nao autorizado.');
   if(modulo==='folha_pagamento')return window.gcmbsAbrirFolhasFechadas?.();
   // HF10 R13:
