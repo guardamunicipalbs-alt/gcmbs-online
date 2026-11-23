@@ -13,8 +13,11 @@ let opening=false,currentKey='',rebuilding=false;
 
 function pageTitle(){return txt($('#onlineTitulo'))||txt($('#onlineModuloTitulo'))||''}
 function active(){
+  const page=$('section[data-view="online"]');
   const card=$('#onlineRegistrosCard');
-  return !!card&&!card.classList.contains('hidden')&&CAD.test(pageTitle());
+  // V388: nunca manter editor inline de um modulo ao navegar para outro.
+  return !!page&&!page.classList.contains('hidden')&&
+    !!card&&!card.classList.contains('hidden')&&CAD.test(pageTitle());
 }
 function label(){
   const t=pageTitle();
@@ -184,7 +187,15 @@ function version(){
 }
 function tick(){
   version();
-  if(!active()){document.body.classList.remove('gc107-cadastro');currentKey='';return}
+  if(!active()){
+    document.body.classList.remove('gc107-cadastro');
+    if(currentKey){
+      const dlg=$('#onlineEditor');
+      if(dlg?.hasAttribute('open'))dlg.removeAttribute('open');
+    }
+    currentKey='';
+    return;
+  }
   document.body.classList.add('gc107-cadastro');
   cleanLegacy();
   patchDialog();
