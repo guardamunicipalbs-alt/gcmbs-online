@@ -3,7 +3,15 @@ import {MODULES} from './communication-contract.js?v=100250';
 // v74: o runtime canônico não carrega hotfixes opcionais fora do manifesto.
 // V219: confirmação isolada da cessão 321 pelo GCM titular autenticado.
 
-export const MODULOS_GCMBS = MODULES.map(m=>({...m,nome:m.name,descricao:m.description}));
+// V368: APENAS O ONLINE. O contrato de sincronizacao continua integral e imutavel.
+// Modulos abaixo permanecem no Desktop e no transporte, mas nao entram no bundle de navegacao.
+export const ONLINE_DESKTOP_ONLY = new Set([
+  'cadastro_guardas','equipes','postos','gerador_escala','escalas','tipos_escalas',
+  'escala_extra_manual','viaturas','relatorios_frota','controle_acesso','cautelas'
+]);
+export const MODULOS_GCMBS = MODULES
+  .filter(m=>!ONLINE_DESKTOP_ONLY.has(m.id))
+  .map(m=>({...m,nome:m.name,descricao:m.description}));
 
 export function normalizarPerfil(session={}){
   const role=String(session.role||session.perfil||'').trim().toLowerCase();
