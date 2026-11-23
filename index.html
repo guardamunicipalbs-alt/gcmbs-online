@@ -90,20 +90,6 @@ a[data-go="avisos"],
   <section class="dashboard-sector"><h2>Postos</h2><div class="dashboard-cards one"><button class="dashboard-card" data-quadro-detail="postos.cobertos" data-title="Postos cobertos no dia"><span>Postos cobertos no dia</span><b id="qPostos">0</b><small>Ver postos, turnos e GCMs</small></button></div><div id="qAviso" class="notice">Carregando Quadro Operacional...</div></section>
   <section id="quadroAvisosHome" class="dashboard-sector"><h2>Quadro de Avisos</h2><div class="card"><div id="avisosHomeLista" class="notice-board-list"></div><button class="mini" type="button" data-go="avisos">Ver todos os avisos</button></div></section>
 </section>
-<section data-view="escala" class="hidden">
-  <div class="desktop-page-head"><div><h1 id="escalaTitulo">Relatório de Escala</h1><p id="escalaSubtitulo">Mesma visão por posto e horário utilizada no Desktop.</p></div></div>
-  <div id="escalaComandoAviso" class="card notice hidden"><strong>Gerenciador de Escala — Comando</strong><br>Toque em <b>Alterar</b> ao lado de um GCM para trocar o posto ou substituir o servidor. Alterações em datas anteriores são bloqueadas e cada ajuste fica registrado para auditoria.</div>
-  <div class="card report-filters">
-    <label>Data inicial<input id="escalaIni" type="date"></label><label>Data final<input id="escalaFim" type="date"></label>
-    <label>GCM<select id="escalaGcm"><option value="">Todos os GCMs</option></select></label>
-    <label>Posto<select id="escalaPosto"><option value="">Todos os postos</option></select></label>
-    <label>Horário<select id="escalaHorario"><option value="">Todos os horários</option><option>07:00 às 17:00</option><option>07:00 às 19:00</option><option>19:00 às 07:00</option></select></label>
-    <button id="escalaGerar" class="primary" type="button">Gerar relatório</button><button id="escalaLimpar" class="secondary" type="button">Limpar filtros</button><button id="escalaImprimir" class="secondary" type="button">Imprimir compacto</button>
-  </div>
-  <div class="card"><div class="report-summary"><strong id="escalaInfo">Informe o período para consultar.</strong><span id="escalaFiltroAtivo"></span></div><h2>Escala — visão por posto e horário</h2><p class="muted">As datas ficam na horizontal. Em telas menores, deslize a tabela lateralmente.</p><div class="matrix-wrap"><table class="report-matrix"><thead><tr id="cabecalhoMatrizMobile"></tr></thead><tbody id="resultadoMatrizMobile"></tbody></table></div></div>
-</section>
-
-
 <section data-view="relatorios" class="hidden">
   <div class="desktop-page-head"><div><h1>Relatórios</h1><p>Consulta institucional própria, alimentada exclusivamente pela réplica integral do Desktop.</p></div><div class="toolbar"><button id="relatoriosAtualizar" class="secondary" type="button">↻ Atualizar</button><button id="relatoriosImprimir" class="secondary" type="button">Imprimir</button></div></div>
   <div class="card report-filters"><label>Data inicial<input id="relatoriosIni" type="date"></label><label>Data final<input id="relatoriosFim" type="date"></label><label>GCM<select id="relatoriosGcm"><option value="">Todos os GCMs</option></select></label><label>Posto<select id="relatoriosPosto"><option value="">Todos os postos</option></select></label><button id="relatoriosGerar" class="primary" type="button">Gerar relatório</button></div>
