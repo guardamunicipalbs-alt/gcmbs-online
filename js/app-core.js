@@ -153,6 +153,12 @@ const NAV_ICONS=Object.fromEntries(MODULOS_GCMBS.map(m=>[m.id,m.icon||'•']));
 
 
 function setView(id){
+  // V388: a navegacao nao pode preservar editor de um modulo anterior.
+  if(id!=='online'){
+    const dlg=document.getElementById('onlineEditor');
+    if(dlg?.hasAttribute('open'))dlg.removeAttribute('open');
+    document.body.classList.remove('gc107-cadastro');
+  }
   document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('hidden',x.dataset.view!==id));
   document.querySelectorAll('#mainNav [data-go]').forEach(x=>x.classList.toggle('active',x.dataset.go===id));
   fecharMenu();
