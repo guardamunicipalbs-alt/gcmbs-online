@@ -22,7 +22,7 @@ const sourceCard=id=>{
 };
 
 let refsCache={postos:null,lastAttempt:0};
-let extrasCache={date:'',value:0,items:[],busy:false};
+let extrasCache={date:'',value:0,a:0,b:0,items:[],busy:false};
 
 function greeting(){
   const h=new Date().getHours();
@@ -97,16 +97,16 @@ async function loadExtras(date){
       ...(Array.isArray(b?.extrasB)?b.extrasB:[])
     ];
     const keys=new Set(all.map(x=>String(x?.guarda_id??x?.id??x?.nome??JSON.stringify(x))));
-    extrasCache={date,value:keys.size,items:all,busy:false};
+    extrasCache={date,value:keys.size,a:(b?.extrasA||[]).length,b:(b?.extrasB||[]).length,items:all,busy:false};
     return keys.size;
   }catch(e){
     console.warn('[GCMBS V118] extras por evento:',e?.message||e);
-    extrasCache={date,value:0,items:[],busy:false};
+    extrasCache={date,value:0,a:0,b:0,items:[],busy:false};
     return 0;
   }
 }
 
-function gc118AgruparExtrasEvento(body){
+function gc118AgruparExtrasEvento(body,turnoFiltro=''){
   const grupos=new Map();
   const adicionar=(turno,item)=>{
     const nome=text(item?.nome||item?.nome_guerra||item?.guarda_nome||'GCM');
@@ -119,28 +119,28 @@ function gc118AgruparExtrasEvento(body){
     const g=grupos.get(chave);
     if(!g.detalhes.includes(detalhe))g.detalhes.push(detalhe);
   };
-  for(const x of Array.isArray(body?.extrasA)?body.extrasA:[])adicionar('A',x);
-  for(const x of Array.isArray(body?.extrasB)?body.extrasB:[])adicionar('B',x);
+  if(!turnoFiltro||turnoFiltro==='A')for(const x of Array.isArray(body?.extrasA)?body.extrasA:[])adicionar('A',x);
+  if(!turnoFiltro||turnoFiltro==='B')for(const x of Array.isArray(body?.extrasB)?body.extrasB:[])adicionar('B',x);
   return [...grupos.values()].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
 }
 
-async function abrirExtrasEvento(data){
+async function abrirExtrasEvento(data,turno=''){
   const modal=document.getElementById('quadroModal');
   const title=document.getElementById('quadroModalTitulo');
   const meta=document.getElementById('quadroModalMeta');
   const list=document.getElementById('quadroModalLista');
   if(!modal||!title||!meta||!list)return;
 
-  title.textContent='Extras por Evento';
+  title.textContent=turno?'Extras — Serviço '+turno:'Escalas Extras';
   meta.textContent='Consultando GCMs escalados...';
   list.innerHTML='<div class="empty">Carregando serviços extras por evento...</div>';
   modal.classList.remove('hidden');
 
   try{
     const body=await apiExtrasEvento(data);
-    const grupos=gc118AgruparExtrasEvento(body);
+    const grupos=gc118AgruparExtrasEvento(body,turno);
     const designacoes=(Array.isArray(body?.extrasA)?body.extrasA.length:0)+(Array.isArray(body?.extrasB)?body.extrasB.length:0);
-    title.textContent='Extras por Evento';
+    title.textContent=turno?'Extras — Serviço '+turno:'Escalas Extras';
     meta.textContent=`Data de referência: ${data?data.split('-').reverse().join('/'):'-'} · ${grupos.length} GCM(s) · ${designacoes} designação(ões) por turno`;
     list.innerHTML=grupos.length
       ?grupos.map(g=>`<div class="item"><strong>${esc(g.nome)}</strong><span>${g.detalhes.map(esc).join('<br>')}</span></div>`).join('')
@@ -150,7 +150,7 @@ async function abrirExtrasEvento(data){
       ...(Array.isArray(body?.extrasA)?body.extrasA:[]),
       ...(Array.isArray(body?.extrasB)?body.extrasB:[])
     ];
-    extrasCache={date:data,value:grupos.length,items:all,busy:false};
+    extrasCache={date:data,value:new Set(all.map(x=>String(x.guarda_id||x.nome))).size,a:(body?.extrasA||[]).length,b:(body?.extrasB||[]).length,items:all,busy:false};
     const home=$('section[data-view="inicio"]');
     const main=home?$('.gc118-main',home):null;
     if(main)renderBars(main,grupos.length);
@@ -289,7 +289,8 @@ function renderBars(main,extras){
   const data=[
     ['Serviço A',n('qServicoA'),'','qServicoA'],
     ['Serviço B',n('qServicoB'),'green','qServicoB'],
-    ['Extras',extras,'purple','__extras__'],
+    ['Extra A',extrasCache.a||0,'purple','__extra_a__'],
+    ['Extra B',extrasCache.b||0,'purple','__extra_b__'],
     ['Faltas',n('qFaltas'),'red','qFaltas']
   ];
   const max=Math.max(1,...data.map(x=>x[1]));
@@ -305,9 +306,9 @@ function renderBars(main,extras){
     const fire=e=>{
       e?.preventDefault?.();
       e?.stopPropagation?.();
-      if(el.dataset.source==='__extras__'){
+      if(['__extra_a__','__extra_b__'].includes(el.dataset.source)){
         const data=$('.gc118-date',main)?.value||document.getElementById('quadroData')?.value||'';
-        abrirExtrasEvento(data);
+        abrirExtrasEvento(data,el.dataset.source==='__extra_a__'?'A':'B');
       }else{
         clickSource(el.dataset.source);
       }
