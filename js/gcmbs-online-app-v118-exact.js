@@ -30,7 +30,7 @@ const sourceCard=id=>{
 };
 
 let refsCache={postos:null,lastAttempt:0};
-let extrasCache={date:'',value:0,a:0,b:0,items:[],busy:false};
+let extrasCache={date:'',value:0,a:0,b:0,items:[],busy:false,error:''};
 const contarGcmsExtras=items=>new Set((Array.isArray(items)?items:[]).map(x=>Number(x.guarda_id)>0?'ID:'+Number(x.guarda_id):'NOME:'+norm(x.nome))).size;
 
 function greeting(){
@@ -106,11 +106,11 @@ async function loadExtras(date){
       ...(Array.isArray(b?.extrasB)?b.extrasB:[])
     ];
     const keys=new Set(all.map(x=>String(x?.guarda_id??x?.id??x?.nome??JSON.stringify(x))));
-    extrasCache={date,value:keys.size,a:contarGcmsExtras(b?.extrasA),b:contarGcmsExtras(b?.extrasB),items:all,busy:false};
+    extrasCache={date,value:keys.size,a:contarGcmsExtras(b?.extrasA),b:contarGcmsExtras(b?.extrasB),items:all,busy:false,error:''};
     return keys.size;
   }catch(e){
     console.warn('[GCMBS V118] extras por evento:',e?.message||e);
-    extrasCache={date,value:0,a:0,b:0,items:[],busy:false};
+    extrasCache={date,value:0,a:0,b:0,items:[],busy:false,error:String(e?.message||e)};
     return 0;
   }
 }
@@ -148,18 +148,18 @@ async function abrirExtrasEvento(data,turno=''){
   try{
     const body=await apiExtrasEvento(data);
     const grupos=gc118AgruparExtrasEvento(body,turno);
-    const designacoes=(Array.isArray(body?.extrasA)?body.extrasA.length:0)+(Array.isArray(body?.extrasB)?body.extrasB.length:0);
+    const designacoes=turno==='A'?(Array.isArray(body?.extrasA)?body.extrasA.length:0):turno==='B'?(Array.isArray(body?.extrasB)?body.extrasB.length:0):((Array.isArray(body?.extrasA)?body.extrasA.length:0)+(Array.isArray(body?.extrasB)?body.extrasB.length:0));
     title.textContent=turno?'Extras — Serviço '+turno:'Escalas Extras';
     meta.textContent=`Data de referência: ${data?data.split('-').reverse().join('/'):'-'} · ${grupos.length} GCM(s) · ${designacoes} designação(ões) por turno`;
     list.innerHTML=grupos.length
-      ?grupos.map(g=>`<div class="item"><strong>${esc(g.nome)}</strong><span>${g.detalhes.map(esc).join('<br>')}</span></div>`).join('')
-      :'<div class="empty">Nenhum GCM está escalado em serviço extra por evento nesta data.</div>';
+      ?grupos.map(g=>`<div class="item"><strong>${esc(g.nome)}</strong><span>${g.detalhes.map(esc).join(' · ')}</span></div>`).join('')
+      :'<div class="empty">Nenhum serviço extra consta no Online para este turno e data. A sincronização com o Desktop pode estar pendente.</div>';
 
     const all=[
       ...(Array.isArray(body?.extrasA)?body.extrasA:[]),
       ...(Array.isArray(body?.extrasB)?body.extrasB:[])
     ];
-    extrasCache={date:data,value:new Set(all.map(x=>String(x.guarda_id||x.nome))).size,a:contarGcmsExtras(body?.extrasA),b:contarGcmsExtras(body?.extrasB),items:all,busy:false};
+    extrasCache={date:data,value:new Set(all.map(x=>String(x.guarda_id||x.nome))).size,a:contarGcmsExtras(body?.extrasA),b:contarGcmsExtras(body?.extrasB),items:all,busy:false,error:''};
     const home=$('section[data-view="inicio"]');
     const main=home?$('.gc118-main',home):null;
     if(main)renderBars(main,grupos.length);
@@ -371,20 +371,20 @@ function renderBars(main,extras){
   const data=[
     ['Serviço A',n('qServicoA'),'','qServicoA'],
     ['Serviço B',n('qServicoB'),'green','qServicoB'],
-    ['Extra A',extrasCache.a||0,'purple','__extra_a__'],
-    ['Extra B',extrasCache.b||0,'purple','__extra_b__'],
+    ['Extra A',extrasCache.error?'—':(extrasCache.a||0),'purple','__extra_a__'],
+    ['Extra B',extrasCache.error?'—':(extrasCache.b||0),'purple','__extra_b__'],
     ['Faltas',n('qFaltas'),'red','qFaltas']
   ];
-  const max=Math.max(1,...data.map(x=>x[1]));
+  const max=Math.max(1,...data.map(x=>Number(x[1])||0));
   const box=$('.gc118-bars',main);
-  const sig=data.map(x=>x[0]+':'+x[1]).join('|');
+  const sig=data.map(x=>x[0]+':'+x[1]).join('|')+'|'+(extrasCache.error||'');
   if(box.dataset.sig===sig)return;
   box.dataset.sig=sig;
   box.innerHTML=data.map(([label,v,cls,id])=>`
-    <div class="gc118-bar-col" role="button" tabindex="0" data-source="${esc(id)}">
-      <b>${v}</b><span class="gc118-bar ${cls}" style="height:${v?Math.max(8,Math.round(v/max*108)):4}px"></span><small>${esc(label)}</small>
-    </div>`).join('');
-  $$('[data-source]',box).forEach(el=>{
+    <button type="button" class="gc118-bar-col" data-source="${esc(id)}" title="Abrir ${esc(label)}" aria-label="Consultar ${esc(label)}: ${v} GCM(s)">
+      <b>${v}</b><span class="gc118-bar ${cls}" style="height:${Number(v)>0?Math.max(8,Math.round(Number(v)/max*108)):4}px"></span><small>${esc(label)}</small>
+    </button>`).join('');
+  $('[data-source]',box).forEach(el=>{
     const fire=e=>{
       e?.preventDefault?.();
       e?.stopPropagation?.();
@@ -395,8 +395,7 @@ function renderBars(main,extras){
         clickSource(el.dataset.source);
       }
     };
-    el.onclick=fire;
-    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){fire(e)}};
+    el.addEventListener('click',fire);
   });
 }
 
