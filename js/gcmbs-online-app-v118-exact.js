@@ -172,29 +172,49 @@ async function abrirExtrasEvento(data,turno=''){
 function clickSource(id){
   try{sourceCard(id)?.click()}catch(_){}
 }
-function clickModule(moduleId,label){
-  try{
-    const b=document.querySelector(`#mainNav [data-module="${moduleId}"]`);
-    if(b)return b.click();
-    const candidates=$$('#mainNav button');
-    const hit=candidates.find(x=>norm(x.textContent).includes(norm(label)));
-    if(hit)hit.click();
-  }catch(_){}
+async function abrirRelacaoSimples(title,records,show){
+ const modal=document.getElementById('quadroModal'),head=document.getElementById('quadroModalTitulo');
+ const meta=document.getElementById('quadroModalMeta'),list=document.getElementById('quadroModalLista');
+ if(!modal||!head||!meta||!list)return;
+ head.textContent=title;meta.textContent=records.length+' registro(s) · consulta somente leitura';
+ list.replaceChildren();
+ for(const x of records){
+  const item=document.createElement('div');item.className='item';
+  const name=document.createElement('strong');name.textContent=String(show(x).name||'');
+  const info=document.createElement('span');info.textContent=String(show(x).details||'');
+  item.append(name,info);list.appendChild(item);
+ }
+ if(!records.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='Nenhum registro disponível.';list.appendChild(empty);}
+ modal.classList.remove('hidden');
+}
+async function abrirPostosCadastrados(){
+ try{
+  const response=await api('references'),ref=response.references||response;
+  const records=Array.isArray(ref.postos)?ref.postos:[];
+  await abrirRelacaoSimples('Postos Operacionais — consulta',records,x=>({name:x.nome||x.descricao||'Posto',details:['Prioridade '+(x.prioridade??'-'),'Mínimo '+(x.quantidade_minima??x.minimo??'-'),'Máximo '+(x.quantidade_maxima??x.maximo??'-')].join(' · ')}));
+ }catch(e){alert('Não foi possível consultar os postos: '+(e?.message||e));}
+}
+async function abrirDetalhesFrota(){
+ try{
+  const response=await api('entity_list',{entity:'viaturas',limit:150,offset:0});
+  const records=(Array.isArray(response.records)?response.records:[]).map(x=>x.data||{});
+  await abrirRelacaoSimples('Detalhes da Frota — consulta',records,x=>({name:[x.prefixo,x.modelo].filter(Boolean).join(' · '),details:['Placa '+(x.placa||'-'),'Situação '+(x.status||'-'),'Última troca de óleo '+(x.km_ultima_troca_oleo??'-')+' km'].join(' · ')}));
+ }catch(e){alert('Não foi possível consultar a frota: '+(e?.message||e));}
+}
+function createMetric(label,id,sub,cls=''){
+ const b=document.createElement('button');
+ b.type='button';
+ b.className=`gc118-metric ${cls}`.trim();
+ b.dataset.gc118Id=id||'';
+ b.innerHTML=`<span class="gc118-metric-label">${esc(label)}</span><b class="gc118-metric-value">0</b><small>${esc(sub)}</small>`;
+ b.addEventListener('click',()=>{
+   if(id==='__postos_total__')return abrirPostosCadastrados();
+   if(id==='__detalhes_frota__')return abrirDetalhesFrota();
+   if(id)return clickSource(id);
+ });
+ return b;
 }
 
-function createMetric(label,id,sub,cls='',moduleId=''){
-  const b=document.createElement('button');
-  b.type='button';
-  b.className=`gc118-metric ${cls}`.trim();
-  b.dataset.gc118Id=id||'';
-  b.dataset.gc118Module=moduleId||'';
-  b.innerHTML=`<span class="gc118-metric-label">${esc(label)}</span><b class="gc118-metric-value">0</b><small>${esc(sub)}</small>`;
-  b.addEventListener('click',()=>{
-    if(moduleId)return clickModule(moduleId,label);
-    if(id)return clickSource(id);
-  });
-  return b;
-}
 
 function makeStructure(home){
   let stash=$('.gc118-source-stash',home);
@@ -253,7 +273,7 @@ function makeStructure(home){
     ['GCM ativos','qAtivos','Efetivo cadastrado','', ''],
     ['Afastados','qAfastados','Fora do serviço','red',''],
     ['Em férias','qFerias','Afastamento programado','gold',''],
-    ['Postos cadastrados','__postos_total__','Configurações operacionais','green','postos']
+    ['Postos cadastrados','__postos_total__','Configurações operacionais','green','']
   ].forEach(d=>eff.appendChild(createMetric(...d)));
 
   const fleet=$('.gc118-grid.fleet',main);
@@ -261,13 +281,10 @@ function makeStructure(home){
     ['Frota total','qViaturasTotal','Viaturas cadastradas','',''],
     ['Disponíveis','qViaturasDisponiveis','Prontas para emprego','green',''],
     ['Em uso','qViaturasUso','Alocadas na operação','gold',''],
-    ['Indisponíveis','qViaturasBaixadas','Fora de operação','orange',''],
     ['Em manutenção','qViaturasManut','Acompanhamento da frota','red','']
   ].forEach(d=>fleet.appendChild(createMetric(...d)));
-  // Detalhes da Frota reutiliza a relacao operacional de viaturas, sem abrir Cadastro.
-  const details=createMetric('Detalhes da Frota','qViaturasTotal','Consultar situacao das viaturas','green','');
-  details.dataset.gc118Id='__detalhes_frota__';
-  details.addEventListener('click',e=>{e.stopImmediatePropagation();clickSource('qViaturasTotal');},true);
+  // O card so consulta detalhes; Cadastro de Viaturas continua exclusivo do Desktop.
+  const details=createMetric('Detalhes da Frota','__detalhes_frota__','Óleo, KM e licenciamento','orange');
   fleet.appendChild(details);
 
 
