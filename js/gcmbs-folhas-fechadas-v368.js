@@ -14,40 +14,147 @@ async function call(action,competencia=''){
  if(!r.ok||!data.success)throw Error(data.message||'Falha na consulta da Folha');
  return data;
 }
-function text(ctx,s,x,y,max=500){ctx.fillText(String(s??''),x,y,max);}
-function sheet(snapshot){
- const rows=snapshot.linhas||[];
- const w=1460,lineHeight=44,top=194;
- const canvas=document.createElement('canvas');
- canvas.width=w;canvas.height=Math.max(480,top+Math.max(1,rows.length)*lineHeight+135);
- const c=canvas.getContext('2d');
- c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);
- c.fillStyle='#122946';c.fillRect(0,0,w,14);
- c.font='700 26px Arial, sans-serif';text(c,'GUARDA CIVIL MUNICIPAL DE BREJO SANTO',38,58,w-60);
- c.font='20px Arial, sans-serif';text(c,'Folha de Pagamento Fechada — '+String(snapshot.competencia||''),38,97,w-60);
- c.font='15px Arial, sans-serif';text(c,'Documento visual gerado a partir do snapshot fechado no Desktop em '+String(snapshot.fechada_em||''),38,130,w-60);
- c.font='bold 17px Arial, sans-serif';
- c.fillStyle='#e6eef8';c.fillRect(28,top-36,w-56,40);
- c.fillStyle='#122946';
- const xs=[40,500,662,812,962,1112,1280];
- const head=['GCM','Horas 50%','Horas 100%','Valor 50%','Valor 100%','Total','Faltas'];
- head.forEach((h,i)=>text(c,h,xs[i],top-11,i===0?445:145));
- rows.forEach((r,i)=>{
-  let y=top+i*lineHeight;
-  c.fillStyle=i%2?'#fff':'#f4f7fb';c.fillRect(28,y,w-56,lineHeight);
-  c.strokeStyle='#dbe5f0';c.beginPath();c.moveTo(28,y+lineHeight);c.lineTo(w-28,y+lineHeight);c.stroke();
-  c.fillStyle='#1a2d49';c.font=i===0?'bold 16px Arial':'16px Arial';
-  const vals=[r.nome,r.horas50,r.horas100,money(r.valor50),money(r.valor100),money(r.valorTotal),r.faltas];
-  vals.forEach((v,j)=>text(c,v,xs[j],y+28,j===0?445:145));
+
+/* V389: representar o snapshot fechado COMPLETO em paginas PNG;
+   os campos sao exibidos sem recalculo e sem edicao. */
+const number=n=>Number(n??0).toLocaleString('pt-BR',{maximumFractionDigits:2});
+const safely=s=>String(s??'').replace(/[\u0000-\u001f]/g,' ').slice(0,1000);
+const PAGE_W=1560,PAGE_H=1150,MAX_ROWS=18;
+function paintPage(folha,part,cols,rows,numberPage){
+ const can=document.createElement('canvas');
+ can.width=PAGE_W;can.height=PAGE_H;
+ const c=can.getContext('2d');
+ c.fillStyle='#fff';c.fillRect(0,0,PAGE_W,PAGE_H);
+ c.fillStyle='#0d3769';c.fillRect(0,0,PAGE_W,12);
+ c.fillStyle='#102d51';c.font='bold 26px Arial';
+ c.fillText('GUARDA CIVIL MUNICIPAL DE BREJO SANTO',34,58);
+ c.font='bold 19px Arial';
+ c.fillText('Folha de Pagamento FECHADA — '+safely(folha.competencia),34,96);
+ c.font='15px Arial';
+ c.fillText('Página '+numberPage+' • '+part+' • Fechamento: '+safely(folha.fechada_em),34,123,1490);
+ c.fillStyle='#e7f1fa';c.fillRect(28,152,1504,48);
+ let x=38;
+ const size=cols.reduce((v,k)=>v+k[1],0),factor=1490/size;
+ c.fillStyle='#183f65';c.font='bold 15px Arial';
+ cols.forEach(([head,width])=>{c.fillText(head,x,Math.round(180),width*factor-9);x+=width*factor});
+ const line=43,top=208;
+ rows.forEach((item,i)=>{
+  const y=top+i*line;
+  c.fillStyle=i%2?'#ffffff':'#f0f5fa';c.fillRect(28,y,1504,line);
+  c.fillStyle='#20344d';c.font='15px Arial';
+  let pos=38;
+  cols.forEach(([header,width,key,kind])=>{
+    const val=item?.[key],v=kind==='money'?money(val):kind==='number'?number(val):kind==='bool'?(val?'SIM':'NÃO'):safely(val);
+    c.fillText(v,pos,y+27,width*factor-9);pos+=width*factor;
+  });
+  c.strokeStyle='#e5eaf0';c.beginPath();c.moveTo(28,y+line);c.lineTo(1532,y+line);c.stroke();
  });
- const foot=top+Math.max(1,rows.length)*lineHeight+38;
- c.font='14px Arial';c.fillStyle='#64748b';
- text(c,'Representação de consulta, somente leitura — '+rows.length+' registro(s). Os valores são do fechamento gravado no Desktop.',38,foot,w-70);
- const img=document.createElement('img');
- img.src=canvas.toDataURL('image/png');img.alt='Imagem da Folha de Pagamento fechada — '+snapshot.competencia;
- img.style.cssText='width:100%;height:auto;border:1px solid #cbd5e1;border-radius:8px;background:white';
+ c.fillStyle='#64748b';c.font='14px Arial';
+ c.fillText('Reprodução para consulta do snapshot fechado — não substitui o documento original assinado.',34,1104,1490);
+ const img=document.createElement('img');img.src=can.toDataURL('image/png');
+ img.alt='Imagem '+part+' — página '+numberPage+' da competência '+folha.competencia;
+ img.style.cssText='width:100%;height:auto;border:1px solid #d4e1f0;border-radius:9px;background:#fff;display:block';
  return img;
 }
+function textPage(folha,title,lines,index){
+ const can=document.createElement('canvas');can.width=PAGE_W;can.height=PAGE_H;
+ const c=can.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,PAGE_W,PAGE_H);
+ c.fillStyle='#0d3769';c.fillRect(0,0,PAGE_W,12);
+ c.fillStyle='#132e4f';c.font='bold 27px Arial';c.fillText('GCMBS — '+title,34,60,1490);
+ c.font='17px Arial';c.fillText('Competência '+folha.competencia+' • Página '+index+' • Fechada em '+safely(folha.fechada_em),34,100,1490);
+ let y=150;c.font='17px Arial';
+ for(const line of lines){
+  const chunks=[];let rest=safely(line);
+  while(rest.length>140){let pos=rest.lastIndexOf(' ',140);if(pos<50)pos=140;chunks.push(rest.slice(0,pos));rest=rest.slice(pos).trim()}
+  chunks.push(rest||'—');
+  for(const chunk of chunks){if(y>1050)break;c.fillStyle='#273e59';c.fillText(chunk,40,y,1460);y+=27}
+  y+=8;
+  if(y>1050)break;
+ }
+ const img=document.createElement('img');img.src=can.toDataURL('image/png');
+ img.alt=title+' — página '+index;img.style.cssText='width:100%;height:auto;border:1px solid #d4e1f0;border-radius:9px;background:#fff;display:block';
+ return img;
+}
+function sheet(folha){
+ const wrap=document.createElement('div');wrap.style.cssText='display:grid;gap:16px;max-width:100%;min-width:0';
+ const status=document.createElement('p');status.textContent='Documentos de consulta: '+folha.quantidade+' registro(s) do fechamento. Valores preservados, sem recálculo.';wrap.appendChild(status);
+ if(folha.cabecalho_imagem){
+  const image=document.createElement('img');image.src=folha.cabecalho_imagem;
+  image.alt='Cabeçalho institucional salvo no fechamento';image.style.cssText='width:100%;max-height:200px;object-fit:contain;object-position:left;background:white;border:1px solid #e2e8f0';
+  wrap.appendChild(image);
+ }
+ const cols=[
+  ['Pagamento',[
+    ['GCM',280,'nome'],['50% (h)',125,'horas50','number'],['100% (h)',125,'horas100','number'],
+    ['Valor 50%',170,'valor50','money'],['Valor 100%',170,'valor100','money'],
+    ['Total',185,'valorTotal','money'],['Faltas',115,'faltas','number'],
+    ['FJ',100,'faltasJustificadas','number']
+  ]],
+  ['Apuração e Banco de Horas',[
+    ['GCM',250,'nome'],['Apur. 50%',130,'horasApuradas50','number'],
+    ['Apur. 100%',130,'horasApuradas100','number'],['Banco 50%',130,'horasBancoOperacional50','number'],
+    ['Banco 100%',130,'horasBancoOperacional100','number'],
+    ['Receb. 50%',130,'horasBancoRecebidas50','number'],['Receb. 100%',130,'horasBancoRecebidas100','number'],
+    ['Realizadas',130,'horasRealizadas','number'],['Pagáveis',130,'horasPagaveis','number']
+  ]],
+  ['Transportes e Excedentes',[
+    ['GCM',235,'nome'],['Transp. 50%',120,'horasTransportadas50','number'],
+    ['Transp. 100%',120,'horasTransportadas100','number'],
+    ['Limite 50%',120,'horasTransportadasLimite50','number'],
+    ['Limite 100%',120,'horasTransportadasLimite100','number'],
+    ['Exced. 50%',120,'excedente50','number'],['Exced. 100%',120,'excedente100','number'],
+    ['Destino',150,'transportadoPara'],['Destino limite',150,'transportadoLimitePara']
+  ]],
+  ['Situação e Arredondamentos',[
+    ['GCM',245,'nome'],['Situação',135,'status'],
+    ['Férias',85,'emFerias','bool'],['Afastado',95,'afastado','bool'],
+    ['Noturno',120,'adicionalNoturno'],
+    ['Ajuste 50%',130,'ajusteArredondamento50','number'],
+    ['Saldo 50%',125,'saldoArredondamento50','number'],
+    ['50% mês',120,'horas50Mes','number'],['100% mês',120,'horas100Mes','number']
+  ]]
+ ];
+ const rows=Array.isArray(folha.linhas)?folha.linhas:[];
+ let pageNo=0;
+ for(const [title,columns] of cols){
+  for(let i=0;i<Math.max(rows.length,1);i+=MAX_ROWS){
+   pageNo++;
+   const part=document.createElement('section');part.style.cssText='display:grid;gap:7px;min-width:0';
+   const h=document.createElement('h3');h.textContent=title+' — página '+(Math.floor(i/MAX_ROWS)+1);h.style.margin='8px 0';part.appendChild(h);
+   part.appendChild(paintPage(folha,title,columns,rows.slice(i,i+MAX_ROWS),pageNo));wrap.appendChild(part);
+  }
+ }
+ const obs=folha.observacoes||{},sign=folha.assinaturas||{};
+ const lines=[];
+ if(Object.keys(obs).length){
+  for(const [k,label] of [['ferias','Férias'],['faltas','Faltas'],['faltasJustificadas','Faltas justificadas'],['recebidos','Horas recebidas'],['transportados','Horas transportadas'],['transportadosLimite','Transportes por limite'],['arredondamentos','Arredondamentos']]){
+   const vals=Array.isArray(obs[k])?obs[k]:[];
+   if(!vals.length)continue;
+   lines.push(label+':');
+   for(const v of vals){
+    if(typeof v==='string')lines.push('  • '+v);
+    else if(v&&typeof v==='object')lines.push('  • '+Object.entries(v).map(([key,val])=>key+': '+String(val??'')).join(' · '));
+   }
+  }
+  if(obs.status&&Object.keys(obs.status).length){lines.push('Situação dos agentes:');for(const [k,v] of Object.entries(obs.status))lines.push('  • '+k+': '+(Array.isArray(v)?v.join(', '):String(v)))}
+ }
+ if(Object.keys(sign).length){
+  lines.push('Assinaturas registradas no fechamento:');
+  for(const [type,detail] of Object.entries(sign))if(detail?.nome)lines.push('  • '+type.toUpperCase()+': '+detail.nome+' — '+(detail.cargo||''));
+ }
+ if(lines.length){
+  const groups=[];let group=[],height=0;
+  for(const line of lines){const cost=1+Math.ceil(String(line).length/140);if(height+cost>27&&group.length){groups.push(group);group=[];height=0}group.push(line);height+=cost}
+  if(group.length)groups.push(group);
+  groups.forEach((g,i)=>wrap.appendChild(textPage(folha,'Observações e assinaturas',g,++pageNo)));
+ }
+ if(folha.rodape_imagem){
+  const im=document.createElement('img');im.src=folha.rodape_imagem;im.alt='Rodapé institucional salvo no fechamento';
+  im.style.cssText='width:100%;max-height:150px;object-fit:contain;object-position:left;background:white';wrap.appendChild(im);
+ }
+ return wrap;
+}
+
 function close(){
  const view=document.querySelector('section[data-view="online"]');
  if(!view)return;
