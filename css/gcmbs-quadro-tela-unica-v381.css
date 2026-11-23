@@ -109,6 +109,24 @@
   html.gc118-exact #appTela .gc118-main .gc118-section-head span{
     font-size:10px!important;
   }
+  html.gc118-exact #appTela .gc118-main .gc118-section-head{
+    border-radius:7px!important;
+    background:linear-gradient(180deg,#e3f0ff,#dceafb)!important;
+    padding:0 6px!important;
+    border-bottom:1px solid #c9dff5!important;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-section-head strong::before{
+    content:"▣";
+    display:inline-flex;align-items:center;justify-content:center;
+    width:21px;height:21px;margin-right:8px;
+    background:linear-gradient(180deg,#2185ef,#0759c2);
+    border-radius:6px;color:white;font-size:12px;vertical-align:middle;
+    box-shadow:0 1px 4px #1b60ac33;
+  }
+  html.gc118-exact #appTela .gc118-main .gc118-chart .gc118-section-head{
+    height:27px!important;
+  }
+
   html.gc118-exact #appTela .gc118-main .gc118-grid{
     min-height:0!important;flex:1!important;align-items:stretch!important;
     gap:9px!important;
