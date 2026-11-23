@@ -159,7 +159,8 @@ function close(){
  const view=document.querySelector('section[data-view="online"]');
  if(!view)return;
  const area=document.getElementById('gcmbs-folhas-fechadas-v368');
- if(area)area.hidden=true;
+ if(area){area.hidden=true;area.style.display='none';}
+ view.removeAttribute('data-gc389-payroll-active');
  Array.from(view.children).filter(x=>x.dataset.gc368Suppressed).forEach(x=>{x.hidden=false;delete x.dataset.gc368Suppressed;});
 }
 window.gcmbsFecharFolhasFechadas=close;
@@ -175,6 +176,8 @@ async function open(){
  }
  Array.from(view.children).filter(el=>el!==root).forEach(el=>{el.hidden=true;el.dataset.gc368Suppressed='1';});
  root.hidden=false;
+ root.style.display='grid';
+ view.dataset.gc389PayrollActive='1';
  root.replaceChildren();
  const head=document.createElement('div');head.style.cssText='display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap';
  const title=document.createElement('h2');title.textContent='Folhas de Pagamento — fechadas';head.appendChild(title);
