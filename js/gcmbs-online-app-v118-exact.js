@@ -5,6 +5,14 @@ if(window.__GCMBS_V118_EXACT__) return;
 window.__GCMBS_V118_EXACT__=true;
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
+/* V370: hierarquia visual do Quadro no padrao do Desktop. */
+const styleId='gcmbs-quadro-desktop-v370';
+if(!document.getElementById(styleId)){
+ const style=document.createElement('style');style.id=styleId;
+ style.textContent=".gc118-main{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}\n.gc118-main>.gc118-hero{grid-column:1/-1;grid-row:1}\n.gc118-main>.gc118-top{grid-column:1;grid-row:2}\n.gc118-main>.gc118-controls{grid-column:2;grid-row:2}\n.gc118-main>.gc118-section,.gc118-main>.gc118-bottom{grid-column:1/-1}\n.gc118-main .gc118-grid.effective{grid-template-columns:repeat(4,minmax(0,1fr))}\n.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(5,minmax(0,1fr))}\n.gc118-main .gc118-bars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end}\n.gc118-main .gc118-metric{min-width:0}\n.gc118-main .gc118-chart{min-width:0;width:100%}\n@media(max-width:1030px){.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(3,minmax(0,1fr))}}\n@media(max-width:720px){.gc118-main{grid-template-columns:minmax(0,1fr)}.gc118-main>.gc118-top,.gc118-main>.gc118-controls{grid-column:1;grid-row:auto}.gc118-main .gc118-grid.effective,.gc118-main .gc118-grid.fleet{grid-template-columns:repeat(2,minmax(0,1fr))}}\n@media(max-width:430px){.gc118-main .gc118-grid.effective,.gc118-main .gc118-grid.fleet{grid-template-columns:1fr}.gc118-main .gc118-bars{gap:3px}}";
+ document.head.appendChild(style);
+}
+
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const text=v=>String(v??'').replace(/\s+/g,' ').trim();
