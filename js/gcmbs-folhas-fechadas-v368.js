@@ -48,6 +48,14 @@ function sheet(snapshot){
  img.style.cssText='width:100%;height:auto;border:1px solid #cbd5e1;border-radius:8px;background:white';
  return img;
 }
+function close(){
+ const view=document.querySelector('section[data-view="online"]');
+ if(!view)return;
+ const area=document.getElementById('gcmbs-folhas-fechadas-v368');
+ if(area)area.hidden=true;
+ Array.from(view.children).filter(x=>x.dataset.gc368Suppressed).forEach(x=>{x.hidden=false;delete x.dataset.gc368Suppressed;});
+}
+window.gcmbsFecharFolhasFechadas=close;
 async function open(){
  const view=document.querySelector('section[data-view="online"]');
  if(!view){alert('Tela de consulta indisponível.');return;}
@@ -64,7 +72,7 @@ async function open(){
  const head=document.createElement('div');head.style.cssText='display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap';
  const title=document.createElement('h2');title.textContent='Folhas de Pagamento — fechadas';head.appendChild(title);
  const back=document.createElement('button');back.type='button';back.textContent='Voltar ao Quadro Operacional';back.className='secondary';
- back.onclick=()=>{root.hidden=true;Array.from(view.children).filter(x=>x.dataset.gc368Suppressed).forEach(x=>{x.hidden=false;delete x.dataset.gc368Suppressed;});document.querySelectorAll('main > section[data-view]').forEach(x=>x.classList.toggle('hidden',x.dataset.view!=='inicio'));};
+ back.onclick=()=>{close();document.querySelectorAll('main > section[data-view]').forEach(x=>x.classList.toggle('hidden',x.dataset.view!=='inicio'));};
  head.appendChild(back);root.appendChild(head);
  const message=document.createElement('p');message.textContent='Somente imagens geradas a partir de folhas efetivamente fechadas. Nenhuma edição ou recálculo permitido.';
  root.appendChild(message);
