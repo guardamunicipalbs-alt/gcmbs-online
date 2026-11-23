@@ -360,3 +360,27 @@ html .gc124-route-bar#gc103RelatedBar {
     --gc381-banner:145px;
   }
 }
+
+/* V387: isolamento do modo tela unica ao Quadro ATIVO.
+   A classe .hidden deve prevalecer ao alternar de modulo;
+   outras telas precisam de altura natural e rolagem normal. */
+html.gc118-exact #appTela main > section[data-view="inicio"].gc118-home.hidden {
+  display:none!important;
+}
+@media (min-width:1100px) and (min-height:650px) {
+  html.gc118-exact #appTela main:has(> section[data-view]:not(.hidden):not([data-view="inicio"])) {
+    height:auto!important;
+    min-height:100dvh!important;
+    max-height:none!important;
+    overflow:visible!important;
+    overflow-y:visible!important;
+    padding-top:70px!important;
+    padding-bottom:28px!important;
+  }
+  html.gc118-exact #appTela main > section[data-view]:not([data-view="inicio"]):not(.hidden) {
+    display:block;
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+}
