@@ -232,3 +232,21 @@ html.gc118-exact body:has(#appTela section[data-view="inicio"].gc118-home:not(.h
   visibility:hidden!important;
   pointer-events:none!important;
 }
+
+/* V384 — Retirada definitiva da tarjeta de titulo gerada pelo layout V124.
+   A tarjeta duplicava o titulo do Quadro e sobrepunha a saudacao/banner.
+   O painel .gc118-main e seus controles permanecem inalterados. */
+html #gc103RelatedBar.gc124-route-bar,
+html #gc103RelatedBar,
+html .gc124-route-bar#gc103RelatedBar {
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  box-shadow:none!important;
+}
