@@ -1,7 +1,7 @@
 
 import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin';
-import {MODULOS_GCMBS} from './access-catalog.js?v=100250';
-import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule} from './communication-contract.js?v=100250-accessscope';
+import {MODULOS_GCMBS,ONLINE_DESKTOP_ONLY} from './access-catalog.js?v=100250';
+import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
 
 const $=id=>document.getElementById(id);
@@ -167,6 +167,7 @@ function setView(id){
   fecharMenu();
 }
 function temAcesso(modulo){
+  if(ONLINE_DESKTOP_ONLY.has(canonicalModule(modulo)))return false;
   if(modulo==='perfil'||modulo==='avisos') return true;
   if(modulo==='gratificacao_motorista') return provider.gestor() && provider.pode(modulo);
   if(modulo==='escalas'||modulo==='gerador_escala') return provider.gestor() && provider.pode('escalas');
@@ -187,6 +188,11 @@ function fecharMenu(){$('mainNav')?.classList.remove('open');$('navBackdrop')?.c
 function abrirMenu(){$('mainNav')?.classList.add('open');$('navBackdrop')?.classList.remove('hidden')}
 async function abrirModuloPrincipal(modulo){
   modulo=canonicalModule(modulo);
+  if(modulo==='folha_pagamento'){
+    if(!temAcesso(modulo)){alert('Modulo sem permissao.');return;}
+    if(typeof window.gcmbsAbrirFolhasFechadas==='function')return window.gcmbsAbrirFolhasFechadas();
+    alert('Visualizador de folhas fechadas indisponivel.');return;
+  }
   if(!temAcesso(modulo)){alert('Você não possui acesso a este módulo.');return;}
   const metaModulo=MODULOS_GCMBS.find(m=>m.id===modulo)||{};
   if($('onlineModuloTitulo'))$('onlineModuloTitulo').textContent=metaModulo.nome||modulo;
@@ -327,7 +333,7 @@ function modulosOutros(){
   // Comandante/Subcomandante recebem o catálogo integral do Desktop. Para os
   // demais GCMs continuam valendo estritamente as permissões cadastradas.
   const base=provider.controleTotal()?MODULOS_GCMBS:provider.modulosAutorizados();
-  return base.filter(m=>!dedicados.has(m.id) && !(m.id==='relatorios_frota'&&!provider.gestor()));
+  return base.filter(m=>!ONLINE_DESKTOP_ONLY.has(canonicalModule(m.id)) && !dedicados.has(m.id) && !(m.id==='relatorios_frota'&&!provider.gestor()));
 }
 function renderModulos(){
   const lista=modulosOutros(),el=$('listaModulos');if(!el)return;
@@ -1417,6 +1423,9 @@ function configurarCabecalhoModulo(modulo){
   if($('onlineVersao'))$('onlineVersao').textContent='Android '+APP_VERSION;
 }
 async function abrirModuloOnline(modulo){
+  modulo=canonicalModule(modulo);
+  if(!temAcesso(modulo))throw new Error('Modulo exclusivo do Desktop ou nao autorizado.');
+  if(modulo==='folha_pagamento')return window.gcmbsAbrirFolhasFechadas?.();
   // HF10 R13:
   // A tela e o cabecalho precisam abrir ANTES da consulta ao catalogo.
   // O modulo primario pode ser consultado diretamente porque entity_list
@@ -1505,6 +1514,9 @@ function renderEntityTabs(){
   host.classList.toggle('hidden',itens.length<=1);host.querySelectorAll('[data-entity-tab]').forEach(b=>b.addEventListener('click',()=>abrirEntidadeOnline(b.dataset.entityTab)));
 }
 async function abrirEntidadeOnline(entity){
+  const targetModule=ENTITY_BY_ID[String(entity||'')]?.module;
+  if(targetModule && ONLINE_DESKTOP_ONLY.has(targetModule))throw new Error('Cadastro exclusivo do Desktop.');
+  if(targetModule==='folha_pagamento')throw new Error('Folha disponivel somente para consulta de competencias fechadas.');
   const b=await provider.entityList(entity,500,0);onlineCurrent=b.catalog;onlineRecords=b.records||[];
   const ent=String(entity||'').toLowerCase(),gid=Number(provider.session?.guarda_id||0);
   if(!provider.gestor()&&gid){
@@ -1919,6 +1931,8 @@ async function editarOnline(key=null){
 }
 async function salvarOnline(){
   try{
+    const forbidden=ENTITY_BY_ID[String(onlineCurrent?.entity||'')]?.module;
+    if(forbidden && (ONLINE_DESKTOP_ONLY.has(forbidden)||forbidden==='folha_pagamento'))throw new Error('Operacao exclusiva do Desktop.');
     if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
     const d={...(onlineEditing?.data||{})};
     const substitutasSelecionadas=onlineCurrent.entity==='viaturas'?coletarSubstitutasViaturaEditor():[];
@@ -1964,6 +1978,8 @@ async function salvarOnline(){
   }catch(e){$('onlineMsg').textContent=e.message}
 }
 async function excluirOnline(key){
+  const forbidden=ENTITY_BY_ID[String(onlineCurrent?.entity||'')]?.module;
+  if(forbidden && (ONLINE_DESKTOP_ONLY.has(forbidden)||forbidden==='folha_pagamento'))throw new Error('Exclusao exclusiva do Desktop.');
   if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
   if(!confirm('Excluir este registro online?'))return;
   try{const r=onlineRecords.find(x=>String(x.record_key)===String(key));await provider.entityMutate(onlineCurrent.entity,key,'DELETE',r?.data||{});await abrirEntidadeOnline(onlineCurrent.entity)}catch(e){alert(e.message)}
