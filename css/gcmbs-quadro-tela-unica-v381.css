@@ -421,3 +421,21 @@ html.gc118-exact body.gc107-cadastro #onlineEditor.gc107-inline-editor .module-e
   max-width:100%!important;
   min-width:0!important;
 }
+
+/* V389: durante a consulta de folha fechada, ocultar obrigatoriamente
+   o cabecalho e os cards do modulo anterior, sem afetar as demais rotas. */
+html.gc118-exact #appTela section[data-view="online"][data-gc389-payroll-active="1"] > :not(#gcmbs-folhas-fechadas-v368) {
+  display:none!important;
+}
+html.gc118-exact #appTela section[data-view="online"][data-gc389-payroll-active="1"] > #gcmbs-folhas-fechadas-v368:not([hidden]){
+  display:grid!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  box-sizing:border-box!important;
+}
+html.gc118-exact #appTela #gcmbs-folhas-fechadas-v368[hidden]{
+  display:none!important;
+}
+html.gc118-exact #appTela #gcmbs-folhas-fechadas-v368 img {
+  max-width:100%!important;
+  height:auto!important;
+}
