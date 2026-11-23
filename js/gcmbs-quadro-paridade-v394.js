@@ -13,20 +13,45 @@
  const day=()=>q('.gc118-main .gc118-date')?.value||q('#quadroData')?.value||'';
  const fmt=d=>/^\d{4}-\d{2}-\d{2}$/.test(d)?d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4):d;
  let serial=0;
- async function remote(slug,body){
+ const TIMEOUT_MS=8500;
+ async function remote(slug,body,timeoutMs=TIMEOUT_MS){
    const token=localStorage.getItem('gcmbs.mobile.token');
    if(!token)throw new Error('Sessão expirada. Entre novamente no sistema.');
-   const r=await fetch(ROOT+slug,{
-     method:'POST',cache:'no-store',
-     headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-     body:JSON.stringify(body)
-   });
-   const result=await r.json().catch(()=>({}));
-   if(!r.ok||result.success===false)throw new Error(result.message||result.error||'Falha na consulta: HTTP '+r.status);
-   return result;
+   const controller=new AbortController();
+   const timeout=setTimeout(()=>controller.abort(),timeoutMs);
+   try{
+     const r=await fetch(ROOT+slug,{
+       method:'POST',cache:'no-store',signal:controller.signal,
+       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+       body:JSON.stringify(body)
+     });
+     const result=await r.json().catch(()=>({}));
+     if(!r.ok||result.success===false||result.ok===false)
+       throw new Error(result.message||result.error||'Falha na consulta: HTTP '+r.status);
+     return result;
+   }catch(e){
+     if(e?.name==='AbortError')throw new Error('A consulta demorou mais de '+Math.round(timeoutMs/1000)+' segundos. Verifique a conexão ou a última sincronização.');
+     throw e;
+   }finally{clearTimeout(timeout)}
  }
- const quadro=d=>remote('gcmbs-communication-gateway-v74',{action:'quadro_operacional',data:d}).then(x=>x.data?.efetivo?x.data:x);
+ const normalizeQuadro=x=>x?.data?.efetivo?x.data:x;
+ const quadroDireto=d=>remote('gcmbs-mobile-api-v6',{action:'quadro_operacional',data:d}).then(normalizeQuadro);
+ // Para efetivo, frota, postos e faltas não depender da cadeia
+ // Gateway V74 -> Quadro V173 -> Gateway V131 -> Mobile.
+ async function quadro(d,canonical=false){
+   if(!canonical)return quadroDireto(d);
+   try{
+     const result=await remote('gcmbs-quadro-canonico-v173',{action:'quadro_operacional',data:d},6500);
+     return normalizeQuadro(result);
+   }catch(e){
+     console.warn('[GCMBS V396] Quadro consolidado indisponível; usando leitura direta:',e?.message||e);
+     const base=await quadroDireto(d);
+     base.meta={...(base.meta||{}),extras_consulta:'INDISPONIVEL',fallback_operacional:true};
+     return base;
+   }
+ }
  const extras=d=>remote('gcmbs-quadro-extras-v68',{data:d});
+
  async function permutas(d){
    if(d<'2026-11-18')return [];
    try{
@@ -45,6 +70,7 @@
    head.textContent=title;
    meta.textContent='Data de referência: '+fmt(date)+' · Consultando dados operacionais...';
    list.replaceChildren();
+   line(list,'div','Carregando os detalhes do indicador...','empty');
    list.style.maxHeight='min(64vh,620px)';
    list.style.overflowY='auto';
    back.classList.remove('hidden');
@@ -178,10 +204,11 @@
    }
  }
  async function registeredPosts(date,ctx){
-   const [ref,quad]=await Promise.all([remote('gcmbs-communication-gateway-v74',{action:'references'}),quadro(date)]);
+   const [ref,quad]=await Promise.all([remote('gcmbs-mobile-api-v6',{action:'references'}),quadro(date)]);
    const refs=ref?.references||ref;
    const posts=Array.isArray(refs.postos)?refs.postos:[];
    const coverage=Array.isArray(quad?.postos?.detalhamento)?quad.postos.detalhamento:[];
+   ctx.list.replaceChildren();
    noteMeta(ctx.meta,date,posts.length,'Postos cadastrados; '+coverage.length+' coberto(s)');
    if(!posts.length){empty(ctx.list,'Nenhum posto cadastrado retornado pela sincronização.');return}
    for(const p of posts){
@@ -196,9 +223,10 @@
    }
  }
  async function detailsFor(key,date,ctx){
-   const quad=await quadro(date);
+   const quad=await quadro(date,key==='qServicoA'||key==='qServicoB');
    let rows=coalesceRow(quad,key);
    if(!quad?.efetivo||!quad?.viaturas)throw new Error('Resposta incompleta do Quadro Online.');
+   ctx.list.replaceChildren();
    noteMeta(ctx.meta,date,rows.length);
    if(quad.meta?.extras_consulta==='INDISPONIVEL'&&['qServicoA','qServicoB'].includes(key)){
      line(ctx.list,'small','Aviso: a consulta de Extras não foi confirmada. Os totais deste turno podem estar incompletos.');
@@ -237,6 +265,7 @@
      const detail=type+' · '+clean(r.complemento||r.descricao||'Extra');
      if(!grouped.get(k).parts.includes(detail))grouped.get(k).parts.push(detail);
    }
+   ctx.list.replaceChildren();
    noteMeta(ctx.meta,date,grouped.size,'Turno '+turn+' · '+list.length+' designação(ões)');
    if(!grouped.size){empty(ctx.list,'Nenhuma Extra consta no espelho Online para este turno. A sincronização com o Desktop pode estar pendente.');return}
    for(const p of [...grouped.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')))
@@ -254,6 +283,7 @@
    }catch(e){
      if(current!==serial)return;
      ctx.meta.textContent='Data de referência: '+fmt(date)+' · Falha de consulta';
+     ctx.list.replaceChildren();
      empty(ctx.list,'Não foi possível consultar este indicador: '+clean(e?.message||e));
    }
  }
