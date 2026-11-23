@@ -49,7 +49,7 @@ let provider=new AuthenticatedProvider();
 let permutasEspelho=[];
 let permutasAgendadasEspelho=[];let permutasAgendadasCarregadas=false;
 let permutaExtrasCache={mine:[],others:[]};
-let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalaModo='pessoal',escalasInstitucionais=[],escalaEditing=null;
+let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalasInstitucionais=[];
 
 function limparEscopoUsuarioRuntime(){
   if(window.gcmbsAgendadaEstadoV298)window.gcmbsAgendadaEstadoV298.requests=[];
@@ -57,7 +57,7 @@ function limparEscopoUsuarioRuntime(){
   permutasAgendadasEspelho=[];permutasAgendadasCarregadas=false;
   permutaExtrasCache={mine:[],others:[]};
   onlineCatalog=[];onlineCurrent=null;onlineRecords=[];onlineEditing=null;
-  quadroAtual=null;permutaEditingId=null;escalaModo='pessoal';escalasInstitucionais=[];escalaEditing=null;
+  quadroAtual=null;permutaEditingId=null;escalasInstitucionais=[];
   try{chkRecords=[];chkPending=[];occRecords=[];}catch{}
   for(const id of [
     'onlineRegistros','listaPermutasSolicitadas','listaPermutasGestao','listaBanco','listaCorrecoes',
@@ -201,7 +201,7 @@ async function abrirModuloPrincipal(modulo){
       }
     }).catch(e=>console.warn('[GCMBS] falha ao atualizar aceites:',e?.message||e));
   }
-  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();if(view==='escala'){escalaModo='pessoal';renderEscalas();}return;}
+  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -433,53 +433,6 @@ function montarGruposEscala(registros){
   return [...grupos.values()].sort((a,b)=>(a.prioridade-b.prioridade)||normalizar(a.posto).localeCompare(normalizar(b.posto))||a.turno.localeCompare(b.turno));
 }
 function gerarDatas(ini,fim){const out=[];if(!ini||!fim||fim<ini)return out;const d=new Date(`${ini}T00:00:00Z`),f=new Date(`${fim}T00:00:00Z`);while(d<=f){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1)}return out}
-function dadosEscalaVisao(){return escalaModo==='institucional'?escalasInstitucionais:provider.escalas()}
-function preencherFiltrosEscala(){
-  const dados=dadosEscalaVisao();
-  const nomes=[...new Set(dados.map(nomeEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
-  const postos=[...new Set(dados.map(postoEscala).filter(Boolean))].sort((a,b)=>normalizar(a).localeCompare(normalizar(b)));
-  const horarios=[...new Set(dados.map(horarioRelatorio).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
-
-  const g=$('escalaGcm'),p=$('escalaPosto'),h=$('escalaHorario');
-
-  if(g){
-    const v=g.value;
-    g.innerHTML='<option value="">Todos os GCMs</option>'+nomes.map(x=>`<option>${esc(x)}</option>`).join('');
-    g.value=v;
-  }
-
-  if(p){
-    const v=p.value;
-    p.innerHTML='<option value="">Todos os postos</option>'+postos.map(x=>`<option>${esc(x)}</option>`).join('');
-    p.value=v;
-  }
-
-  // HF10 R25: o filtro tambem passa a oferecer horarios de Extras parciais,
-  // por exemplo 19:00 às 01:00, sem remover os horarios ordinarios.
-  if(h){
-    const v=h.value;
-    h.innerHTML='<option value="">Todos os horários</option>'+horarios.map(x=>`<option>${esc(x)}</option>`).join('');
-    h.value=horarios.includes(v)?v:'';
-  }
-}
-function renderEscalas(){
-  preencherFiltrosEscala();
-  const ini=$('escalaIni')?.value||'',fim=$('escalaFim')?.value||'',gcm=$('escalaGcm')?.value||'',posto=$('escalaPosto')?.value||'',horario=$('escalaHorario')?.value||'';
-  if(!ini||!fim){$('cabecalhoMatrizMobile').innerHTML='<th class="col-posto">POSTO / HORÁRIO</th>';$('resultadoMatrizMobile').innerHTML='<tr><td>Informe o período para consultar.</td></tr>';return}
-  let dados=dadosEscalaVisao().filter(x=>{const d=String(x.data||'').slice(0,10);if(d<ini||d>fim)return false;if(gcm&&normalizar(nomeEscala(x))!==normalizar(gcm))return false;if(posto&&normalizar(postoEscala(x))!==normalizar(posto))return false;if(horario&&horarioRelatorio(x)!==horario)return false;return true});
-  let datas=gerarDatas(ini,fim);if(gcm||posto||horario){const ds=new Set(dados.map(x=>String(x.data||'').slice(0,10)));datas=datas.filter(d=>ds.has(d))}
-  const grupos=montarGruposEscala(dados);
-  $('cabecalhoMatrizMobile').innerHTML='<th class="col-posto">POSTO / HORÁRIO</th>'+datas.map(d=>`<th>${fmt(d)}</th>`).join('');
-  const podeGerenciar=provider.gestor()&&provider.pode('escalas','EDICAO');
-  $('escalaComandoAviso')?.classList.toggle('hidden',!podeGerenciar);
-  if($('escalaTitulo'))$('escalaTitulo').textContent=podeGerenciar?'Gerenciar Escalas':'Relatório de Escala';
-  if($('escalaSubtitulo'))$('escalaSubtitulo').textContent=podeGerenciar?'Visualize a escala e faça ajustes administrativos pelo celular.':'Mesma visão por posto e horário utilizada no Desktop.';
-  $('resultadoMatrizMobile').innerHTML=grupos.map(g=>`<tr><th class="posto-linha"><b>${esc(g.posto)}</b><span>${esc(g.horario)}</span></th>${datas.map(d=>{const itens=g.itens.get(d)||[];return itens.length?`<td>${itens.map(x=>`<div class="gcm-linha"><b>${esc(x.nome)}</b>${x.motorista?`<span class="tag-driver">MOTORISTA${x.veiculo?' - '+esc(x.veiculo):''}</span>`:''}${x.extra?'<span class="tag-extra">Extra</span>':''}${podeGerenciar&&x.id&&!x.extra?`<button class="mini scale-edit" data-scale-edit="${x.id}" type="button">Alterar</button>`:''}</div>`).join('')}</td>`:'<td class="vazio">—</td>'}).join('')}</tr>`).join('')||`<tr><td colspan="${Math.max(1,datas.length+1)}">Nenhuma escala encontrada para os filtros informados.</td></tr>`;
-  document.querySelectorAll('[data-scale-edit]').forEach(b=>b.onclick=()=>abrirAjusteEscala(Number(b.dataset.scaleEdit)));
-  $('escalaInfo').textContent=`${dados.length} registro(s) · ${fmt(ini)} a ${fmt(fim)}`;
-  $('escalaFiltroAtivo').textContent=[gcm&&`GCM: ${gcm}`,posto&&`Posto: ${posto}`,horario&&`Horário: ${horario}`].filter(Boolean).join(' · ')||'Todos os GCMs, postos e horários';
-}
-
 function filtrarRelatoriosInstitucionais(){
   const ini=$('relatoriosIni')?.value||'',fim=$('relatoriosFim')?.value||'',gcm=normalizar($('relatoriosGcm')?.value||''),posto=normalizar($('relatoriosPosto')?.value||'');
   let dados=(escalasInstitucionais||[]).filter(x=>{const d=String(x.data||'').slice(0,10);if(ini&&d<ini)return false;if(fim&&d>fim)return false;if(gcm&&normalizar(nomeEscala(x))!==gcm)return false;if(posto&&normalizar(postoEscala(x))!==posto)return false;return true;});
@@ -549,23 +502,6 @@ function imprimirRelatoriosInstitucionais(){
     .page{break-before:page}
   </style></head><body><h1>GCMBS — Relatório Institucional de Escalas</h1><p>${esc(fmt(ini))} a ${esc(fmt(fim))} · ${dados.length} registro(s) · grade por posto e horário</p>${tabelas||'<p>Nenhum registro encontrado.</p>'}</body></html>`);
   w.document.close();w.focus();setTimeout(()=>w.print(),150);
-}
-
-function abrirAjusteEscala(id){
-  if(!(provider.gestor()&&provider.pode('escalas','EDICAO')))return alert('Ajuste de escala restrito ao Comando autorizado.');
-  const item=dadosEscalaVisao().find(x=>Number(x.id)===Number(id));if(!item)return alert('Registro de escala não localizado.');
-  const hojeLocal=new Date().toLocaleDateString('en-CA',{timeZone:'America/Fortaleza'});if(String(item.data||'').slice(0,10)<hojeLocal)return alert('Escalas anteriores são históricas e não podem ser alteradas.');
-  escalaEditing=item;const refs=refData();
-  $('escalaEditorResumo').innerHTML=`<b>${esc(nomeEscala(item))}</b> · ${fmt(String(item.data).slice(0,10))} · ${esc(horarioRelatorio(item))}<br>Posto atual: <b>${esc(postoEscala(item)||'-')}</b>`;
-  $('escalaNovoPosto').innerHTML='<option value="">Manter posto atual</option>'+(refs.postos||[]).map(x=>`<option value="${esc(x.id)}">${esc(x.nome||'Posto')}</option>`).join('');
-  $('escalaNovoGcm').innerHTML='<option value="">Manter GCM atual</option>'+(refs.guardas||[]).filter(x=>Number(x.id)!==Number(item.guarda_id)).map(x=>`<option value="${esc(x.id)}">${esc(x.nome_guerra||x.nome_completo||'GCM')}</option>`).join('');
-  $('escalaMotivo').value='';$('escalaAjusteMsg').textContent='';$('escalaEditor').showModal();
-}
-async function salvarAjusteEscala(){
-  if(!escalaEditing)return;const posto=Number($('escalaNovoPosto').value)||0,gcm=Number($('escalaNovoGcm').value)||0,motivo=$('escalaMotivo').value.trim();
-  if(!posto&&!gcm)return alert('Selecione um novo posto ou um GCM substituto.');if(!motivo)return alert('Informe o motivo da alteração.');
-  $('escalaSalvarAjuste').disabled=true;$('escalaAjusteMsg').textContent='Registrando ajuste...';
-  try{const r=await provider.ajustarEscalaComando({escala_id:Number(escalaEditing.id),data:String(escalaEditing.data||'').slice(0,10),novo_posto_id:posto||null,novo_guarda_id:gcm||null,motivo});$('escalaAjusteMsg').textContent=r.message||'Alteração registrada para sincronização com o Desktop.';$('escalaEditor').close();await provider.load();renderEscalas();alert(r.message||'Alteração registrada.');}catch(e){$('escalaAjusteMsg').textContent=e.message;}finally{$('escalaSalvarAjuste').disabled=false;}
 }
 
 function detalhesQuadro(caminho){const [g,k]=String(caminho||'').split('.');if(!quadroAtual)return[];if(g==='efetivo')return quadroAtual.efetivo?.detalhes?.[k]||[];if(g==='viaturas')return quadroAtual.viaturas?.detalhes?.[k]||[];if(g==='postos'&&k==='cobertos')return quadroAtual.postos?.detalhamento||[];if(g==='faltas'&&k==='registros')return quadroAtual.faltas?.registros||[];return[]}
@@ -2226,7 +2162,6 @@ function renderTudo(resetView=true){
   renderPerfil();
   renderModulos();
   renderInicio();
-  if(temAcesso('escalas')) renderEscalas();
   renderViaturas();
   if(temAcesso('permutas')) {renderPermutas();renderPermutasGestao();}
   if(temAcesso('banco_horas')) {renderBanco();renderBancoGestao();}
@@ -2306,7 +2241,6 @@ async function boot(){
   $('onlineNovo')?.addEventListener('click',()=>editarOnline());
   $('onlineSalvar')?.addEventListener('click',salvarOnline);
   $('onlineCancelar')?.addEventListener('click',()=>$('onlineEditor').close());$('onlineCancelarBottom')?.addEventListener('click',()=>$('onlineEditor').close());
-  ['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>$(id)?.addEventListener('change',renderEscalas));
   const gcmbsAtualizarPeriodoPermuta=()=>{
   const modalidade=$('pmModalidade')?.value||'ASSUNCAO';
 
@@ -2328,13 +2262,11 @@ async function boot(){
   atualizarSubstituidosPermuta();
 };
 
-$('escalaGerar')?.addEventListener('click',renderEscalas);
 $('pmData')?.addEventListener('change',gcmbsAtualizarPeriodoPermuta);
 $('pmTurno')?.addEventListener('change',e=>{
   e.currentTarget.dataset.gcmbsTurnoSelecionado=e.currentTarget.value;
   gcmbsAtualizarPeriodoPermuta();
 });$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirEventos')?.addEventListener('click',()=>abrirModuloOnline('eventos_extra'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
-  $('escalaLimpar')?.addEventListener('click',()=>{['escalaIni','escalaFim','escalaGcm','escalaPosto','escalaHorario'].forEach(id=>{if($(id))$(id).value=''});renderEscalas();});
   $('quadroData')?.addEventListener('change',()=>carregarQuadro().catch(()=>{}));
   document.querySelectorAll('[data-quadro-detail]').forEach(b=>b.addEventListener('click',()=>abrirQuadroDetalhe(b.dataset.title,b.dataset.quadroDetail)));
   $('quadroModalFechar')?.addEventListener('click',()=>$('quadroModal').classList.add('hidden'));
@@ -2362,4 +2294,3 @@ $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstituciona
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100162',{updateViaCache:'none'}).catch(()=>{});}
 
-$('escalaEditorFechar')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaCancelarAjuste')?.addEventListener('click',()=>$('escalaEditor')?.close());$('escalaSalvarAjuste')?.addEventListener('click',salvarAjusteEscala);
