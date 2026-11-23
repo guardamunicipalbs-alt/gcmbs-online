@@ -225,3 +225,10 @@ html.gc118-exact #appTela section[data-view="inicio"].gc118-home .desktop-page-h
 html.gc118-exact #appTela section[data-view="inicio"].gc118-home > .desktop-page-head{
   display:none!important;
 }
+
+/* V383: ocultar a faixa V124 fixa sobre o banner SOMENTE na Home do Online. */
+html.gc118-exact body:has(#appTela section[data-view="inicio"].gc118-home:not(.hidden)) #gc103RelatedBar.gc124-route-bar{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
