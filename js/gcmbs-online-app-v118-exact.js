@@ -268,7 +268,8 @@ function makeStructure(home){
         <div class="gc118-bars"></div>
       </section>
 
-    </div>`;
+    </div>
+    <div class="gc381-footer" role="status">Painel operacional · Informações referentes à data selecionada</div>`;
   home.appendChild(main);
 
   const eff=$('.gc118-grid.effective',main);
