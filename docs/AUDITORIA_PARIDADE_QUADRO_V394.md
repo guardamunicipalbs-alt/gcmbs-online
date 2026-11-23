@@ -53,3 +53,27 @@ Na auditoria remota de 23/11/2026, foram encontradas:
 - JavaScript passou na validação de sintaxe; arquivo incluído uma vez no `index.html`.
 - Identificadas chamadas de leitura para Quadro, Extras e permutas autorizadas.
 - Ainda depende de teste funcional com sessão autenticada para conferir todos os botões e o conjunto de dados efetivamente disponível no navegador.
+
+
+## Anexo de auditoria atual — ZIP do Desktop de 23/11/2026 às 18:44
+
+Arquivo recebido e inspecionado: `GCMBS_DESKTOP_QUADRO_V394_20261123_184402.zip` (14 membros, incluindo manifesto e 13 módulos JavaScript/HTML). Origem declarada no manifesto: `F:\GCMBS`, sem leitura/escrita de SQLite ou segredos.
+
+**Evidência atual:** `DashboardRepository.js` SHA256 `BADF94FA14A2ABD6338B7DBA77FA0F4854B2247B5EE8DF30BCA9076358B41F86` (17/11/2026). `gcmbs-dashboard-v99-clicks.js` SHA256 `C4FD34BDD7B72D0119BF4F505BAEC8B6F911F7267326BEEBEF6606DCA67FCF69` (18/11/2026). A cópia de `dashboard.html` foi alterada em 20/11/2026, posterior à referência antiga. Estes arquivos permitem afirmar regras do Desktop sem acesso remoto ao Windows.
+
+### Diferenças descobertas e alterações adicionais V395
+
+1. **Serviços A/B**: o Desktop combina ordinários, Extras automáticos, Extras manuais e Extras por evento; uma pessoa pode aparecer com mais de um vínculo, mas conta apenas uma vez por turno. O endpoint canônico `gcmbs-quadro-canonico-v173` passou à versão **6**, complementando o Quadro base com `gcmbs-quadro-extras-v68`, consolidando vínculos do mesmo GCM. Se a consulta de Extras falha, os dados base permanecem e o campo `meta.extras_consulta` informa o estado; não se presume zero como confirmação.
+2. **Extras que atravessam meia-noite**: o Desktop considera interseção temporal dos participantes Extras por evento com a data e turno selecionados. A função `gcmbs-quadro-extras-v68` passou à versão **9**, utilizando interseção pelo início e fim reais, em vez de filtrar exclusivamente a data do cadastro do evento. Teste SQL de somente leitura com 23/09/2026 encontrou 4 participantes.
+3. **Extras manuais**: a fonte Desktop aceita registros que não estejam cancelados, excluídos ou inativos. A V68 v9 foi ajustada para o mesmo filtro negativo de situação.
+4. **Viaturas em uso**: o Desktop discrimina os turnos A/B com nomes de guerra, postos e substituições, sem inferir turnos não comprovados. O Online usa os detalhes de frota e a distribuição de efetivo; permutas aprovadas disponíveis no endpoint R14 podem substituir logicamente o nome apenas quando o GCM, posto e turno são conciliáveis.
+5. **Permutas**: a nova representação faz substituições lógicas apenas na consulta, não altera a escala gravada, não duplica as permutas conciliadas ao listar pendências e não apresenta associação ambígua como confirmada.
+6. **Natureza**: serviços exibem etiqueta `ORDINÁRIO`, `EXTRA` ou `ORDINÁRIO + EXTRA`, respeitando o acúmulo de vínculos no mesmo turno.
+
+**Atenção:** permutas históricas anteriores ao alcance da API R14 (antes de 18/11/2026) são tratadas por resolvedor local R19 no Desktop. O Online não deve inventar essas resoluções sem fonte histórica autenticada.
+
+### Homologação ainda necessária
+
+- Testar cliques em todos os cartões no navegador autenticado, incluindo mobile/desktop, abertura/fechamento de modais, identidade e permissões.
+- Conferir dados após ciclo regular do Modelo B; o ZIP não contém valores atuais do SQLite, apenas código.
+- Comparar quantitativos para a mesma data e credenciais, após confirmar recebimento de escalas e Extras no servidor.
