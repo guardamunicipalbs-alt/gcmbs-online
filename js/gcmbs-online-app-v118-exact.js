@@ -384,7 +384,7 @@ function renderBars(main,extras){
     <button type="button" class="gc118-bar-col" data-source="${esc(id)}" title="Abrir ${esc(label)}" aria-label="Consultar ${esc(label)}: ${v} GCM(s)">
       <b>${v}</b><span class="gc118-bar ${cls}" style="height:${Number(v)>0?Math.max(8,Math.round(Number(v)/max*108)):4}px"></span><small>${esc(label)}</small>
     </button>`).join('');
-  $('[data-source]',box).forEach(el=>{
+  $$('[data-source]',box).forEach(el=>{
     const fire=e=>{
       e?.preventDefault?.();
       e?.stopPropagation?.();
