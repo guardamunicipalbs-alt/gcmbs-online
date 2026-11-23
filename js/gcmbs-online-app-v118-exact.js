@@ -31,6 +31,7 @@ const sourceCard=id=>{
 
 let refsCache={postos:null,lastAttempt:0};
 let extrasCache={date:'',value:0,a:0,b:0,items:[],busy:false};
+const contarGcmsExtras=items=>new Set((Array.isArray(items)?items:[]).map(x=>Number(x.guarda_id)>0?'ID:'+Number(x.guarda_id):'NOME:'+norm(x.nome))).size;
 
 function greeting(){
   const h=new Date().getHours();
@@ -105,7 +106,7 @@ async function loadExtras(date){
       ...(Array.isArray(b?.extrasB)?b.extrasB:[])
     ];
     const keys=new Set(all.map(x=>String(x?.guarda_id??x?.id??x?.nome??JSON.stringify(x))));
-    extrasCache={date,value:keys.size,a:(b?.extrasA||[]).length,b:(b?.extrasB||[]).length,items:all,busy:false};
+    extrasCache={date,value:keys.size,a:contarGcmsExtras(b?.extrasA),b:contarGcmsExtras(b?.extrasB),items:all,busy:false};
     return keys.size;
   }catch(e){
     console.warn('[GCMBS V118] extras por evento:',e?.message||e);
@@ -158,7 +159,7 @@ async function abrirExtrasEvento(data,turno=''){
       ...(Array.isArray(body?.extrasA)?body.extrasA:[]),
       ...(Array.isArray(body?.extrasB)?body.extrasB:[])
     ];
-    extrasCache={date:data,value:new Set(all.map(x=>String(x.guarda_id||x.nome))).size,a:(body?.extrasA||[]).length,b:(body?.extrasB||[]).length,items:all,busy:false};
+    extrasCache={date:data,value:new Set(all.map(x=>String(x.guarda_id||x.nome))).size,a:contarGcmsExtras(body?.extrasA),b:contarGcmsExtras(body?.extrasB),items:all,busy:false};
     const home=$('section[data-view="inicio"]');
     const main=home?$('.gc118-main',home):null;
     if(main)renderBars(main,grupos.length);
