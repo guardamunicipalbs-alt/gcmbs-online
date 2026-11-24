@@ -7,7 +7,8 @@ import {MODULES} from './communication-contract.js?v=100250';
 // Modulos abaixo permanecem no Desktop e no transporte, mas nao entram no bundle de navegacao.
 export const ONLINE_DESKTOP_ONLY = new Set([
   'cadastro_guardas','equipes','postos','gerador_escala','escalas','tipos_escalas',
-  'escala_extra_manual','viaturas','relatorios_frota','controle_acesso','cautelas'
+  'escala_extra_manual','viaturas','relatorios_frota','controle_acesso','cautelas',
+  'gratificacao_motorista','feriados'
 ]);
 export const MODULOS_GCMBS = MODULES
   .filter(m=>!ONLINE_DESKTOP_ONLY.has(m.id))
