@@ -1,6 +1,6 @@
 
 import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin';
-import {MODULOS_GCMBS,ONLINE_DESKTOP_ONLY} from './access-catalog.js?v=100375-online-slim';
+import {MODULOS_GCMBS,ONLINE_DESKTOP_ONLY} from './access-catalog.js?v=100408-menu';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
 
