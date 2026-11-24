@@ -195,66 +195,47 @@ async function abrirPostosCadastrados(){
   await abrirRelacaoSimples('Postos Operacionais — consulta',records,x=>({name:x.nome||x.descricao||'Posto',details:['Prioridade '+(x.prioridade??'-'),'Mínimo '+(x.quantidade_minima??x.minimo??'-'),'Máximo '+(x.quantidade_maxima??x.maximo??'-')].join(' · ')}));
  }catch(e){alert('Não foi possível consultar os postos: '+(e?.message||e));}
 }
+/* V407: consulta da frota em cartões; sem escrita ou polling adicional. */
+let frotaV407Cache=null;
 async function abrirDetalhesFrota(){
+ const modal=document.getElementById('quadroModal'),head=document.getElementById('quadroModalTitulo'),meta=document.getElementById('quadroModalMeta'),list=document.getElementById('quadroModalLista');
+ if(!modal||!head||!meta||!list)return;
+ head.textContent='Detalhes da Frota';meta.textContent='Quilometragem, óleo e licenciamento — somente leitura';list.textContent='Carregando dados sincronizados...';modal.classList.remove('hidden');
+ const token=localStorage.getItem('gcmbs.mobile.token');
+ const km=v=>{if(v==null||v==='')return null;const s=String(v).trim().replace(/\s*km\s*$/i,'').replace(/\./g,'');return /^\d+$/.test(s)&&Number.isSafeInteger(Number(s))?Number(s):null};
+ const fmt=v=>v==null?'Não informado':v.toLocaleString('pt-BR')+' km';
+ const date=v=>{let m=String(v??'').match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=String(v??'').match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m?m[3]+'-'+m[2]+'-'+m[1]:''};
+ const key=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+ const plate=v=>key(String(v??'').toUpperCase().match(/[A-Z]{3}[-\s:]?\d[A-Z0-9]\d{2}/)?.[0]||'');
  try{
-  const response=await api('entity_list',{entity:'viaturas',limit:150,offset:0});
-  const records=(Array.isArray(response.records)?response.records:[]).map(x=>x.data||{});
-  const modal=document.getElementById('quadroModal');
-  const head=document.getElementById('quadroModalTitulo');
-  const meta=document.getElementById('quadroModalMeta');
-  const list=document.getElementById('quadroModalLista');
-  if(!modal||!head||!meta||!list)return;
-  head.textContent='Detalhes da Frota — consulta';
-  meta.textContent=records.length+' veículo(s) · somente leitura · dados disponíveis na última sincronização';
-  list.replaceChildren();
-  list.style.maxHeight='min(65vh, 620px)';
-  list.style.overflowY='auto';
-  const fields=[
-   ['Prefixo','prefixo'],['Placa','placa'],['Situação','situacao'],['Status','status'],
-   ['Marca','marca'],['Modelo','modelo'],['Tipo','tipo'],['Categoria','categoria'],
-   ['Ano de fabricação','ano_fabricacao'],['Ano do modelo','ano_modelo'],
-   ['Cor','cor'],['Combustível','combustivel'],['Cilindrada','cilindrada'],
-   ['Potência','potencia'],['Motor','motor'],['Chassi','chassi'],['RENAVAM','renavam'],
-   ['Proprietário','proprietario_nome'],['Documento do proprietário','proprietario_documento'],
-   ['Endereço do proprietário','proprietario_endereco'],
-   ['KM da última troca de óleo','km_ultima_troca_oleo'],
-   ['Intervalo para troca de óleo (km)','intervalo_troca_oleo_km'],
-   ['Observações','observacao']
-  ];
-  const available=v=>v!==null&&v!==undefined&&String(v).trim()!=='';
-  for(const x of records){
-   const item=document.createElement('details');
-   item.className='item';
-   item.style.display='block';
-   item.style.padding='12px 14px';
-   const summary=document.createElement('summary');
-   summary.style.cursor='pointer';
-   summary.style.fontWeight='700';
-   summary.textContent=[x.prefixo,x.modelo].filter(available).join(' · ')||'Veículo sem identificação';
-   item.appendChild(summary);
-   const subtitle=document.createElement('div');
-   subtitle.style.cssText='font-size:12px;opacity:.75;margin:6px 0';
-   subtitle.textContent=['Placa '+(x.placa||'Não informado'),'Situação '+(x.situacao||x.status||'Não informado')].join(' · ');
-   item.appendChild(subtitle);
-   const grid=document.createElement('div');
-   grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #dce5ef';
-   for(const [label,key] of fields){
-    const cell=document.createElement('div');
-    cell.style.cssText='min-width:0;overflow-wrap:anywhere';
-    const lbl=document.createElement('div');lbl.textContent=label;lbl.style.cssText='font-size:11px;color:#64748b';
-    const val=document.createElement('div');val.textContent=available(x[key])?String(x[key]):'Não informado';
-    val.style.cssText='font-size:13px;font-weight:600;color:#193451';
-    cell.append(lbl,val);grid.appendChild(cell);
-   }
-   item.appendChild(grid);list.appendChild(item);
+  if(!token)throw Error('Sessão não autenticada.');
+  if(!frotaV407Cache||frotaV407Cache.token!==token||Date.now()-frotaV407Cache.time>=1800000){
+   const vr=await api('entity_list',{entity:'viaturas',limit:150,offset:0});
+   if(!Array.isArray(vr.records))throw Error('Cadastro de viaturas indisponível.');
+   const vehicles=vr.records.map(x=>x.data||{}),checks=[];
+   let checkOk=true,formsOk=false;
+   try{for(let offset=0;offset<3000;offset+=150){const r=await api('entity_list',{entity:'checklist_viaturas',limit:150,offset});if(!Array.isArray(r.records))throw Error('Checklist indisponível');checks.push(...r.records.map(x=>x.data||{}));if(r.records.length<150)break;if(offset===2850)checkOk=false;}}catch(e){checkOk=false;}
+   try{const r=await fetch('https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-forms-checklists-read-r1',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}',cache:'no-store'});const f=await r.json();if(r.ok&&f.ok&&Array.isArray(f.registros)){formsOk=true;for(const x of f.registros){const a=x.respostas||[];checks.push({_forms:true,id:x.source_row,viatura:x.viatura||a[4],km:x.quilometragem??a[6],data:x.data_checklist||a[1]||x.enviado_em,hora:x.enviado_em||a[0]});}}}catch(e){}
+   frotaV407Cache={token,time:Date.now(),vehicles,checks,checkOk,formsOk};
   }
-  if(!records.length){
-   const empty=document.createElement('div');empty.className='empty';
-   empty.textContent='Nenhum veículo disponível na sincronização atual.';
-   list.appendChild(empty);
+  if(localStorage.getItem('gcmbs.mobile.token')!==token||head.textContent!=='Detalhes da Frota')return;
+  const {vehicles,checks,checkOk,formsOk}=frotaV407Cache;
+  const latest=new Map();
+  for(const c of checks){const v=vehicles.find(v=>!c._forms&&String(v.id)===String(c.viatura_id))||vehicles.find(v=>c._forms&&((plate(c.viatura)&&plate(c.viatura)===key(v.placa))||key(c.viatura)===key(v.prefixo)));const d=date(c.data),k=km(c.km);if(!v||!d||k==null)continue;const h=String(c.hora||'').match(/\b\d{2}:\d{2}(?::\d{2})?\b/)?.[0]||'00:00';const rank=d+'T'+h.padEnd(8,':00')+'|'+String(c.id??'').padStart(12,'0');if(!latest.has(v.id)||latest.get(v.id).rank<rank)latest.set(v.id,{rank,d,k,forms:c._forms});}
+  list.replaceChildren();list.style.maxHeight='min(65vh,620px)';list.style.overflowY='auto';
+  const note=document.createElement('p');note.textContent=(!checkOk||!formsOk)?'Atenção: uma fonte de checklists está indisponível ou incompleta. Os valores apresentados podem estar desatualizados.':'Dados consultados nas fontes sincronizadas. Atualização da consulta a cada 30 minutos.';list.append(note);
+  const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:13px';list.append(grid);
+  const order=['VTR01','VTR02','VTRPMP02','MT03','MT04','VTRPMP01'];const ord=v=>{const i=order.indexOf(key(v.prefixo).replace(/^VTRMT/,'MT'));return i<0?999:i};
+  for(const v of [...vehicles].sort((a,b)=>ord(a)-ord(b)||String(a.prefixo).localeCompare(String(b.prefixo),'pt-BR'))){
+   const c=latest.get(v.id),u=km(v.km_ultima_troca_oleo),i=km(v.intervalo_troca_oleo_km),p=u!=null&&i>0?u+i:null,m=Number(v.mes_licenciamento);
+   const card=document.createElement('article');card.style.cssText='background:#fff;border:1px solid #cbdff3;border-radius:12px;padding:14px;color:#153758';const h=document.createElement('h3');h.textContent=v.prefixo||'Viatura';h.style.cssText='margin:0 0 12px;color:#10365f;font-size:16px';card.append(h);
+   const rows=[['KM atual (último check-list)',fmt(c?.k)],['Data do check-list',c?c.d.split('-').reverse().join('/')+(c.forms?' (Forms)':''):'Não informado'],['Intervalo programado',fmt(i>0?i:null)],['KM próxima troca',fmt(p)],['KM da última troca de óleo',fmt(u)],['Mês de licenciamento',Number.isInteger(m)&&m>=1&&m<=12?new Intl.DateTimeFormat('pt-BR',{month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2026,m-1,1))):'Não informado']];
+   for(const [label,value] of rows){const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:13px';const l=document.createElement('span'),r=document.createElement('strong');l.textContent=label;r.textContent=value;row.append(l,r);card.append(row);}
+   const status=document.createElement('div');const due=p!=null&&c&&c.k>=p;status.style.cssText='padding:9px;border-radius:8px;font-size:12px;background:'+(due?'#ffe9e9':'#fff0d7')+';color:#704d12';status.textContent=!c?'Sem quilometragem válida de check-list.':u==null?'KM da última troca não informado.':u>c.k?'Confira a referência da última troca.':p==null?'Intervalo programado não informado.':due?'Atenção: troca de óleo atingida ou ultrapassada.':'Troca dentro do prazo: faltam '+fmt(p-c.k)+'.';if(c&&u!=null&&u<=c.k&&p!=null&&!due){status.style.background='#ebf8ef';status.style.color='#21643c';}card.append(status);grid.append(card);
   }
-  modal.classList.remove('hidden');
- }catch(e){alert('Não foi possível consultar a frota: '+(e?.message||e));}
+  meta.textContent=vehicles.length+' veículo(s) · somente leitura · dados sincronizados';
+  if(!vehicles.length)note.textContent='Nenhum veículo disponível.';
+ }catch(e){list.textContent='Não foi possível consultar a frota: '+(e?.message||e);}
 }
 function createMetric(label,id,sub,cls=''){
  const icons={'GCM ativos':'👮','Afastados':'↪','Em férias':'▣','Postos cadastrados':'♧','Frota total':'🚓','Disponíveis':'✓','Em uso':'◉','Em manutenção':'⚙','Detalhes da Frota':'🔧'};
