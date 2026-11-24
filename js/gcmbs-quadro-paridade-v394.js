@@ -245,6 +245,18 @@
      rows=rows.map(x=>({...x}));
      const swaps=await permutas(date);
      if(ctx.requestId!==serial)return;
+     const somenteExtras=rows.length>0&&rows.every(r=>
+       normal(r.tipo_servico||r.origem||r.complemento).includes('EXTRA')
+       &&!normal(r.tipo_servico||r.origem||'').includes('ORDINARIO'));
+     const semOrdinarios=rows.length===0||somenteExtras;
+     if(semOrdinarios){
+       const aviso=document.createElement('section');
+       aviso.setAttribute('role','status');
+       aviso.style.cssText='padding:12px 14px;margin:0 0 12px;border:1px solid #d49e45;border-radius:10px;background:#fff9ed;color:#713f12;font-weight:600;line-height:1.5';
+       aviso.textContent='DADOS INCOMPLETOS: nenhuma escala ordinária ativa está disponível no espelho Online para este turno. Os GCMs relacionados abaixo são apenas as Extras já recebidas; não representam todo o efetivo do Desktop. Aguardando a reconciliação da fila Modelo B.';
+       ctx.list.appendChild(aviso);
+       ctx.meta.textContent='Data de referência: '+fmt(date)+' · PARCIAL — '+rows.length+' registro(s) de Extras/serviços disponíveis';
+     }
      permutaDisplay(rows,swaps,turn,ctx.list);
      for(const r of rows){
        const nature=normal(r.tipo_servico||r.origem||r.complemento);
