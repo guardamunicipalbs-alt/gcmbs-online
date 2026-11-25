@@ -202,7 +202,6 @@ function configureCautionResponsibility(){const mod=document.querySelector('[dat
 function enhanceGenericEditor(){
   const dlg=$('onlineEditor');if(!dlg?.open)return;const t=currentOnlineTitle(),title=$('onlineEditorTitulo');
   if(t==='Equipamentos e Cautelas'){if(title)title.textContent=/^Editar/i.test(title.textContent||'')?'Editar Cautela':'Nova Cautela';replaceCautionStatus();configureCautionResponsibility();}
-  if(t==='Cursos e Habilitações'){if(title)title.textContent=/^Editar/i.test(title.textContent||'')?'Editar Curso / Habilitação':'Novo Curso / Habilitação';injectGenericFile('curso');}
   if(t==='Ofícios'){if(title)title.textContent=/^Editar/i.test(title.textContent||'')?'Editar Ofício':'Novo Ofício';injectGenericFile('oficio');}
 }
 function validateGenericSave(e){if(!e.target.closest?.('#onlineSalvar')||currentOnlineTitle()!=='Equipamentos e Cautelas')return;const m=String(document.querySelector('[data-online-field="modalidade_uso"]')?.value||'INDIVIDUAL').toUpperCase(),g=document.querySelector('[data-online-field="guarda_id"]')?.value,v=document.querySelector('[data-online-field="viatura_id"]')?.value;if(m==='INDIVIDUAL'&&!g){e.preventDefault();e.stopImmediatePropagation();alert('Na cautela individual, selecione o GCM responsável.');}else if(m==='VIATURA'&&!v){e.preventDefault();e.stopImmediatePropagation();alert('Na cautela vinculada à viatura, selecione a viatura responsável.');}}
