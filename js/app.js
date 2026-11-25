@@ -1,10 +1,10 @@
-import './communication-workflows-v74.js?v=100085';
+import './communication-workflows-v74.js?v=100420-r2';
 
 // GCMBS V293 - economia de invocações Edge Functions.
 // Mantém ações manuais/imediatas, mas alonga apenas os dois timers automáticos conhecidos
 // (atualização global e frequência) de 60 segundos para 30 minutos.
 // Temporizadores especificos sao configurados diretamente em cada modulo.
-await import('./app-core.js?v=100419-modulos-removidos');
+await import('./app-core.js?v=100420-r2');
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;
@@ -73,11 +73,11 @@ const GCMBS_BOOLEANOS_UI=new Set([
 const GCMBS_MODULOS_UI=new Map([
   ['dashboard','Quadro Operacional'],['guardas','Cadastro de Guardas'],['equipes','Equipes'],['postos','Postos Operacionais'],['tipos_escalas','Tipos de Escalas'],
   ['escala_extra','Escala Extra'],['escalas_extras_manuais','Escala Extra Manual'],['feriados','Feriados'],['justificativas_faltas','Justificativa de Faltas'],
-  ['eventos','Eventos / Serviço Extra por Evento'],['eventos_extras','Eventos / Serviço Extra por Evento'],['folha','Folha de Pagamento'],['folha_pagamento','Folha de Pagamento'],
+
   ['banco_horas','Banco de Horas'],['relatorios','Relatórios'],['viaturas','Cadastro de Viaturas'],['permutas','Permutas'],['abastecimento','Abastecimento'],
   ['manutencao_viaturas','Manutenção de Viaturas'],['checklist','Check-list de Viaturas'],['relatorios_frota','Relatórios da Frota'],['ocorrencias','Ocorrências / Produção'],
-  ['ocorrencias_operacionais','Ocorrências / Produção'],['equipamentos','Equipamentos e Cautelas'],['cursos','Cursos e Habilitações'],['oficios','Ofícios'],
-  ['frequencia','Frequência'],['central_pendencias','Central de Pendências'],['controle_acesso','Controle de Acesso'],['imagens','Imagens da GCM'],['avisos','Quadro de Avisos']
+  ['ocorrencias_operacionais','Ocorrências / Produção'],['equipamentos','Equipamentos e Cautelas'],['oficios','Ofícios'],
+  ['controle_acesso','Controle de Acesso']
 ]);
 const GCMBS_CODIGOS_TEXTO=new Map([
   ['ESCALA_EXTRA_MANUAL','Escala extra manual'],['MESMA_EQUIPE','Mesma equipe'],['ORDINARIO','Ordinário'],['EDICAO','Edição'],['CONSULTA','Consulta']

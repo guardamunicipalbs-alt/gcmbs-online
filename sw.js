@@ -1,4 +1,4 @@
-const VERSION='gcmbs-online-100419-modulos-removidos';
+const VERSION='gcmbs-online-100420-r2';
 
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -15,7 +15,7 @@ self.addEventListener('fetch',event=>{
     if(!response.ok)return response;
     const headers=new Headers(response.headers);
     headers.set('cache-control','no-store');
-    headers.set('x-gcmbs-version','10.0.419-menu');
+    headers.set('x-gcmbs-version','10.0.420-r2');
     headers.set('x-gcmbs-banco-competencia','20-19-v294-paid-cutoff-20260930');
     headers.set('x-gcmbs-runtime','smart-data-cache-v162');
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});

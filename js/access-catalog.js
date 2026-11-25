@@ -1,5 +1,5 @@
 import './sync-button-hotfix-v62.js?v=100076';
-import {MODULES} from './communication-contract.js?v=100250';
+import {MODULES, canonicalModule, ENTITY_BY_ID} from './communication-contract.js?v=100250';
 // v74: o runtime canônico não carrega hotfixes opcionais fora do manifesto.
 // V219: confirmação isolada da cessão 321 pelo GCM titular autenticado.
 
@@ -11,8 +11,23 @@ export const ONLINE_DESKTOP_ONLY = new Set([
   'gratificacao_motorista','feriados',
   'eventos_extra','folha_pagamento','cursos','frequencia','central_pendencias','imagens','imagens_gcm','avisos'
 ]);
+// R2: politica de navegacao local, independente do catalogo remoto.
+const normalizeOnlineId = id => String(id ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\s-]+/g,'_');
+const removedAliases = new Set(['pendencias','central_de_pendencias','quadro_avisos','quadro_de_avisos','institutional_notices','notices','cursos_e_habilitacoes','servico_extra_por_evento','eventos_servico_extra_por_evento','imagens_da_gcm','folhas_fechadas']);
+export function onlineModuleBlocked(id){
+  const key=normalizeOnlineId(id);
+  return ONLINE_DESKTOP_ONLY.has(canonicalModule(key)) || removedAliases.has(key);
+}
+export function onlineEntityBlocked(id){
+  const key=normalizeOnlineId(id);
+  const meta=Object.prototype.hasOwnProperty.call(ENTITY_BY_ID,key)?ENTITY_BY_ID[key]:null;
+  return !key || !meta || onlineModuleBlocked(meta.module) || onlineModuleBlocked(key);
+}
+export function onlineCatalogAllowed(row){
+  return !!row && !onlineModuleBlocked(row.modulo) && !onlineEntityBlocked(row.entity);
+}
 export const MODULOS_GCMBS = MODULES
-  .filter(m=>!ONLINE_DESKTOP_ONLY.has(m.id))
+  .filter(m=>!onlineModuleBlocked(m.id))
   .map(m=>({...m,nome:m.name,descricao:m.description}));
 
 export function normalizarPerfil(session={}){

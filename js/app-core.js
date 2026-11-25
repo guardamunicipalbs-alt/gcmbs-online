@@ -1,6 +1,6 @@
 
 import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin';
-import {MODULOS_GCMBS,ONLINE_DESKTOP_ONLY} from './access-catalog.js?v=100419-100408-menu';
+import {MODULOS_GCMBS,onlineModuleBlocked,onlineEntityBlocked,onlineCatalogAllowed} from './access-catalog.js?v=100420-r2';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
 
@@ -149,6 +149,7 @@ const NAV_ICONS=Object.fromEntries(MODULOS_GCMBS.map(m=>[m.id,m.icon||'•']));
 
 
 function setView(id){
+  if(onlineModuleBlocked(id))id='inicio';
   if(![...document.querySelectorAll('[data-view]')].some(el=>el.dataset.view===id)) id='inicio';
   // V388: a navegacao nao pode preservar editor de um modulo anterior.
   if(id!=='online'){
@@ -161,7 +162,7 @@ function setView(id){
   fecharMenu();
 }
 function temAcesso(modulo){
-  if(ONLINE_DESKTOP_ONLY.has(canonicalModule(modulo)))return false;
+  if(onlineModuleBlocked(modulo))return false;
   if(modulo==='perfil') return true;
   if(modulo==='gratificacao_motorista') return provider.gestor() && provider.pode(modulo);
   if(modulo==='escalas'||modulo==='gerador_escala') return provider.gestor() && provider.pode('escalas');
@@ -269,7 +270,7 @@ function renderPerfil(){
   $('perfilCargo').textContent=s.cargo||s.role||'';
   $('perfilUsuario').textContent=s.usuario||s.username||'';
   $('perfilRole').textContent=s.role||'gcm';
-  const ps=provider.permissoesEfetivas().filter(p=>!ONLINE_DESKTOP_ONLY.has(canonicalModule(p.modulo)));
+  const ps=provider.permissoesEfetivas().filter(p=>!onlineModuleBlocked(p.modulo));
   $('listaPermissoes').innerHTML=provider.controleTotal()
     ? `<span class="badge">CONTROLE TOTAL · ${ps.length} módulos</span>`
     : ps.length
@@ -316,7 +317,7 @@ function modulosOutros(){
   // Comandante/Subcomandante recebem o catálogo integral do Desktop. Para os
   // demais GCMs continuam valendo estritamente as permissões cadastradas.
   const base=provider.controleTotal()?MODULOS_GCMBS:provider.modulosAutorizados();
-  return base.filter(m=>!ONLINE_DESKTOP_ONLY.has(canonicalModule(m.id)) && !dedicados.has(m.id) && !(m.id==='relatorios_frota'&&!provider.gestor()));
+  return base.filter(m=>!onlineModuleBlocked(m.id) && !dedicados.has(m.id) && !(m.id==='relatorios_frota'&&!provider.gestor()));
 }
 function renderModulos(){
   const lista=modulosOutros(),el=$('listaModulos');if(!el)return;
@@ -1325,12 +1326,12 @@ function rotuloOnline(k,v){return valorApresentacao(k,v)}
 let onlineModuleFilter='';
 function renderCatalogoOnline(){
   const el=$('onlineEntidades');if(!el)return;
-  const lista=onlineCatalog.filter(c=>!ONLINE_DESKTOP_ONLY.has(canonicalModule(c.modulo))&&(!onlineModuleFilter||c.modulo===onlineModuleFilter));
+  const lista=onlineCatalog.filter(c=>onlineCatalogAllowed(c)&&(!onlineModuleFilter||c.modulo===onlineModuleFilter));
   el.innerHTML=lista.map(c=>`<article class="module-card ready" data-online-entity="${esc(c.entity)}"><div><strong>${esc(c.titulo)}</strong><small>${esc(c.modulo)} · ${c.can_edit?'edição online':'consulta online'}</small></div><span class="level">${c.can_edit?'EDIÇÃO':'CONSULTA'}</span></article>`).join('')||'<div class="empty">Nenhum conjunto de dados online autorizado para este módulo.</div>';
   document.querySelectorAll('[data-online-entity]').forEach(x=>x.addEventListener('click',()=>abrirEntidadeOnline(x.dataset.onlineEntity)));
 }
 async function carregarOnlineCatalog(){
-  try{onlineCatalog=await provider.entityCatalog();onlineModuleFilter='';renderCatalogoOnline();renderModulos();}
+  try{onlineCatalog=(await provider.entityCatalog()).filter(onlineCatalogAllowed);onlineModuleFilter='';renderCatalogoOnline();renderModulos();}
   catch(e){const el=$('onlineEntidades');if(el)el.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
 }
 function configurarCabecalhoModulo(modulo){
@@ -1378,7 +1379,7 @@ async function abrirModuloOnline(modulo){
       if(!onlineCatalog.length){
         provider.entityCatalog()
           .then(lista=>{
-            onlineCatalog=Array.isArray(lista)?lista:[];
+            onlineCatalog=Array.isArray(lista)?lista.filter(onlineCatalogAllowed):[];
             try{renderEntityTabs();}catch(e){
               console.warn('[GCMBS] abas do catalogo:',e?.message||e);
             }
@@ -1416,7 +1417,7 @@ async function abrirModuloOnline(modulo){
   // Somente modulos sem entidade primaria precisam aguardar o catalogo.
   if(!onlineCatalog.length){
     try{
-      onlineCatalog=await provider.entityCatalog();
+      onlineCatalog=(await provider.entityCatalog()).filter(onlineCatalogAllowed);
     }
     catch(e){
       onlineCatalog=[];
@@ -1427,21 +1428,22 @@ async function abrirModuloOnline(modulo){
   renderCatalogoOnline();
 }
 function renderEntityTabs(){
-  const host=$('onlineEntityTabs');if(!host)return;const itens=onlineCatalog.filter(c=>c.modulo===onlineModuleFilter&&c.entity!=='viatura_substituicoes');
+  const host=$('onlineEntityTabs');if(!host)return;const itens=onlineCatalog.filter(c=>onlineCatalogAllowed(c)&&c.modulo===onlineModuleFilter&&c.entity!=='viatura_substituicoes');
   host.innerHTML=itens.length>1?itens.map(c=>`<button type="button" class="module-tab ${onlineCurrent?.entity===c.entity?'active':''}" data-entity-tab="${esc(c.entity)}">${esc(c.titulo)}</button>`).join(''):'';
   host.classList.toggle('hidden',itens.length<=1);host.querySelectorAll('[data-entity-tab]').forEach(b=>b.addEventListener('click',()=>abrirEntidadeOnline(b.dataset.entityTab)));
 }
 async function abrirEntidadeOnline(entity){
-  const targetModule=ENTITY_BY_ID[String(entity||'')]?.module;
-  if(targetModule && ONLINE_DESKTOP_ONLY.has(targetModule))throw new Error('Cadastro exclusivo do Desktop.');
-  if(targetModule==='folha_pagamento')throw new Error('Folha disponivel somente para consulta de competencias fechadas.');
-  const b=await provider.entityList(entity,500,0);onlineCurrent=b.catalog;onlineRecords=b.records||[];
+  if(onlineEntityBlocked(entity))throw new Error('Entidade indisponivel no Online.');
+  entity=String(entity).trim().toLowerCase();
+  const b=await provider.entityList(entity,500,0);
+  if(!onlineCatalogAllowed(b.catalog))throw new Error('Catalogo indisponivel no Online.');
+  onlineCurrent=b.catalog;onlineRecords=b.records||[];
   const ent=String(entity||'').toLowerCase(),gid=Number(provider.session?.guarda_id||0);
   if(!provider.gestor()&&gid){
     if(ent==='justificativas_faltas')onlineRecords=onlineRecords.filter(r=>Number(r?.data?.guarda_id||0)===gid);
     else if(ent==='abastecimento_viaturas')onlineRecords=onlineRecords.filter(r=>Number(r?.data?.motorista_id||0)===gid);
     else if(ent==='manutencao_viaturas')onlineRecords=onlineRecords.filter(r=>Number(r?.data?.encaminhado_por||0)===gid);
-    else if(!['ocorrencias_operacionais','feriados','eventos_extras'].includes(ent)&&Array.isArray(onlineCurrent?.scope_fields)&&onlineCurrent.scope_fields.length){
+    else if(!['ocorrencias_operacionais','feriados'].includes(ent)&&Array.isArray(onlineCurrent?.scope_fields)&&onlineCurrent.scope_fields.length){
       onlineRecords=onlineRecords.filter(r=>(r?.scope_guard_ids||[]).map(Number).includes(gid));
     }
   }
@@ -1465,7 +1467,7 @@ function renderRegistrosOnline(){
   el.innerHTML=list.map(r=>{
     const d=r.data||{},ord=cfg.order||[];const keys=[...ord.filter(k=>Object.prototype.hasOwnProperty.call(d,k)),...Object.keys(d).filter(k=>!ord.includes(k))];
     const pairs=keys.filter(k=>!ONLINE_HIDE_FIELDS.has(String(k).toLowerCase())&&!campoOcultoNaEntidade(k)&&!['id'].includes(String(k).toLowerCase())).slice(0,18).map(k=>[k,d[k]]);
-    const temDocumento=!!d.arquivo_nome&&['cursos_habilitacoes','oficios','justificativas_faltas'].includes(onlineCurrent.entity);
+    const temDocumento=!!d.arquivo_nome&&['oficios','justificativas_faltas'].includes(onlineCurrent.entity);
     const acoes=(temDocumento||onlineCurrent.can_edit)?`<div class="online-record-actions">${temDocumento?`<button class="mini" data-online-doc="${esc(r.record_key)}">Visualizar documento</button>`:''}${onlineCurrent.can_edit?`<button class="mini" data-online-edit="${esc(r.record_key)}">Editar</button>${(onlineCurrent.entity!=='manutencao_viaturas'||provider.gestor())?`<button class="mini danger-soft" data-online-del="${esc(r.record_key)}">Excluir</button>`:''}`:''}</div>`:'';
     return `<div class="item" data-online-key="${esc(r.record_key)}"><div class="online-kv">${pairs.map(([k,v])=>`<b>${esc(onlineLabel(k))}</b><span>${esc(rotuloOnline(k,v))}</span>`).join('')}</div>${acoes}</div>`;
   }).join('')||'<div class="empty">Nenhum registro.</div>';
@@ -1475,6 +1477,7 @@ function renderRegistrosOnline(){
 }
 async function visualizarDocumentoOnline(key){
   try{
+    if(onlineEntityBlocked(onlineCurrent?.entity))throw new Error('Entidade indisponivel no Online.');
     const b=await provider.entityGet(onlineCurrent.entity,key),d=b?.record?.data||{};
     if(!d.arquivo_dados)throw new Error('O registro não possui conteúdo de documento sincronizado.');
     let src=String(d.arquivo_dados||'');const tipo=String(d.arquivo_tipo||'application/octet-stream');
@@ -1819,6 +1822,7 @@ async function salvarSubstituicoesViatura(principalId,selecionadas){
   }
 }
 async function editarOnline(key=null){
+  if(onlineEntityBlocked(onlineCurrent?.entity))return;
   if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
   onlineEditing=key?onlineRecords.find(r=>String(r.record_key)===String(key)):null;const d=onlineEditing?.data||{},cfg=uiEntity();
   $('onlineEditorTitulo').textContent=(onlineEditing?'Editar ':'Novo ')+(cfg.titulo||onlineCurrent?.titulo||'registro');
@@ -1845,8 +1849,7 @@ async function editarOnline(key=null){
 }
 async function salvarOnline(){
   try{
-    const forbidden=ENTITY_BY_ID[String(onlineCurrent?.entity||'')]?.module;
-    if(forbidden && (ONLINE_DESKTOP_ONLY.has(forbidden)||forbidden==='folha_pagamento'))throw new Error('Operacao exclusiva do Desktop.');
+    if(onlineEntityBlocked(onlineCurrent?.entity))throw new Error('Entidade indisponivel no Online.');
     if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
     const d={...(onlineEditing?.data||{})};
     const substitutasSelecionadas=onlineCurrent.entity==='viaturas'?coletarSubstitutasViaturaEditor():[];
@@ -1892,8 +1895,7 @@ async function salvarOnline(){
   }catch(e){$('onlineMsg').textContent=e.message}
 }
 async function excluirOnline(key){
-  const forbidden=ENTITY_BY_ID[String(onlineCurrent?.entity||'')]?.module;
-  if(forbidden && (ONLINE_DESKTOP_ONLY.has(forbidden)||forbidden==='folha_pagamento'))throw new Error('Exclusao exclusiva do Desktop.');
+  if(onlineEntityBlocked(onlineCurrent?.entity))throw new Error('Entidade indisponivel no Online.');
   if(onlineCurrent?.entity==='feriados'&&!gcmbsV125FeriadosPodeEditar())return;
   if(!confirm('Excluir este registro online?'))return;
   try{const r=onlineRecords.find(x=>String(x.record_key)===String(key));await provider.entityMutate(onlineCurrent.entity,key,'DELETE',r?.data||{});await abrirEntidadeOnline(onlineCurrent.entity)}catch(e){alert(e.message)}
@@ -2151,5 +2153,5 @@ $('relatoriosGerar')?.addEventListener('click',()=>renderRelatoriosInstitucionai
 $('relatoriosAtualizar')?.addEventListener('click',()=>carregarRelatoriosInstitucionais(true).catch(e=>alert(e.message)));
 $('relatoriosImprimir')?.addEventListener('click',imprimirRelatoriosInstitucionais);
 for(const id of ['relatoriosIni','relatoriosFim','relatoriosGcm','relatoriosPosto'])$(id)?.addEventListener('change',renderRelatoriosInstitucionais);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100162',{updateViaCache:'none'}).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=100420-r2',{updateViaCache:'none'}).catch(()=>{});}
 
