@@ -1,6 +1,6 @@
 
 import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin';
-import {MODULOS_GCMBS,ONLINE_DESKTOP_ONLY} from './access-catalog.js?v=100408-menu';
+import {MODULOS_GCMBS,ONLINE_DESKTOP_ONLY} from './access-catalog.js?v=100419-100408-menu';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
 
@@ -135,13 +135,9 @@ function valorApresentacao(k,v){
 const ENTITY_UI={
   feriados:{titulo:'Feriados',action:'Novo feriado',descricao:'Calendário institucional. GCMs fora da equipe COMANDANTES possuem acesso somente para consulta.',order:['data','nome','observacao'],sections:[['Feriado',['data','nome']],['Observação',['observacao']]]},
   justificativas_faltas:{titulo:'Justificativa de Faltas',action:'Nova justificativa',descricao:'Justificativa de faltas e documentos do próprio GCM, conforme permissão.',order:['guarda_id','data_inicial','quantidade_dias','data_final','tipo_servico','motivo','observacao','status'],sections:[['Período e serviço',['guarda_id','data_inicial','quantidade_dias','data_final','tipo_servico']],['Justificativa',['motivo','observacao','status']]]},
-  eventos_extras:{titulo:'Serviço Extra por Evento',action:'Novo evento',descricao:'Eventos extraordinários, local e período operacional.',order:['nome','data','horario_inicio','horario_fim','local','observacao','status'],sections:[['Evento',['nome','status']],['Data, horário e local',['data','horario_inicio','horario_fim','local']],['Observação',['observacao']]]},
   manutencao_viaturas:{titulo:'Manutenção de Viaturas',action:'Nova manutenção',descricao:'Baixa, acompanhamento e retorno de viaturas. Exclusão fica restrita ao Comando/Subcomando.',order:['viatura_id','data_manutencao','tipo_manutencao','descricao','quilometragem','encaminhado_por','empresa','atendente_oficina','valor','responsavel','status','consertado','data_retorno','recebido_por','observacao'],sections:[['Viatura e entrada',['viatura_id','data_manutencao','quilometragem','tipo_manutencao','status']],['Serviço / oficina',['descricao','encaminhado_por','empresa','atendente_oficina','valor','responsavel']],['Retorno',['consertado','data_retorno','recebido_por']],['Observações',['observacao']]]},
   abastecimento_viaturas:{titulo:'Abastecimento',action:'Novo abastecimento',descricao:'Registro e histórico de abastecimentos da frota.',order:['viatura_id','data_abastecimento','quilometragem','litros','motorista_id','observacao'],sections:[['Abastecimento',['viatura_id','data_abastecimento','quilometragem','litros']],['Condutor e observação',['motorista_id','observacao']]]},
-  cursos_habilitacoes:{titulo:'Cursos e Habilitações',action:'Novo curso',descricao:'Cursos e habilitações dos GCMs, incluindo início, conclusão, validade e comprovantes.',order:['guarda_id','curso','instituicao','data_inicio','data_conclusao','validade','certificado','observacao','ativo'],sections:[['GCM e curso',['guarda_id','curso','instituicao','ativo']],['Datas',['data_inicio','data_conclusao','validade']],['Comprovante e observação',['certificado','observacao']]]},
   oficios:{titulo:'Ofícios',action:'Novo ofício',descricao:'Ofícios e demandas institucionais seguindo o formulário adotado no Desktop.',order:['numero_oficio','data_recebimento','secretaria_municipal','outro','instituicao_solicitante','responsavel_solicitacao','cargo_solicitante','telefone_solicitante','data_demanda','local_demanda','horario_inicio','horario_termino_previsto','demanda'],sections:[['Identificação do ofício',['numero_oficio','data_recebimento','secretaria_municipal','outro']],['Solicitante',['instituicao_solicitante','responsavel_solicitacao','cargo_solicitante','telefone_solicitante']],['Demanda',['data_demanda','local_demanda','horario_inicio','horario_termino_previsto']],['Descrição detalhada',['demanda']]]},
-  frequencia_registros:{titulo:'Frequência',action:'Novo registro',descricao:'Registros de frequência consolidados e sincronizados com o Desktop.'},
-  imagens_gcm:{titulo:'Imagens da GCM',action:'Nova imagem',descricao:'Identidade visual institucional utilizada no Desktop, Online e aplicativo Android.'}
 };
 function uiEntity(){return ENTITY_UI[onlineCurrent?.entity]||{descricao:`Dados de ${onlineCurrent?.titulo||'módulo'} sincronizados com o Desktop.`}}
 function orderedColumns(){const write=new Set((onlineCurrent?.write_fields||[]).map(String)),cols=(onlineCurrent?.columns||[]).filter(c=>!write.size||write.has(String(c.name||''))),cfg=uiEntity(),map=new Map(cols.map(c=>[c.name,c]));const out=[];for(const n of cfg.order||[])if(map.has(n)){out.push(map.get(n));map.delete(n)}for(const c of cols)if(map.has(c.name))out.push(c);return out}
@@ -153,6 +149,7 @@ const NAV_ICONS=Object.fromEntries(MODULOS_GCMBS.map(m=>[m.id,m.icon||'•']));
 
 
 function setView(id){
+  if(![...document.querySelectorAll('[data-view]')].some(el=>el.dataset.view===id)) id='inicio';
   // V388: a navegacao nao pode preservar editor de um modulo anterior.
   if(id!=='online'){
     const dlg=document.getElementById('onlineEditor');
@@ -165,7 +162,7 @@ function setView(id){
 }
 function temAcesso(modulo){
   if(ONLINE_DESKTOP_ONLY.has(canonicalModule(modulo)))return false;
-  if(modulo==='perfil'||modulo==='avisos') return true;
+  if(modulo==='perfil') return true;
   if(modulo==='gratificacao_motorista') return provider.gestor() && provider.pode(modulo);
   if(modulo==='escalas'||modulo==='gerador_escala') return provider.gestor() && provider.pode('escalas');
   return provider.pode(modulo);
@@ -185,12 +182,6 @@ function fecharMenu(){$('mainNav')?.classList.remove('open');$('navBackdrop')?.c
 function abrirMenu(){$('mainNav')?.classList.add('open');$('navBackdrop')?.classList.remove('hidden')}
 async function abrirModuloPrincipal(modulo){
   modulo=canonicalModule(modulo);
-  if(modulo!=='folha_pagamento')window.gcmbsFecharFolhasFechadas?.();
-  if(modulo==='folha_pagamento'){
-    if(!temAcesso(modulo)){alert('Modulo sem permissao.');return;}
-    if(typeof window.gcmbsAbrirFolhasFechadas==='function')return window.gcmbsAbrirFolhasFechadas();
-    alert('Visualizador de folhas fechadas indisponivel.');return;
-  }
   if(!temAcesso(modulo)){alert('Você não possui acesso a este módulo.');return;}
   const metaModulo=MODULOS_GCMBS.find(m=>m.id===modulo)||{};
   if($('onlineModuloTitulo'))$('onlineModuloTitulo').textContent=metaModulo.nome||modulo;
@@ -207,7 +198,7 @@ async function abrirModuloPrincipal(modulo){
       }
     }).catch(e=>console.warn('[GCMBS] falha ao atualizar aceites:',e?.message||e));
   }
-  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});if(view==='pendencias')renderCentralPendencias();return;}
+  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -278,7 +269,7 @@ function renderPerfil(){
   $('perfilCargo').textContent=s.cargo||s.role||'';
   $('perfilUsuario').textContent=s.usuario||s.username||'';
   $('perfilRole').textContent=s.role||'gcm';
-  const ps=provider.permissoesEfetivas().filter(p=>provider.gestor()||canonicalModule(p.modulo)!=='gratificacao_motorista');
+  const ps=provider.permissoesEfetivas().filter(p=>!ONLINE_DESKTOP_ONLY.has(canonicalModule(p.modulo)));
   $('listaPermissoes').innerHTML=provider.controleTotal()
     ? `<span class="badge">CONTROLE TOTAL · ${ps.length} módulos</span>`
     : ps.length
@@ -1334,7 +1325,7 @@ function rotuloOnline(k,v){return valorApresentacao(k,v)}
 let onlineModuleFilter='';
 function renderCatalogoOnline(){
   const el=$('onlineEntidades');if(!el)return;
-  const lista=onlineModuleFilter?onlineCatalog.filter(c=>c.modulo===onlineModuleFilter):onlineCatalog;
+  const lista=onlineCatalog.filter(c=>!ONLINE_DESKTOP_ONLY.has(canonicalModule(c.modulo))&&(!onlineModuleFilter||c.modulo===onlineModuleFilter));
   el.innerHTML=lista.map(c=>`<article class="module-card ready" data-online-entity="${esc(c.entity)}"><div><strong>${esc(c.titulo)}</strong><small>${esc(c.modulo)} · ${c.can_edit?'edição online':'consulta online'}</small></div><span class="level">${c.can_edit?'EDIÇÃO':'CONSULTA'}</span></article>`).join('')||'<div class="empty">Nenhum conjunto de dados online autorizado para este módulo.</div>';
   document.querySelectorAll('[data-online-entity]').forEach(x=>x.addEventListener('click',()=>abrirEntidadeOnline(x.dataset.onlineEntity)));
 }
@@ -1352,9 +1343,7 @@ function configurarCabecalhoModulo(modulo){
 }
 async function abrirModuloOnline(modulo){
   modulo=canonicalModule(modulo);
-  if(modulo!=='folha_pagamento')window.gcmbsFecharFolhasFechadas?.();
   if(!temAcesso(modulo))throw new Error('Modulo exclusivo do Desktop ou nao autorizado.');
-  if(modulo==='folha_pagamento')return window.gcmbsAbrirFolhasFechadas?.();
   // HF10 R13:
   // A tela e o cabecalho precisam abrir ANTES da consulta ao catalogo.
   // O modulo primario pode ser consultado diretamente porque entity_list
@@ -1573,7 +1562,6 @@ function campoOnline(col,val){
   if(lower==='status'&&onlineCurrent?.entity==='manutencao_viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="ABERTA" ${String(v||'ABERTA').toUpperCase()!=='CONCLUIDA'?'selected':''}>ABERTA</option><option value="CONCLUIDA" ${String(v).toUpperCase()==='CONCLUIDA'?'selected':''}>CONCLUÍDA</option></select></label>`;
   if(lower==='status'&&onlineCurrent?.entity==='viaturas')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['ATIVA','INDISPONIVEL','BAIXADA','INATIVA'].map(x=>`<option value="${x}" ${String(v||'ATIVA').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
   if(lower==='modalidade_uso')return `<label>${esc(label)}<select data-online-field="${esc(name)}">${['INDIVIDUAL','VIATURA','COLETIVO'].map(x=>`<option ${String(v||'INDIVIDUAL').toUpperCase()===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
-  if(lower==='tipo_servico'&&onlineCurrent?.entity==='frequencia_registros')return `<label>${esc(label)}<select data-online-field="${esc(name)}" disabled><option value="${esc(v)}">${esc(v||'Selecione GCM e data')}</option></select><small>Preenchido automaticamente pela escala gravada.</small></label>`;
   if(lower==='tipo_servico')return `<label>${esc(label)}<select data-online-field="${esc(name)}"><option value="ORDINARIO" ${String(v||'ORDINARIO').toUpperCase()==='ORDINARIO'?'selected':''}>Serviço ordinário</option><option value="EXTRA" ${String(v).toUpperCase()==='EXTRA'?'selected':''}>Serviço extra</option></select></label>`;
   if(lower==='status')return `<label>${esc(label)}<input data-online-field="${esc(name)}" value="${esc(v||'ATIVA')}"></label>`;
   if(lower==='data'||/^data_/.test(lower)||['data_inicial','data_final','validade'].includes(lower)){
@@ -1854,9 +1842,6 @@ async function editarOnline(key=null){
     document.getElementById('onlineDiasFimSemana')?.addEventListener('click',()=>set(['6','0']));
     sync();
   }
-  if(onlineCurrent?.entity==='frequencia_registros'){
-    const atualizar=async()=>{const g=Number(document.querySelector('[data-online-field="guarda_id"]')?.value||0),dt=document.querySelector('[data-online-field="data"]')?.value,ts=document.querySelector('[data-online-field="tipo_servico"]'),ref=document.querySelector('[data-online-field="referencia_id"]');if(!g||!dt||!ts)return;try{const rr=await provider.frequencyServices(g,dt),sv=rr.services||[];ts.disabled=false;ts.innerHTML=sv.length?sv.map(x=>`<option value="${esc(x.tipo_servico)}" data-ref="${esc(x.referencia_id)}">${esc(x.tipo_servico==='ORDINARIO'?'Serviço ordinário':'Serviço extra')} · ${esc(x.turno||'')} · ${esc(x.referencia||'')}</option>`).join(''):'<option value="">Nenhum serviço gravado nesta data</option>';const setref=()=>{if(ref)ref.value=ts.selectedOptions[0]?.dataset.ref||''};ts.onchange=setref;setref()}catch(e){ts.innerHTML=`<option value="">${esc(e.message)}</option>`}};document.querySelector('[data-online-field="guarda_id"]')?.addEventListener('change',atualizar);document.querySelector('[data-online-field="data"]')?.addEventListener('change',atualizar);atualizar();
-  }
 }
 async function salvarOnline(){
   try{
@@ -1938,34 +1923,6 @@ async function atualizarAoVivo(){
     return false;
   }finally{gcmbsAtualizacaoAutoEmCurso=false;}
 }
-
-function renderAvisosInstitucionais(){
-  const lista=(provider.institutionalNotices?.()||[]).slice();
-  const render=(host,limit=50)=>{if(!host)return;const arr=lista.slice(0,limit);host.innerHTML=arr.length?arr.map(x=>{const nivel=String(x.nivel||'NORMAL').toUpperCase();const ate=x.fim_em?` · até ${fmt(String(x.fim_em).slice(0,10))}`:'';return `<article class="notice-board-item ${esc(nivel)}"><small><span class="notice-priority">${esc(nivel)}</span> · ${fmt(String(x.created_at||x.inicio_em||'').slice(0,10))}${ate}</small><strong>${esc(x.titulo||'Comunicado')}</strong><p>${esc(x.mensagem||'')}</p>${x.criado_por_nome?`<small>Publicado por ${esc(x.criado_por_nome)}</small>`:''}</article>`}).join(''):'<div class="empty">Nenhum aviso institucional ativo.</div>';};
-  render($('avisosHomeLista'),3);render($('listaAvisosInstitucionais'),50);
-}
-
-function renderAvisos(){
-  /* GCMBS_V278_NOTIFICACOES_LIMPAS
-     Aviso institucional possui tela propria no Quadro de Avisos.
-     Evita duplicacao/reaparecimento no feed de notificacoes.
-     Para eventos e servicos, data_evento prevalece sobre created_at.
-  */
-  const lista=filtraCompetencia(
-    provider.notifications()
-      .filter(x=>
-        String(x?.tipo||'').toUpperCase()!=='AVISO_INSTITUCIONAL'
-      ),
-    'avisosCompetenciaFiltro'
-  );
-  const decisoes=filtraCompetencia(provider.actionRequests().filter(x=>['APROVADA','RECUSADA','REPROVADA','CANCELADA'].includes(String(x.status||'').toUpperCase())),'avisosCompetenciaFiltro').map(x=>({created_at:x.processado_em||x.created_at,titulo:String(x.tipo).toUpperCase()==='PERMUTA'?'Decisão de permuta':'Decisão do Banco de Horas',mensagem:x.resposta||`Situação: ${x.status}`,synthetic:true}));
-  const naoLidas=lista.filter(x=>!x.lida_em).length;
-  const badge=$('navAvisosBadge'); if(badge){badge.textContent=naoLidas?String(naoLidas):'';badge.classList.toggle('hidden',!naoLidas);}
-  const todos=[...decisoes,...lista];
-  $('listaAvisos').innerHTML=todos.length?todos.map(x=>`<div class="item notice-item ${!x.synthetic&&!x.lida_em?'unread':''}" ${x.id?`data-notification-id="${x.id}"`:''}><small>${fmt(String(x.data_evento||x.created_at||'').slice(0,10))}${x.data_evento?' · evento '+fmt(x.data_evento):''}</small><strong>${esc(x.titulo||'Aviso')}</strong><span>${esc(x.mensagem||'')}</span>${x.id&&!x.lida_em?'':' '}${x.id&&!x.lida_em?'<button class="mini" data-read="'+x.id+'">Marcar como lido</button>':''}</div>`).join(''):'<div class="empty">Nenhuma notificação.</div>';
-  document.querySelectorAll('[data-read]').forEach(b=>b.addEventListener('click',async()=>{try{await provider.markNotificationRead(Number(b.dataset.read));renderAvisos();}catch(e){alert(e.message)}}));
-}
-
 
 function renderSolicitacoes(){
   const lista=provider.actionRequests();
@@ -2066,103 +2023,6 @@ async function enviarPermuta(ev){
   }
 }
 
-async function enviarMensagemComando(ev){ev.preventDefault();const ret=$('msgComandoRetorno');ret.className='full request-message';ret.textContent='Enviando...';try{const destino=$('msgDestino').value,ids=[...$('msgGcms').selectedOptions].map(o=>Number(o.value));const r=await provider.sendInstitutionalMessage({titulo:$('msgTitulo').value,mensagem:$('msgConteudo').value,nivel:$('msgNivel')?.value||'NORMAL',fim_em:$('msgFim')?.value||null,destino,data_servico:$('msgDataServico')?.value||null,guarda_ids:ids});ret.textContent=`Mensagem enviada para ${r.enviadas||0} destinatário(s).`;ret.classList.add('success');$('msgTitulo').value='';$('msgConteudo').value='';if($('msgFim'))$('msgFim').value='';if($('msgNivel'))$('msgNivel').value='NORMAL';await provider.load();renderAvisosInstitucionais();renderAvisos()}catch(e){ret.textContent=e.message;ret.classList.add('error')}}
-function renderMensagemComando(){const card=$('mensagemComandoCard');if(!card)return;const permitido=provider.gestor()&&provider.pode('central_pendencias','EDICAO');card.classList.toggle('hidden',!permitido);if(!permitido)return;const sel=$('msgGcms');const pessoas=(refData().guardas||[]).map(x=>({guarda_id:x.guarda_id||x.id,nome_guerra:x.nome_guerra||x.nome_completo}));sel.innerHTML=pessoas.map(x=>`<option value="${x.guarda_id}">${esc(x.nome_guerra||'GCM')}</option>`).join('');}
-function renderCentralPendencias(){
-  const host=$('pendenciasLista');if(!host)return;
-  const finais=new Set(['APROVADA','RECUSADA','REPROVADA','NEGADA','CANCELADA','CONCLUIDA']);
-  const gcmbsRequestOperacionalHF158=x=>{
-    const tipo=String(x?.tipo||'').trim().toUpperCase();
-    const status=String(x?.status||'PENDENTE').trim().toUpperCase();
-    const statusOriginal=String(x?.status_original||x?.status||'PENDENTE').trim().toUpperCase();
-    const desktopRecebido=Number(x?.desktop_referencia_id||0)>0;
-
-    /*
-     * O gateway pode apresentar PENDENTE_DESKTOP como PENDENTE
-     * para compatibilidade visual. Para a Central operacional,
-     * uma permuta so entra depois que saiu da fila de envio
-     * ao Desktop ou quando ja possui referencia Desktop.
-     */
-    if(tipo==='PERMUTA'){
-      if(statusOriginal==='PENDENTE_DESKTOP'&&!desktopRecebido)return false;
-      return status==='PENDENTE';
-    }
-
-    if(tipo==='BANCO_HORAS_CORRECAO'){
-      return ['PENDENTE','PENDENTE_DESKTOP'].includes(status);
-    }
-
-    return !finais.has(status) && status!=='ERRO';
-  };
-  const req=(provider.actionRequests()||[]).filter(gcmbsRequestOperacionalHF158);
-  const allRequestsHF156=provider.actionRequests()||[];
-  const requestsByIdHF156=new Map(
-    allRequestsHF156
-      .map(x=>[Number(x.id||0),x])
-      .filter(x=>x[0])
-  );
-
-  const gcmbsNotifSeenHF156=new Set();
-
-  const notif=(provider.notifications()||[]).filter(x=>{
-    if(x.lida_em)return false;
-
-    const tipo=String(x.tipo||'').trim().toUpperCase();
-
-    // GCMBS V278:
-    // avisos institucionais pertencem ao Quadro de Avisos,
-    // nao a Central de Pendencias.
-    if(tipo==='AVISO_INSTITUCIONAL')return false;
-    const refTipo=String(x.referencia_tipo||'').trim().toUpperCase();
-    const refId=Number(x.referencia_id||0);
-
-    /*
-     * A solicitacao real de Banco de Horas e a fonte canonica.
-     * O aviso PENDENCIA_COMANDO nao cria outro cartao do mesmo fato.
-     */
-    if(
-      tipo==='PENDENCIA_COMANDO' &&
-      refId &&
-      requestsByIdHF156.has(refId) &&
-      (
-        refTipo==='BANCO_HORAS_CORRECAO' ||
-        refTipo.includes('PERMUTA')
-      )
-    ){
-      return false;
-    }
-
-    /*
-     * Consolidar notificacoes semanticamente repetidas apenas
-     * na exibicao da Central, sem excluir ou marcar como lidas.
-     */
-    const chave=[
-      tipo,
-      refTipo,
-      refId,
-      String(x.titulo||'').trim(),
-      String(x.mensagem||'').trim()
-    ].join('|');
-
-    if(gcmbsNotifSeenHF156.has(chave)){
-      return false;
-    }
-
-    gcmbsNotifSeenHF156.add(chave);
-    return true;
-  });
-  const refs=new Set(req.map(x=>Number(x.desktop_referencia_id||0)).filter(Boolean));
-  const espelho=provider.gestor()?(provider.permutas()||[]).filter(x=>String(x.status||'').toUpperCase()==='PENDENTE'&&!refs.has(Number(x.id||x.desktop_id||0))):[];
-  const itens=[
-    ...req.map(x=>{const perm=String(x.tipo||'').startsWith('PERMUTA'),dataServico=perm?String(x.payload?.data||'').slice(0,10):'';return{data:dataServico||x.created_at,sort:dataServico||String(x.created_at||''),tipo:'Solicitação',titulo:String(x.tipo||'PENDÊNCIA').replace(/_/g,' '),texto:x.resposta||'Aguardando análise/processamento.',status:x.status||'PENDENTE',modulo:perm?'permutas':String(x.tipo||'').startsWith('BANCO_HORAS')?'banco_horas':'',analise:true};}),
-    ...espelho.map(x=>({data:String(x.data||'').slice(0,10),sort:String(x.data||'9999-99-99').slice(0,10),tipo:'Permuta Desktop',titulo:`Permuta #${Number(x.id||x.desktop_id||0)} aguardando análise`,texto:`${pessoaPorId(x.substituto_id)||x.substituto_nome||'GCM'} ↔ ${pessoaPorId(x.substituido_id)||x.substituido_nome||'GCM'} · turno ${x.turno||'-'}.`,status:'PENDENTE',modulo:'permutas',analise:true})),
-    ...notif.map(x=>({data:x.data_evento||x.created_at,sort:String(x.data_evento||x.created_at||''),tipo:'Aviso',titulo:x.titulo||'Notificação',texto:x.mensagem||'',status:'NÃO LIDA',modulo:x.referencia_tipo&&String(x.referencia_tipo).includes('PERMUTA')?'permutas':'',analise:false}))
-  ].sort((a,b)=>{if(a.analise!==b.analise)return a.analise?-1:1;return a.analise?String(a.sort||'9999').localeCompare(String(b.sort||'9999')):String(b.sort||'').localeCompare(String(a.sort||''));});
-  if($('pTotal'))$('pTotal').textContent=String(itens.length);if($('pSolic'))$('pSolic').textContent=String(req.length+espelho.length);if($('pAvisos'))$('pAvisos').textContent=String(notif.length);
-  host.innerHTML=itens.map(x=>`<article class="pending-card" ${x.modulo?`data-pend-open="${esc(x.modulo)}" tabindex="0" role="button"`:''}><div><small>${esc(x.tipo)} · ${fmt(String(x.data||'').slice(0,10))}</small><strong>${esc(x.titulo)}</strong><p>${esc(x.texto)}</p></div><span class="status-pill status-PENDENTE">${esc(x.status)}</span></article>`).join('')||'<div class="empty">Nenhuma pendência visível para seu perfil.</div>';
-  host.querySelectorAll('[data-pend-open]').forEach(el=>{const abrir=()=>abrirModuloPrincipal(el.dataset.pendOpen);el.addEventListener('click',abrir);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();abrir();}})});
-}
-
 function renderTudo(resetView=true){
   renderNavegacao();
   renderPerfil();
@@ -2171,12 +2031,8 @@ function renderTudo(resetView=true){
   renderViaturas();
   if(temAcesso('permutas')) {renderPermutas();renderPermutasGestao();}
   if(temAcesso('banco_horas')) {renderBanco();renderBancoGestao();}
-  renderAvisosInstitucionais();
-  renderAvisos();
   renderSolicitacoes();
   renderPermutaCandidates();
-  renderMensagemComando();
-  renderCentralPendencias();
   if(resetView){
     const primeiro=MODULOS_GCMBS.find(m=>temAcesso(m.id));
     if(primeiro) abrirModuloPrincipal(primeiro.id).catch(()=>setView('perfil')); else setView('perfil');
@@ -2224,20 +2080,17 @@ async function alterarSenhaOnline(){const a=$('senhaAtual').value,n=$('senhaNova
 async function resetSenhaComando(){const id=Number($('senhaResetGcm')?.value||0),m=$('senhaMsg');if(!id){m.textContent='Selecione o GCM.';return}if(!confirm('Redefinir a senha deste GCM para o CPF cadastrado?'))return;try{const r=await provider.resetPasswordAdmin(id);m.textContent=r.message||'Senha redefinida.'}catch(e){m.textContent=e.message}}
 
 async function boot(){
-  await aplicarIdentidadeVisual();atualizarStatusConexao();window.addEventListener('online',atualizarStatusConexao);window.addEventListener('offline',atualizarStatusConexao);if($('quadroData'))$('quadroData').value=hoje();if($('escalaIni'))$('escalaIni').value=hoje();if($('escalaFim'))$('escalaFim').value=hoje();['pmCompetenciaFiltro','bhCompetenciaFiltro','avisosCompetenciaFiltro'].forEach(id=>{if($(id)&&!$(id).value)$(id).value=competenciaAtual();});
+  await aplicarIdentidadeVisual();atualizarStatusConexao();window.addEventListener('online',atualizarStatusConexao);window.addEventListener('offline',atualizarStatusConexao);if($('quadroData'))$('quadroData').value=hoje();if($('escalaIni'))$('escalaIni').value=hoje();if($('escalaFim'))$('escalaFim').value=hoje();['pmCompetenciaFiltro','bhCompetenciaFiltro'].forEach(id=>{if($(id)&&!$(id).value)$(id).value=competenciaAtual();});
   const lembrar=localStorage.getItem('gcmbs.login.remember')==='1';if($('loginLembrar'))$('loginLembrar').checked=lembrar;if(lembrar&&$('loginUsuario'))$('loginUsuario').value=localStorage.getItem('gcmbs.login.usuario')||'';
   $('loginForm').addEventListener('submit',entrar);$('sair').addEventListener('click',sair);$('minhaSenha')?.addEventListener('click',abrirSenha);$('senhaFechar')?.addEventListener('click',()=>{if(!senhaObrigatoria)$('senhaEditor')?.close()});$('senhaEditor')?.addEventListener('cancel',e=>{if(senhaObrigatoria)e.preventDefault()});$('senhaSalvar')?.addEventListener('click',alterarSenhaOnline);$('senhaResetar')?.addEventListener('click',resetSenhaComando);
-  ['pmCompetenciaFiltro','bhCompetenciaFiltro','avisosCompetenciaFiltro'].forEach(id=>$(id)?.addEventListener('change',()=>renderTudo(false)));
+  ['pmCompetenciaFiltro','bhCompetenciaFiltro'].forEach(id=>$(id)?.addEventListener('change',()=>renderTudo(false)));
   $('formBancoCorrecao')?.addEventListener('submit',enviarBancoCorrecao);
   $('formPermuta')?.addEventListener('submit',enviarPermuta);
   $('pmCancelarEdicao')?.addEventListener('click',resetPermutaForm);$('pmModalidade')?.addEventListener('change',atualizarModoPermuta);$('pmExtraData')?.addEventListener('change',()=>{renderExtrasOutroFiltrados();$('pmExtraOutro')?.dispatchEvent(new Event('change'));});
   $('abrirAbastecimento')?.addEventListener('click',()=>abrirModuloOnline('abastecimento_viaturas'));
   $('abrirManutencao')?.addEventListener('click',()=>abrirModuloOnline('manutencao_viaturas'));
-  $('formMensagemComando')?.addEventListener('submit',enviarMensagemComando);
-  $('msgDestino')?.addEventListener('change',()=>{const v=$('msgDestino').value;$('msgGcmsLabel')?.classList.toggle('hidden',v!=='SELECIONADOS');$('msgDataServicoLabel')?.classList.toggle('hidden',v!=='SERVICO_DATA');});
   $('verificarAtualizacaoApp')?.addEventListener('click',verificarAtualizacaoApp);
   document.querySelectorAll('#mainNav [data-fixed][data-go]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.go)));
-  document.querySelectorAll('#quadroAvisosHome [data-go="avisos"]').forEach(b=>b.addEventListener('click',()=>setView('avisos')));
   $('menuToggle')?.addEventListener('click',()=>{if($('mainNav')?.classList.contains('open'))fecharMenu();else abrirMenu()});
   $('navBackdrop')?.addEventListener('click',fecharMenu);
   $('chkNovo')?.addEventListener('click',abrirNovoChecklist);$('chkCancelar')?.addEventListener('click',()=>$('chkFormCard').classList.add('hidden'));$('chkForm')?.addEventListener('submit',salvarChecklist);$('chkViatura')?.addEventListener('change',atualizarChecklistContexto);$('chkKm')?.addEventListener('input',atualizarChecklistContexto);$('chkTrocaOleo')?.addEventListener('change',()=>{$('chkKmTrocaBox').classList.toggle('hidden',!$('chkTrocaOleo').checked);if($('chkTrocaOleo').checked&&!$('chkKmTroca').value)$('chkKmTroca').value=$('chkKm').value||''});
@@ -2272,7 +2125,7 @@ $('pmData')?.addEventListener('change',gcmbsAtualizarPeriodoPermuta);
 $('pmTurno')?.addEventListener('change',e=>{
   e.currentTarget.dataset.gcmbsTurnoSelecionado=e.currentTarget.value;
   gcmbsAtualizarPeriodoPermuta();
-});$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirEventos')?.addEventListener('click',()=>abrirModuloOnline('eventos_extra'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
+});$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
   $('quadroData')?.addEventListener('change',()=>carregarQuadro().catch(()=>{}));
   document.querySelectorAll('[data-quadro-detail]').forEach(b=>b.addEventListener('click',()=>abrirQuadroDetalhe(b.dataset.title,b.dataset.quadroDetail)));
   $('quadroModalFechar')?.addEventListener('click',()=>$('quadroModal').classList.add('hidden'));

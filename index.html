@@ -27,21 +27,11 @@
 </style>
 
 <!-- GCMBS_UI_SEM_QUADRO_AVISOS_20261117 -->
-<style id="gcmbs-ui-sem-quadro-avisos">
-/* Ocultacao visual: dados e logica de avisos mantidos para compatibilidade. */
-#quadroAvisosHome,
-section[data-view="avisos"],
-button[data-go="avisos"],
-a[data-go="avisos"],
-[data-go="avisos"][role="menuitem"],
-#navAvisosBadge {
-  display: none !important;
-}
-</style>
+
 
 <style id="gcmbs-remover-avisos-layout">
 /* GCMBS_REMOVER_AVISOS_LAYOUT_20261117 */
-.gc118-notices, #quadroAvisosHome, section[data-view="avisos"], [data-go="avisos"], #navAvisosBadge {display:none!important;}
+
 .gc118-bottom{grid-template-columns:minmax(0,1fr)!important;}
 .gc118-chart{grid-column:1/-1!important;min-width:0!important;}
 </style>
@@ -89,7 +79,7 @@ a[data-go="avisos"],
     <button class="dashboard-card" data-quadro-detail="viaturas.manutencao" data-title="Em manutenção"><span>Em manutenção</span><b id="qViaturasManut">0</b><small>Ver relação</small></button>
   </div></section>
   <section class="dashboard-sector"><h2>Postos</h2><div class="dashboard-cards one"><button class="dashboard-card" data-quadro-detail="postos.cobertos" data-title="Postos cobertos no dia"><span>Postos cobertos no dia</span><b id="qPostos">0</b><small>Ver postos, turnos e GCMs</small></button></div><div id="qAviso" class="notice">Carregando Quadro Operacional...</div></section>
-  <section id="quadroAvisosHome" class="dashboard-sector"><h2>Quadro de Avisos</h2><div class="card"><div id="avisosHomeLista" class="notice-board-list"></div><button class="mini" type="button" data-go="avisos">Ver todos os avisos</button></div></section>
+  
 </section>
 <section data-view="relatorios" class="hidden">
   <div class="desktop-page-head"><div><h1>Relatórios</h1><p>Consulta institucional própria, alimentada exclusivamente pela réplica integral do Desktop.</p></div><div class="toolbar"><button id="relatoriosAtualizar" class="secondary" type="button">↻ Atualizar</button><button id="relatoriosImprimir" class="secondary" type="button">Imprimir</button></div></div>
@@ -185,12 +175,8 @@ a[data-go="avisos"],
 </section>
 
 
-<section data-view="pendencias" class="hidden">
-  <div class="desktop-page-head"><div><h1>Central de Pendências</h1><p>Solicitações em análise e avisos ainda não lidos, consolidados para o usuário atual.</p></div></div>
-  <div class="dashboard-cards"><div class="dashboard-card static"><span>Total visível</span><b id="pTotal">0</b><small>Pendências atuais</small></div><div class="dashboard-card static"><span>Solicitações</span><b id="pSolic">0</b><small>Aguardando processamento</small></div><div class="dashboard-card static"><span>Avisos</span><b id="pAvisos">0</b><small>Não lidos</small></div></div>
-  <div class="card"><div class="toolbar"><div><h2>Pendências consolidadas</h2><small class="muted">Atualizadas junto com a sincronização online.</small></div></div><div id="pendenciasLista" class="pending-list"></div></div>
-</section>
-<section data-view="folhaFechada" class="hidden" id="gcmbsFolhaFechadaView" aria-label="Folha de Pagamento fechada"></section>
+
+
 <section data-view="online" class="hidden">
   <div class="desktop-page-head module-page-head"><div><div class="module-kicker">GCMBS ONLINE / ANDROID</div><h1 id="onlineModuloTitulo">Módulo institucional</h1><p id="onlineModuloDescricao">Dados integrados ao mesmo cadastro utilizado pelo Desktop.</p></div><div class="module-head-meta"><span id="onlineNivel" class="level read">CONSULTA</span><small id="onlineVersao">Online · 10.0.160 · Aceites V298</small></div></div>
   <div class="card module-landing">
@@ -209,22 +195,9 @@ a[data-go="avisos"],
 <dialog id="senhaEditor"><div class="card module-editor-card" style="margin:0"><div class="module-editor-head"><div><div class="module-kicker">SEGURANÇA DA CONTA</div><h2>Senha de acesso</h2></div><button id="senhaFechar" class="dialog-close" type="button">×</button></div><div class="module-editor-fields"><section class="module-editor-section"><h3>Alterar minha senha</h3><label>Senha atual<input id="senhaAtual" type="password" autocomplete="current-password"></label><label>Nova senha<input id="senhaNova" type="password" autocomplete="new-password"></label><label>Confirmar nova senha<input id="senhaConfirmar" type="password" autocomplete="new-password"></label><button id="senhaSalvar" class="primary" type="button">Alterar senha</button></section><section id="senhaResetComando" class="module-editor-section hidden"><h3>Redefinir senha — Comando</h3><p class="muted">Redefine a senha do GCM selecionado para o CPF cadastrado. O usuário deverá alterá-la após o acesso.</p><label>GCM<select id="senhaResetGcm"><option value="">Selecione...</option></select></label><button id="senhaResetar" class="secondary" type="button">Resetar para CPF</button></section><div id="senhaMsg" class="muted"></div></div></div></dialog>
 <dialog id="onlineEditor"><div class="card module-editor-card" style="margin:0"><div class="module-editor-head"><div><div class="module-kicker">FORMULÁRIO INSTITUCIONAL</div><h2 id="onlineEditorTitulo">Registro</h2></div><button id="onlineCancelar" class="dialog-close" type="button" aria-label="Fechar">×</button></div><div id="onlineCampos" class="module-editor-fields"></div><div class="form-actions module-editor-actions"><button id="onlineSalvar" class="primary">Salvar</button><button id="onlineCancelarBottom" class="secondary" type="button">Cancelar</button></div><div id="onlineMsg" class="muted" style="margin-top:8px"></div></div></dialog>
 
-<section data-view="avisos" class="hidden">
-  <div class="desktop-page-head"><div><h1>Quadro de Avisos</h1><p>Comunicados institucionais sincronizados entre Desktop, Online e App.</p></div></div>
-  <div id="mensagemComandoCard" class="card hidden"><h2>Publicar aviso institucional</h2><p class="muted">Disponível ao Comando conforme as permissões vigentes.</p><form id="formMensagemComando" class="form-grid">
-    <label class="full">Título<input id="msgTitulo" placeholder="Aviso, determinação de serviço..."></label>
-    <label>Prioridade<select id="msgNivel"><option value="NORMAL">Normal</option><option value="IMPORTANTE">Importante</option><option value="URGENTE">Urgente</option></select></label>
-    <label>Exibir até<input id="msgFim" type="datetime-local"></label>
-    <label>Destino<select id="msgDestino"><option value="TODOS">Todos os GCMs</option><option value="ATIVOS">Somente GCMs ativos/disponíveis</option><option value="SERVICO_DATA">Somente GCMs de serviço na data</option><option value="SELECIONADOS">GCMs selecionados</option></select></label>
-    <label id="msgDataServicoLabel" class="hidden">Data do serviço<input id="msgDataServico" type="date"></label><label id="msgGcmsLabel" class="full hidden">GCMs<select id="msgGcms" multiple size="8"></select></label>
-    <label class="full">Mensagem<textarea id="msgConteudo" required placeholder="Digite o conteúdo do aviso institucional"></textarea></label>
-    <button class="primary full" type="submit">Publicar aviso</button><div id="msgComandoRetorno" class="full request-message"></div>
-  </form></div>
-  <div class="card"><h2>Avisos ativos</h2><div id="listaAvisosInstitucionais" class="notice-board-list"></div></div>
-  <div class="card"><div class="toolbar"><h2>Notificações pessoais</h2><label>Competência <input id="avisosCompetenciaFiltro" type="month"></label></div><div class="notice">Alertas automáticos de escala, permutas, banco de horas e confirmações.</div><div id="listaAvisos" class="list" style="margin-top:12px"></div></div>
-</section>
 
-<section data-view="eventos" class="hidden"><div class="card"><h2>Eventos</h2><p class="muted">Administração online dos eventos e das equipes/GCMs participantes, conforme as permissões do Desktop.</p><button id="abrirEventos" class="primary">Abrir gestão de eventos</button></div></section>
+
+
 <section data-view="acessos" class="hidden">
   <div class="card"><h2>Outros</h2><p class="muted">O aplicativo respeita a mesma autorização do GCMBS Desktop. Cada módulo autorizado utiliza uma interface própria ou um formulário estruturado conforme o cadastro correspondente do Desktop. Os dados são sincronizados em nuvem quando houver conexão. O nível CONSULTA/EDIÇÃO vem do Controle de Acesso do GCMBS.</p><div id="listaModulos" class="module-grid"></div></div>
 </section>
@@ -236,14 +209,14 @@ a[data-go="avisos"],
 </section>
 </main>
 <div id="quadroModal" class="quadro-modal hidden" role="dialog" aria-modal="true"><div class="quadro-modal-card"><div class="quadro-modal-head"><h2 id="quadroModalTitulo">Detalhes</h2><button id="quadroModalFechar" type="button">×</button></div><div id="quadroModalMeta" class="muted"></div><div id="quadroModalLista" class="list"></div></div></div>
-<nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="avisos" data-fixed="true">📢 <span>Quadro de Avisos</span> <span id="navAvisosBadge" class="nav-badge hidden"></span></button><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
+<nav id="mainNav" class="desktop-nav"><div class="nav-brand"><strong>GCMBS</strong><small>Menus autorizados</small></div><div id="navGroups" class="nav-groups"></div><div class="nav-fixed"><button data-go="perfil" data-fixed="true">👤 <span>Meu Perfil</span></button></div></nav><div id="navBackdrop" class="nav-backdrop hidden"></div>
 </div>
 <script defer src="js/gcmbs-design-system-v76.js?v=100386-pendencias-only"></script>
 <script type="module" src="js/hf10-r15-online-stability.js?v=100110"></script>
-<script type="module" src="js/app.js?v=100408-menu"></script>
+<script type="module" src="js/app.js?v=100419-modulos-removidos"></script>
 <script defer src="js/gcmbs-quadro-tipo-servico-v151.js?v=100177-extra-classify2"></script>
 <script defer src="js/gcmbs-status-desktop-v365.js?v=100365-sync-evidence"></script>
-<script defer src="js/gcmbs-folhas-fechadas-v368.js?v=100391-desktop-reference"></script>
+
 <script defer src="js/gcmbs-desktop-parity-v107.js?v=100388-route-guard"></script><script type="module" src="js/gcmbs-audit-fixes-v110.js?v=100156"></script>
 <!-- GCMBS_V118_EXACT_LAYOUT -->
 <script defer src="js/gcmbs-online-app-v118-exact.js?v=100393-r3-clicks-verified"></script>

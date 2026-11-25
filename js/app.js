@@ -4,7 +4,7 @@ import './communication-workflows-v74.js?v=100085';
 // Mantém ações manuais/imediatas, mas alonga apenas os dois timers automáticos conhecidos
 // (atualização global e frequência) de 60 segundos para 30 minutos.
 // Temporizadores especificos sao configurados diretamente em cada modulo.
-await import('./app-core.js?v=100408-menu');
+await import('./app-core.js?v=100419-modulos-removidos');
 
 // Hotfix visual 10.0.62: datas visiveis em dd/mm/aaaa, preservando ISO em inputs/API.
 const GCMBS_ISO_DATE_TEST=/\b\d{4}-\d{2}-\d{2}\b/;
@@ -52,144 +52,8 @@ function gcmbsAjustarOficios(){
   const filtrados=document.getElementById('onlineFiltrados');if(filtrados){const q=String(filtro.value||'').trim();filtrados.textContent=`${visiveis.length} ${q?'encontrado(s)':'registro(s)'} · ${gcmbsRotuloCompetencia(competencia)}`;}
 }
 
-// Frequência do Comando: espelha o controle do Desktop e grava online imediatamente.
-const GCMBS_FREQUENCIA_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
-let gcmbsFreqRows=[],gcmbsFreqCanEdit=false,gcmbsFreqLoading=false,gcmbsFreqLoadedKey='',gcmbsFreqTimer=null;
-const gcmbsFreqDirty=new Set();
-async function gcmbsFreqCall(action,payload={}){
-  const token=localStorage.getItem('gcmbs.mobile.token');
-  if(!token)throw new Error('Sessão online não autenticada.');
-  const r=await fetch(GCMBS_FREQUENCIA_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({action,...payload}),cache:'no-store'});
-  let b={};try{b=await r.json()}catch{}
-  if(!r.ok)throw new Error(b.message||`Erro ${r.status}`);return b;
-}
-function gcmbsFreqControls(){return document.getElementById('gcmbsFrequenciaDesktopLike');}
-function gcmbsFreqEnsureControls(){
-  const host=document.getElementById('onlineRegistros'),filtro=document.getElementById('onlineFiltro');if(!host||!filtro)return null;
-  let wrap=gcmbsFreqControls();if(wrap)return wrap;
-  filtro.style.display='none';
-  wrap=document.createElement('div');wrap.id='gcmbsFrequenciaDesktopLike';wrap.style.cssText='margin:0 0 14px 0;padding:14px;border:1px solid #dbe4f0;border-radius:14px;background:#fff';
-  const hoje=gcmbsDataAtual();
-  wrap.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,minmax(150px,1fr)) minmax(150px,190px);gap:10px;align-items:end">
-    <label style="display:grid;gap:6px;font-size:13px">Data inicial<input id="gcmbsFreqIni" type="date" value="${hoje}" style="min-height:42px"></label>
-    <label style="display:grid;gap:6px;font-size:13px">Data final<input id="gcmbsFreqFim" type="date" value="${hoje}" style="min-height:42px"></label>
-    <label style="display:grid;gap:6px;font-size:13px">Tipo<select id="gcmbsFreqTipo" style="min-height:42px"><option value="TODOS">Todos</option><option value="ORDINARIO">Ordinário</option><option value="EXTRA">Extra</option></select></label>
-    <label style="display:grid;gap:6px;font-size:13px">GCM<select id="gcmbsFreqGcm" style="min-height:42px"><option value="TODOS">Todos os GCMs</option></select></label>
-    <button id="gcmbsFreqAtualizar" type="button" style="min-height:42px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer">Atualizar</button>
-  </div>
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px"><button id="gcmbsFreqImprimir" type="button" style="min-height:38px;padding:0 22px;border:1px solid #9aa9bd;border-radius:9px;background:#64748b;color:#fff;font-weight:700">Imprimir</button><span id="gcmbsFreqStatus" style="font-size:13px;color:#52627a">Controle online sincronizado com o Desktop.</span></div>`;
-  host.parentElement?.insertBefore(wrap,host);
-  wrap.querySelector('#gcmbsFreqAtualizar')?.addEventListener('click',()=>gcmbsFreqLoad(true));
-  wrap.querySelector('#gcmbsFreqImprimir')?.addEventListener('click',()=>window.print());
-  wrap.querySelector('#gcmbsFreqTipo')?.addEventListener('change',gcmbsFreqRender);
-  wrap.querySelector('#gcmbsFreqGcm')?.addEventListener('change',gcmbsFreqRender);
-  for(const id of ['gcmbsFreqIni','gcmbsFreqFim'])wrap.querySelector('#'+id)?.addEventListener('change',()=>{gcmbsFreqLoadedKey='';});
-  if(!gcmbsFreqTimer)gcmbsFreqTimer=setInterval(()=>{if(String(document.getElementById('onlineTitulo')?.textContent||'').trim()==='Frequência'&&!gcmbsFreqDirty.size&&!gcmbsFreqLoading)gcmbsFreqLoad(true,true);},1800000);
-  return wrap;
-}
-function gcmbsFreqFiltered(){
-  const tipo=document.getElementById('gcmbsFreqTipo')?.value||'TODOS',gcm=document.getElementById('gcmbsFreqGcm')?.value||'TODOS';
-  return gcmbsFreqRows.filter(r=>(tipo==='TODOS'||r.tipo_servico===tipo)&&(gcm==='TODOS'||String(r.guarda_id)===gcm));
-}
-function gcmbsFreqOptionsGcm(){
-  const s=document.getElementById('gcmbsFreqGcm');if(!s)return;const atual=s.value||'TODOS';
-  const map=new Map();for(const r of gcmbsFreqRows)map.set(String(r.guarda_id),r.gcm);
-  s.innerHTML='<option value="TODOS">Todos os GCMs</option>'+[...map].sort((a,b)=>String(a[1]).localeCompare(String(b[1]),'pt-BR')).map(([id,n])=>`<option value="${gcmbsEsc(id)}">${gcmbsEsc(n)}</option>`).join('');
-  s.value=[...s.options].some(o=>o.value===atual)?atual:'TODOS';
-}
-function gcmbsFreqRender(){
-  const host=document.getElementById('onlineRegistros');if(!host||!gcmbsFreqControls())return;
-  const list=gcmbsFreqFiltered();
-  const rowsHtml=list.map(r=>{const uid=gcmbsEsc(r.uid);const bloqueada=!!r.situacao_bloqueada||!gcmbsFreqCanEdit;const situacao=String(r.situacao||'PRESENTE').toUpperCase();return `<tr data-gcmbs-freq-row="${uid}">
-    <td>${gcmbsEsc(gcmbsDataBr(r.data))}</td><td><strong>${gcmbsEsc(r.gcm)}</strong></td><td>${r.tipo_servico==='EXTRA'?'EXTRA':'ORDINÁRIO'}</td><td>${gcmbsEsc(r.turno)}</td><td>${gcmbsEsc(r.referencia)}</td>
-    <td><select data-freq-field="situacao" ${bloqueada?'disabled':''} style="min-width:172px;min-height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px"><option value="PRESENTE" ${situacao==='PRESENTE'?'selected':''}>PRESENTE</option><option value="FALTA" ${situacao==='FALTA'?'selected':''}>FALTA</option><option value="FALTA JUSTIFICADA" ${situacao==='FALTA JUSTIFICADA'?'selected':''}>FALTA JUSTIFICADA</option><option value="ATRASO" ${situacao==='ATRASO'?'selected':''}>ATRASO</option><option value="DISPENSADO" ${situacao==='DISPENSADO'?'selected':''}>DISPENSADO</option></select></td>
-    <td style="min-width:210px">${gcmbsEsc(r.justificativa||'-')}</td><td><input data-freq-field="observacao" value="${gcmbsEsc(r.observacao||'')}" ${!gcmbsFreqCanEdit?'disabled':''} style="min-width:160px;min-height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 8px"></td>
-    <td><button data-freq-save="1" ${!gcmbsFreqCanEdit?'disabled':''} style="min-height:38px;padding:0 15px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer">Salvar</button></td></tr>`;}).join('');
-  host.innerHTML=`<div data-gcmbs-frequencia-controle="1" style="overflow-x:auto;border:1px solid #dbe4f0;border-radius:12px;background:#fff"><table style="width:100%;border-collapse:collapse;min-width:1080px"><thead><tr style="background:#f8fafc;text-align:left"><th>Data</th><th>GCM</th><th>Serviço</th><th>Turno</th><th>Referência</th><th>Situação</th><th>Justificativa</th><th>Observação</th><th>Ação</th></tr></thead><tbody>${rowsHtml||`<tr><td colspan="9" style="padding:30px;text-align:center">Nenhum GCM escalado no período selecionado.</td></tr>`}</tbody></table></div>`;
-  host.querySelectorAll('th,td').forEach(el=>el.style.cssText+=';padding:10px;border-bottom:1px solid #e5eaf1;vertical-align:middle;font-size:13px');
-  host.querySelectorAll('[data-freq-field]').forEach(el=>el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>gcmbsFreqDirty.add(el.closest('tr')?.dataset.gcmbsFreqRow||'')));
-  host.querySelectorAll('[data-freq-save]').forEach(btn=>btn.addEventListener('click',()=>gcmbsFreqSave(btn.closest('tr'))));
-  const total=document.getElementById('onlineTotal');if(total)total.textContent=String(list.length);
-  const filtrados=document.getElementById('onlineFiltrados');if(filtrados){const ini=document.getElementById('gcmbsFreqIni')?.value||'',fim=document.getElementById('gcmbsFreqFim')?.value||'';filtrados.textContent=`${list.length} registro(s) · ${gcmbsDataBr(ini)}${fim&&fim!==ini?' a '+gcmbsDataBr(fim):''}`;}
-}
-async function gcmbsFreqSave(tr){
-  if(!tr)return;const uid=tr.dataset.gcmbsFreqRow,row=gcmbsFreqRows.find(x=>x.uid===uid);if(!row)return;
-  const btn=tr.querySelector('[data-freq-save]'),status=document.getElementById('gcmbsFreqStatus');const original=btn.textContent;btn.disabled=true;btn.textContent='Salvando...';
-  try{
-    const situacao=tr.querySelector('[data-freq-field="situacao"]')?.value||row.situacao||'PRESENTE';const observacao=tr.querySelector('[data-freq-field="observacao"]')?.value||'';
-    const r=await gcmbsFreqCall('frequency_save',{registro:{source_entity:row.source_entity,source_record_key:row.source_record_key,situacao,observacao}});
-    row.situacao=r.registro?.situacao||situacao;row.observacao=r.registro?.observacao||observacao;row.frequency_record_key=r.record_key||row.frequency_record_key;gcmbsFreqDirty.delete(uid);
-    if(status){status.textContent='Salvo online agora · aguardando/consolidando sincronização do Desktop.';status.style.color='#15803d';}
-    btn.textContent='Salvo';setTimeout(()=>{btn.textContent='Salvar';btn.disabled=!gcmbsFreqCanEdit;},1200);
-  }catch(e){if(status){status.textContent=e.message||'Falha ao salvar frequência.';status.style.color='#b91c1c';}btn.textContent=original;btn.disabled=false;}
-}
-async function gcmbsFreqLoad(force=false,silent=false){
-  const wrap=gcmbsFreqEnsureControls();if(!wrap||gcmbsFreqLoading)return;
-  const ini=document.getElementById('gcmbsFreqIni')?.value||gcmbsDataAtual(),fim=document.getElementById('gcmbsFreqFim')?.value||ini,key=`${ini}|${fim}`;
-  if(!force&&gcmbsFreqLoadedKey===key&&document.querySelector('[data-gcmbs-frequencia-controle]'))return;
-  gcmbsFreqLoading=true;const st=document.getElementById('gcmbsFreqStatus');if(st&&!silent){st.textContent='Atualizando frequência operacional...';st.style.color='#52627a';}
-  try{const b=await gcmbsFreqCall('frequency_list',{data_inicial:ini,data_final:fim});gcmbsFreqRows=b.rows||[];gcmbsFreqCanEdit=!!b.can_edit;gcmbsFreqLoadedKey=key;gcmbsFreqOptionsGcm();gcmbsFreqRender();if(st){st.textContent=`Atualizado ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · gravação online em tempo real.`;st.style.color='#15803d';}}
-  catch(e){const host=document.getElementById('onlineRegistros');if(host)host.innerHTML=`<div data-gcmbs-frequencia-controle="1" style="padding:22px;text-align:center;color:#b91c1c">${gcmbsEsc(e.message||'Falha ao carregar frequência.')}</div>`;if(st){st.textContent=e.message||'Falha ao carregar frequência.';st.style.color='#b91c1c';}}
-  finally{gcmbsFreqLoading=false;}
-}
-let gcmbsFreqGestorToken='';
-let gcmbsFreqGestorCache=null;
-let gcmbsFreqGestorPromise=null;
-function gcmbsSessaoEhGestor(s){
-  const role=String(s?.role||s?.perfil||'').trim().toLowerCase();
-  const cargo=String(s?.cargo||'').trim().toUpperCase();
-  return role==='comandante'||role==='subcomandante'||/SUBCOMANDANTE/.test(cargo)||(/COMANDANTE/.test(cargo)&&!/SUBCOMANDANTE/.test(cargo));
-}
-async function gcmbsFreqEhGestor(){
-  const token=localStorage.getItem('gcmbs.mobile.token')||'';
-  if(!token)return false;
-  if(token!==gcmbsFreqGestorToken){
-    gcmbsFreqGestorToken=token;
-    gcmbsFreqGestorCache=null;
-    gcmbsFreqGestorPromise=null;
-  }
-  if(gcmbsFreqGestorCache!==null)return gcmbsFreqGestorCache;
-  if(!gcmbsFreqGestorPromise){
-    gcmbsFreqGestorPromise=gcmbsFreqCall('session')
-      .then(r=>gcmbsSessaoEhGestor(r?.session||{}))
-      .catch(()=>false)
-      .then(v=>{
-        gcmbsFreqGestorCache=!!v;
-        return gcmbsFreqGestorCache;
-      })
-      .finally(()=>{gcmbsFreqGestorPromise=null;});
-  }
-  return gcmbsFreqGestorPromise;
-}
-async function gcmbsAjustarFrequenciaComando(){
-  const titulo=String(document.getElementById('onlineTitulo')?.textContent||'').trim(),wrap=gcmbsFreqControls(),filtro=document.getElementById('onlineFiltro');
-  if(titulo!=='Frequência'){
-    if(wrap)wrap.remove();
-    if(filtro)filtro.style.display='';
-    gcmbsFreqLoadedKey='';
-    gcmbsFreqDirty.clear();
-    return;
-  }
-
-  // A visão operacional completa de frequência é exclusiva do Comando/Subcomando.
-  // GCM comum permanece na visão genérica já filtrada pelo próprio guarda_id.
-  if(!(await gcmbsFreqEhGestor())){
-    const atual=gcmbsFreqControls();
-    if(atual)atual.remove();
-    if(filtro)filtro.style.display='';
-    gcmbsFreqLoadedKey='';
-    gcmbsFreqDirty.clear();
-    return;
-  }
-
-  if(String(document.getElementById('onlineTitulo')?.textContent||'').trim()!=='Frequência')return;
-  gcmbsFreqEnsureControls();
-  if(!document.querySelector('[data-gcmbs-frequencia-controle]'))gcmbsFreqLoadedKey='';
-  gcmbsFreqLoad(false);
-}
-
 let gcmbsUiScheduled=false;
-function gcmbsAgendarAjustesVisuais(){if(gcmbsUiScheduled)return;gcmbsUiScheduled=true;queueMicrotask(()=>{gcmbsUiScheduled=false;gcmbsFormatarDatasTexto(document.body);gcmbsAjustarOficios();gcmbsAjustarFrequenciaComando();});}
+function gcmbsAgendarAjustesVisuais(){if(gcmbsUiScheduled)return;gcmbsUiScheduled=true;queueMicrotask(()=>{gcmbsUiScheduled=false;gcmbsFormatarDatasTexto(document.body);gcmbsAjustarOficios();});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',gcmbsAgendarAjustesVisuais,{once:true});else gcmbsAgendarAjustesVisuais();
 new MutationObserver(gcmbsAgendarAjustesVisuais).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 
