@@ -3,6 +3,7 @@ import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin'
 import {MODULOS_GCMBS,onlineModuleBlocked,onlineEntityBlocked,onlineCatalogAllowed} from './access-catalog.js?v=100420-r2';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
+import {renderBankModern,clearBankModern} from './gcmbs-bank-modern-r1.js?v=20261127-r1';
 
 const $=id=>document.getElementById(id);
 const GCMBS_APP_VERSION='10.0.157';
@@ -52,6 +53,7 @@ let permutaExtrasCache={mine:[],others:[]};
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalasInstitucionais=[];
 
 function limparEscopoUsuarioRuntime(){
+  clearBankModern();
   if(window.gcmbsAgendadaEstadoV298)window.gcmbsAgendadaEstadoV298.requests=[];
   permutasEspelho=[];
   permutasAgendadasEspelho=[];permutasAgendadasCarregadas=false;
@@ -160,6 +162,7 @@ function setView(id){
   document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('hidden',x.dataset.view!==id));
   document.querySelectorAll('#mainNav [data-go]').forEach(x=>x.classList.toggle('active',x.dataset.go===id));
   fecharMenu();
+  if(id==='banco'&&temAcesso('banco_horas'))renderBankModern(provider);
 }
 function temAcesso(modulo){
   if(onlineModuleBlocked(modulo))return false;
@@ -255,7 +258,7 @@ if(!window.__GCMBS_HF158_R2_BANK_FILTER__){
   document.addEventListener('change',ev=>{
     const alvo=ev.target;
 
-    if(alvo?.id==='bhGcmFiltroV136'){
+    if(['bhGcmFiltroV136','bhGcmFiltro'].includes(alvo?.id)){
       queueMicrotask(()=>{
         renderBanco();
         renderBancoGestao();
@@ -1257,6 +1260,7 @@ function renderBanco(){
   const lr=$('listaCorrecoes');if(lr)lr.innerHTML=req.length?req.map(x=>{const p=x.payload||{},min=Number(p.minutos_solicitados||0),status=String(x.status||'PENDENTE').toUpperCase();return `<div class="item"><small>${fmt(String(x.created_at||'').slice(0,10))} · ${esc(p.data_servico||'')} · ${horas(min)}</small><strong>${esc(status)} · Solicitação #${x.id}</strong><span>${esc(p.descricao||'Solicitação de correção')}</span>${x.resposta?`<small>${esc(x.resposta)}</small>`:''}${resumoDecisaoBanco(x)}</div>`}).join(''):'<div class="empty">Nenhuma solicitação de correção enviada.</div>';
 
   renderBancoFolhaResumoHF158R2(historico);
+  renderBankModern(provider);
 }
 
 /* GCMBS_V276_DECISION_TRACE_UI */
