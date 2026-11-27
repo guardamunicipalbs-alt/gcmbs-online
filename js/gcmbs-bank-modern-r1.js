@@ -82,6 +82,9 @@ const css=[
 '#gcBankModern .gcb-summary .gcb-other{background:#c1e9fb!important;color:#12466b!important}',
 '#gcBankModern .gcb-summary td.gcb-money{background:#e5f3df!important;color:#245e36!important}',
 '#gcBankModern .gcb-summary{order:-1}',
+'section[data-view="banco"].gc-bank-modern:not(.gc-bank-details) .gc-bank-top #tituloBanco{display:none!important}',
+'section[data-view="banco"].gc-bank-modern:not(.gc-bank-details) .gc-bank-top div:has(#bh50):not(:has(#bhCompetenciaFiltro)):not(:has(#gcBankMode)){display:none!important}',
+'section[data-view="banco"].gc-bank-modern:not(.gc-bank-details) .gc-bank-top .gc-bank-old-tab{display:none!important}',
 '#gcBankModern .gcb-calendar{min-width:0!important}',
 '#gcBankModern .gcb-calendar .gcb-planned{background:#fff2be;color:#805c04}',
 '#gcBankModern .gcb-calendar .gcb-absence{background:#fce0e0;color:#a52525}',
@@ -100,6 +103,7 @@ function install(section){if(!$('gcBankModernCSS')){const style=document.createE
  for(const card of section.querySelectorAll(':scope > .card'))if(card!==top)card.classList.add('gc-bank-legacy');
  let toggle=$('gcBankMode');if(!toggle){toggle=document.createElement('button');toggle.type='button';toggle.id='gcBankMode';toggle.className='gc-bank-mode';toggle.textContent='Conferência e correções';toggle.setAttribute('aria-expanded','false');top.querySelector('.toolbar')?.append(toggle);toggle.addEventListener('click',()=>{const b=section.classList.toggle('gc-bank-details');toggle.textContent=b?'Voltar ao resumo':'Conferência e correções';toggle.setAttribute('aria-expanded',String(b))})}
  let panel=$('gcBankModern');if(!panel){panel=document.createElement('div');panel.id='gcBankModern';top.after(panel)}
+ for(const button of top.querySelectorAll('button'))if(/^(Resumo e lançamentos|Filtros avançados e impressão)$/i.test(button.textContent.trim()))button.classList.add('gc-bank-old-tab');
  section.classList.add('gc-bank-modern');return panel;
 }
 async function getPayroll(provider,c,gid){
