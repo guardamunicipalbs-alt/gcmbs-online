@@ -3,7 +3,7 @@ import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin'
 import {MODULOS_GCMBS,onlineModuleBlocked,onlineEntityBlocked,onlineCatalogAllowed} from './access-catalog.js?v=100420-r2';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
-import {renderBankModern,clearBankModern} from './gcmbs-bank-modern-r1.js?v=20261127-r1';
+import {renderBankModern,clearBankModern} from './gcmbs-bank-modern-r1.js?v=20261127-r2';
 
 const $=id=>document.getElementById(id);
 const GCMBS_APP_VERSION='10.0.157';
