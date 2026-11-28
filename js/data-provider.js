@@ -23,7 +23,14 @@ function gcmbsSortPermutas(list){return [...(list||[])].sort((a,b)=>{const ap=PE
 function gcmbsNetworkMessage(err){const msg=String(err?.message||err||'');if(err instanceof TypeError||/failed to fetch|networkerror|network request failed|load failed/i.test(msg))return 'Falha de comunicação com o servidor. Verifique a conexão e tente novamente. Nenhuma alteração foi confirmada.';return msg||'Falha de comunicação com o servidor.';}
 
 export class AuthenticatedProvider {
-  constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}; }
+  constructor(){ this.session=null; this.data=null; this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]}; this.readsR22=new Map(); }
+  clearDataR22(){this.data=null;this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};this.readsR22.clear();}
+  readOnceR22(action,payload={}){
+    const token=localStorage.getItem('gcmbs.mobile.token')||'',session=this.session;
+    const key=JSON.stringify([token,action,payload]);const old=this.readsR22.get(key);if(old)return old;
+    const task=this.call(action,payload).then(body=>{if(this.session!==session||token!==(localStorage.getItem('gcmbs.mobile.token')||''))throw Error('Sessão alterada durante a consulta.');return body;});
+    this.readsR22.set(key,task);const clear=()=>{if(this.readsR22.get(key)===task)this.readsR22.delete(key)};task.then(clear,clear);return task;
+  }
 
   async endpoint(url,action,payload={},authenticated=true){
     const headers={'Content-Type':'application/json'};
@@ -49,7 +56,7 @@ export class AuthenticatedProvider {
   async login(identificador,senha,remember=false){
     const body=await this.call('login',{identificador,senha,remember},false);
     localStorage.setItem('gcmbs.mobile.token',body.token);
-    this.session=body.session;
+    this.clearDataR22();this.session=body.session;
     if(Number(this.session?.senha_trocada||0)!==0) await this.load();
     return body.session;
   }
@@ -59,19 +66,19 @@ export class AuthenticatedProvider {
     if(!token) return null;
     try{
       const body=await this.call('session');
-      this.session=body.session;
+      this.clearDataR22();this.session=body.session;
       if(Number(this.session?.senha_trocada||0)!==0) await this.load();
       return this.session;
     }catch{
       localStorage.removeItem('gcmbs.mobile.token');
-      this.session=null;this.data=null;
+      this.session=null;this.clearDataR22();
       return null;
     }
   }
 
   async logout(preserveToken=false){
     if(!preserveToken){try{await this.call('logout')}catch{};localStorage.removeItem('gcmbs.mobile.token');}
-    this.session=null;this.data=null;
+    this.session=null;this.clearDataR22();
   }
 
   async changePassword(senha_atual,nova_senha){return this.call('change_password',{senha_atual,nova_senha})}
@@ -79,7 +86,9 @@ export class AuthenticatedProvider {
 
   async decideMirrorPermuta(desktopId,decisao,motivo=''){const r=await this.endpoint(PERMUTA_ADMIN_API,'decide_mirror',{desktop_id:Number(desktopId),decisao:String(decisao||'').toUpperCase(),motivo:String(motivo||'')});await this.load();return r}
   async load(){
-    const body=await this.call('data');
+    const session=this.session,token=localStorage.getItem('gcmbs.mobile.token')||'';
+    const ensure=()=>{if(!session||this.session!==session||token!==(localStorage.getItem('gcmbs.mobile.token')||''))throw Error('Sessão alterada durante a consulta.');};
+    const body=await this.call('data');ensure();
     // Defesa em profundidade no cliente: GCM comum nunca mantém em memória
     // Banco de Horas, extras, solicitações ou permutas de terceiros.
     if(!this.gestor()){
@@ -99,14 +108,15 @@ export class AuthenticatedProvider {
         if(Array.isArray(body.guardas))body.guardas=body.guardas.filter(x=>Number(x?.guarda_id||x?.id||0)===gid);
       }
     }
-    this.data=body;
+    let refs;
     try{
-      this.refs=await this.call('references');
+      refs=await this.call('references');ensure();
       if(!this.gestor()){
-        const gid=Number(this.session?.guarda_id||0),root=this.refs?.references&&typeof this.refs.references==='object'?this.refs.references:this.refs;
+        const gid=Number(this.session?.guarda_id||0),root=refs?.references&&typeof refs.references==='object'?refs.references:refs;
         if(Array.isArray(root?.justificativas))root.justificativas=root.justificativas.filter(x=>Number(x?.guarda_id||0)===gid);
       }
-    }catch{this.refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
+    }catch{ensure();refs={viaturas:[],guardas:[],equipes:[],postos:[],tipos_escalas:[],eventos:[],oficios:[],grupos_ativacao:[],justificativas:[]};}
+    ensure();this.data=body;this.refs=refs;
     return this;
   }
 
@@ -121,7 +131,7 @@ export class AuthenticatedProvider {
   permutationCandidates(){return this.data?.permutation_candidates||[]}
 
   async branding(){return (await this.call('branding')).branding||[]}
-  async entityCatalog(){return (await this.call('entity_catalog')).entities||[]}
+  async entityCatalog(){return (await this.readOnceR22('entity_catalog')).entities||[]}
   async entityList(entity,limit=500,offset=0){
     const b=await this.call('entity_list',{entity,limit,offset});
     if(this.gestor())return b;
@@ -148,7 +158,7 @@ export class AuthenticatedProvider {
     }
     return this.call('entity_mutate',{entity,record_key,operation,data,client_change_id});
   }
-  async quadro(data){return this.call('quadro_operacional',{data})}
+  async quadro(data){return this.readOnceR22('quadro_operacional',{data})}
   async syncStatus(){return (await this.call('sync_status')).sincronizacao||{}}
   async relatorioEscalas(){return (await this.call('relatorio_escalas')).escalas||[]}
   async ajustarEscalaComando(adjustment){const r=await this.call('escala_admin_adjust',{adjustment});await this.load();return r}

@@ -1,30 +1,12 @@
 
 
-import {AuthenticatedProvider} from './data-provider.js?v=20261127-clean-r21';
+import {AuthenticatedProvider} from './data-provider.js?v=20261127-integridade-r22';
 import {MODULOS_GCMBS,onlineModuleBlocked,onlineEntityBlocked,onlineCatalogAllowed} from './access-catalog.js?v=20261127-clean-r21';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
 import {renderBankModern,clearBankModern} from './gcmbs-bank-modern-r2-release.js';
 
 const $=id=>document.getElementById(id);
-const GCMBS_APP_VERSION='10.0.157';
-const GCMBS_APP_VERSION_CODE=157;
-const GCMBS_UPDATE_BASE='https://guardamunicipalbs-alt.github.io/gcmbs-online/';
-const GCMBS_INSTALL_PAGE=GCMBS_UPDATE_BASE+'instalar.html';
-async function verificarAtualizacaoApp(){
-  const out=$('statusAtualizacaoApp');if(out)out.textContent='Verificando versão publicada...';
-  try{
-    const r=await fetch(GCMBS_UPDATE_BASE+'downloads/version.json?ts='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw new Error('Informação de atualização ainda não publicada.');
-    const v=await r.json();const code=Number(v.versionCode||0);
-    if(out){
-      if(code>GCMBS_APP_VERSION_CODE)out.innerHTML=`Nova versão <b>${esc(v.version||code)}</b> disponível. Abra <a href="${GCMBS_INSTALL_PAGE}" target="_blank" rel="noopener">Baixar / atualizar app</a>.`;
-      else if(code===GCMBS_APP_VERSION_CODE)out.textContent=`Você está na versão atual (${GCMBS_APP_VERSION}).`;
-      else out.textContent=`Versão instalada ${GCMBS_APP_VERSION}. O site ainda informa ${v.version||'uma versão anterior'}.`;
-    }
-  }catch(e){if(out)out.textContent=e.message||'Não foi possível verificar a atualização.';}
-}
-
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>{if(!d)return'';const [y,m,day]=String(d).slice(0,10).split('-');return `${day}/${m}/${y}`};
 const gcmbsDataISO=v=>/^\d{4}-\d{2}-\d{2}$/.test(String(v||'').slice(0,10))?String(v).slice(0,10):'';
@@ -204,7 +186,7 @@ async function abrirModuloPrincipal(modulo){
       }
     }).catch(e=>console.warn('[GCMBS] falha ao atualizar aceites:',e?.message||e));
   }
-  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='gratificacao')carregarGratificacao().catch(e=>console.warn(e));if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});return;}
+  if(view==='inicio')carregarQuadro().catch(()=>{});if(view==='ocorrencias')carregarOcorrencias().catch(e=>console.warn(e));if(view==='checklist')carregarChecklist().catch(e=>console.warn(e));if(view==='relatorios')carregarRelatoriosInstitucionais().catch(e=>{console.warn(e);const out=$('relatoriosStatus');if(out)out.textContent=e.message||'Falha ao carregar relatórios.';});return;}
   await abrirModuloOnline(modulo);ativar();
 }
 function minhasEscalas(){return provider.escalas().slice().sort((a,b)=>String(a.data).localeCompare(String(b.data)))}
@@ -281,40 +263,6 @@ function renderPerfil(){
     : ps.length
       ? ps.map(p=>`<span class="badge">${esc(p.modulo)} · ${esc(p.nivel)}</span>`).join(' ')
       : '<span class="muted">Sem permissões habilitadas no Desktop.</span>';
-}
-
-let __gratificacaoEventos=false;
-function grHm(m){const n=Math.max(0,Math.round(Number(m)||0));return `${Math.floor(n/60)}h${String(n%60).padStart(2,'0')}`}
-async function carregarGratificacao(){
-  if(!provider.gestor())return;
-  const compEl=$('grComp');if(compEl&&!compEl.value)compEl.value=competenciaAtual();
-  const comp=String(compEl?.value||'');
-  try{
-    const [cfgR,regR]=await Promise.all([
-      provider.entityList('gratificacao_motorista_config',10,0),
-      provider.entityList('gratificacao_motorista_registros',500,0)
-    ]);
-    const cfg=(cfgR.records||[]).find(x=>String(x.record_key||x.id)==='1')?.data||(cfgR.records||[])[0]?.data||{};
-    const rows=(regR.records||[]).map(x=>x.data||x).filter(x=>!comp||String(x.competencia||x.data_servico||'').startsWith(comp));
-    if($('grAtivo')){$('grAtivo').checked=Number(cfg.ativo)===1;$('grAtivo').disabled=true;}
-    if($('grFator')){$('grFator').value=Number(cfg.fator_hora||0.125);$('grFator').disabled=true;}
-    if($('grSalvar'))$('grSalvar').disabled=true;
-    if($('grMsg'))$('grMsg').textContent='Ativação/desativação permanece protegida no Desktop; Online/App acompanham o estado sincronizado.';
-    if($('grStatus'))$('grStatus').textContent=Number(cfg.ativo)===1?'ATIVADA':'DESATIVADA';
-    const totalMin=rows.reduce((a,x)=>a+Number(x.minutos_gratificacao||0),0);
-    const motorMin=rows.reduce((a,x)=>a+Math.round(Number(x.segundos_motorista||0)/60),0);
-    if($('grResumo'))$('grResumo').innerHTML=`<div class="metric">Registros<b>${rows.length}</b></div><div class="metric">Tempo motorista<b>${grHm(motorMin)}</b></div><div class="metric">Gratificação<b>${grHm(totalMin)}</b></div>`;
-    if($('grLista'))$('grLista').innerHTML=rows.length
-      ?rows.sort((a,b)=>String(b.inicio_reconhecido||'').localeCompare(String(a.inicio_reconhecido||''))).map(x=>`<article class="record"><strong>${esc(x.data_servico||'')} · ${esc(x.nome_guerra||('GCM '+x.guarda_id))}</strong><small>Viatura ${esc(x.prefixo||x.viatura_id||'')} · ${grHm(Math.round(Number(x.segundos_motorista||0)/60))} como motorista · Gratificação ${grHm(x.minutos_gratificacao)} · ${esc(x.classe?x.classe+'%':'em apuração')}</small><span class="badge">${esc(x.status||'')}</span></article>`).join('')
-      :'<div class="empty">Nenhum registro nesta competência.</div>';
-    if(!__gratificacaoEventos){
-      __gratificacaoEventos=true;
-      $('grComp')?.addEventListener('change',()=>carregarGratificacao().catch(console.warn));
-    }
-  }catch(e){
-    if($('grMsg'))$('grMsg').textContent='A Gratificação ainda não está disponível na réplica online: '+(e.message||e);
-    if($('grLista'))$('grLista').innerHTML='<div class="empty">Aguardando sincronização do módulo com o Desktop.</div>';
-  }
 }
 
 function modulosOutros(){
@@ -547,11 +495,6 @@ async function carregarQuadro(){
   try{const d=await provider.quadro(data);quadroAtual=d;$('qAtivos').textContent=d.efetivo?.ativos||0;$('qAfastados').textContent=d.efetivo?.afastados||0;$('qFerias').textContent=d.efetivo?.feristas||0;if($('qServicoA'))$('qServicoA').textContent=d.efetivo?.servicoA||0;if($('qServicoB'))$('qServicoB').textContent=d.efetivo?.servicoB||0;$('qViaturasTotal').textContent=d.viaturas?.total||0;$('qViaturasDisponiveis').textContent=d.viaturas?.disponivel||0;$('qViaturasUso').textContent=d.viaturas?.emUso||0;$('qViaturasBaixadas').textContent=d.viaturas?.baixadas||0;$('qViaturasManut').textContent=d.viaturas?.manutencao||0;$('qPostos').textContent=d.postos?.cobertos||0;if($('qFaltas'))$('qFaltas').textContent=d.faltas?.total||0;$('qAviso').textContent=(d.cnhVencidas||[]).length?`⚠ CNH vencida: ${d.cnhVencidas.length} GCM(s).`:'Sem avisos de CNH vencida para a data selecionada.'}catch(e){$('qAviso').textContent='Não foi possível carregar o Quadro Operacional: '+e.message}
 }
 function nomeCandidato(id){const x=provider.permutationCandidates().find(g=>Number(g.guarda_id)===Number(id));return x?.nome_guerra||'GCM';}
-function renderViaturas(){
-  $('cardAbastecimento')?.classList.toggle('hidden',!provider.pode('abastecimento_viaturas'));
-  $('cardManutencao')?.classList.toggle('hidden',!provider.pode('manutencao_viaturas'));
-}
-
 const CHECK_ITEMS=['pneus','luzes','sirene','giroflex','freios','oleo','agua','combustivel','limpeza','avarias','equipamentos'];
 const OCC_NATUREZAS=['ABORDAGEM','APOIO A OUTRO ÓRGÃO','AVERIGUAÇÃO','DANO AO PATRIMÔNIO','DESENTENDIMENTO','FURTO','ROUBO','TRÂNSITO','VIOLÊNCIA DOMÉSTICA','PERTURBAÇÃO DO SOSSEGO','PESSOA EM ATITUDE SUSPEITA','ACIDENTE','APREENSÃO','PRISÃO / CONDUÇÃO','OUTRO'];
 let chkRecords=[],chkPending=[],occRecords=[];
@@ -2050,7 +1993,6 @@ function renderTudo(resetView=true){
   renderPerfil();
   renderModulos();
   renderInicio();
-  renderViaturas();
   if(temAcesso('permutas')) {renderPermutas();renderPermutasGestao();}
   if(temAcesso('banco_horas')) {renderBanco();renderBancoGestao();}
   renderSolicitacoes();
@@ -2109,9 +2051,6 @@ async function boot(){
   $('formBancoCorrecao')?.addEventListener('submit',enviarBancoCorrecao);
   $('formPermuta')?.addEventListener('submit',enviarPermuta);
   $('pmCancelarEdicao')?.addEventListener('click',resetPermutaForm);$('pmModalidade')?.addEventListener('change',atualizarModoPermuta);$('pmExtraData')?.addEventListener('change',()=>{renderExtrasOutroFiltrados();$('pmExtraOutro')?.dispatchEvent(new Event('change'));});
-  $('abrirAbastecimento')?.addEventListener('click',()=>abrirModuloOnline('abastecimento_viaturas'));
-  $('abrirManutencao')?.addEventListener('click',()=>abrirModuloOnline('manutencao_viaturas'));
-  $('verificarAtualizacaoApp')?.addEventListener('click',verificarAtualizacaoApp);
   document.querySelectorAll('#mainNav [data-fixed][data-go]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.go)));
   $('menuToggle')?.addEventListener('click',()=>{if($('mainNav')?.classList.contains('open'))fecharMenu();else abrirMenu()});
   $('navBackdrop')?.addEventListener('click',fecharMenu);
@@ -2147,7 +2086,7 @@ $('pmData')?.addEventListener('change',gcmbsAtualizarPeriodoPermuta);
 $('pmTurno')?.addEventListener('change',e=>{
   e.currentTarget.dataset.gcmbsTurnoSelecionado=e.currentTarget.value;
   gcmbsAtualizarPeriodoPermuta();
-});$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));$('abrirJustificativas')?.addEventListener('click',()=>abrirModuloOnline('justificativas_faltas'));
+});$('abrirOcorrencias')?.addEventListener('click',()=>abrirModuloOnline('ocorrencias'));
   $('quadroData')?.addEventListener('change',()=>carregarQuadro().catch(()=>{}));
   document.querySelectorAll('[data-quadro-detail]').forEach(b=>b.addEventListener('click',()=>abrirQuadroDetalhe(b.dataset.title,b.dataset.quadroDetail)));
   $('quadroModalFechar')?.addEventListener('click',()=>$('quadroModal').classList.add('hidden'));

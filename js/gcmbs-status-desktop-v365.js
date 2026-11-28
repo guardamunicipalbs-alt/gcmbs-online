@@ -31,8 +31,10 @@ async function read(force=false){
   if(body?.success!==true||!body?.sincronizacao)throw Error('Resposta incompleta');
   const s=body.sincronizacao,at=formatDate(s.ultimo_contato_desktop||s.ultima_sincronizacao);
   const verified=s.checkpoint_verificado===true;
-  el.textContent='Ultimo sinal Desktop: '+(at||'nao confirmado')+' | Sincronizacao '+(verified?'com checkpoint verificado':'sem checkpoint verificado');
- }catch(error){el.textContent='Estado da sincronizacao indisponivel (sem alterar os dados)';}
+  if(token!==localStorage.getItem('gcmbs.mobile.token'))return;
+  const ev=s.evidencias_r22||{},cycle=formatDate(ev.ciclo_inicio),pending=Number(s.pendentes);
+  el.textContent='Último sinal Desktop: '+(at||'não confirmado')+' | '+(cycle?'Início de ciclo: '+cycle+' | ':'')+(Number.isFinite(pending)?pending+' pendência(s) | ':'')+'Sincronização '+(verified?'com checkpoint verificado':'sem checkpoint verificado');
+ }catch(error){if(token===localStorage.getItem('gcmbs.mobile.token'))el.textContent='Estado da sincronização indisponível (sem alterar os dados)';}
  finally{loading=false;}
 }
 function boot(){
