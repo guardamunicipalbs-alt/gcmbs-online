@@ -447,36 +447,50 @@ function preencherFiltrosRelatorios(){
   g.innerHTML='<option value="">Todos os GCMs</option>'+nomes.map(x=>`<option>${esc(x)}</option>`).join('');g.value=nomes.includes(vg)?vg:'';
   p.innerHTML='<option value="">Todos os postos</option>'+postos.map(x=>`<option>${esc(x)}</option>`).join('');p.value=postos.includes(vp)?vp:'';
 }
+let relatorioPagina=0,relatorioChave='';
+function semanaRelatorio(dia){
+  const d=new Date(dia+'T12:00:00Z');
+  if(!Number.isFinite(+d))return [];
+  d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));
+  const ini=d.toISOString().slice(0,10);
+  d.setUTCDate(d.getUTCDate()+6);
+  return [ini,d.toISOString().slice(0,10)];
+}
+function blocosRelatorio(datas){
+  const blocos=[];for(let i=0;i<datas.length;i+=7)blocos.push(datas.slice(i,i+7));return blocos;
+}
 function renderRelatoriosInstitucionais(){
   preencherFiltrosRelatorios();
   const dados=filtrarRelatoriosInstitucionais(),host=$('relatoriosLista'),status=$('relatoriosStatus');if(!host)return;
   const ini=$('relatoriosIni')?.value||'',fim=$('relatoriosFim')?.value||'';
-  if(status)status.textContent=`${dados.length} registro(s) institucional(is) · visão em grade por posto e horário`;
-  if(!ini||!fim){
-    host.innerHTML='<div class="empty">Informe o período para consultar.</div>';
-    return;
-  }
-  let datas=gerarDatas(ini,fim);
   const gcm=$('relatoriosGcm')?.value||'',posto=$('relatoriosPosto')?.value||'';
-  if(gcm||posto){
-    const ds=new Set(dados.map(x=>String(x.data||'').slice(0,10)));
-    datas=datas.filter(d=>ds.has(d));
+  const chave=[ini,fim,gcm,posto].join('|');if(chave!==relatorioChave){relatorioPagina=0;relatorioChave=chave}
+  if(!ini||!fim||fim<ini){
+    if(status)status.textContent='Selecione um período válido.';
+    host.innerHTML='<div class="empty">Informe as datas inicial e final para consultar.</div>';return;
   }
-  const grupos=montarGruposEscala(dados);
-  const cab=`<th class="col-posto">POSTO / HORÁRIO</th>${datas.map(d=>`<th>${esc(fmt(d))}</th>`).join('')}`;
-  const linhas=grupos.map(g=>`<tr><th class="posto-linha"><b>${esc(g.posto)}</b><span>${esc(g.horario)}</span></th>${datas.map(d=>{
+  const datas=gerarDatas(ini,fim),blocos=blocosRelatorio(datas);
+  relatorioPagina=Math.max(0,Math.min(relatorioPagina,blocos.length-1));
+  const dias=blocos[relatorioPagina]||[],setDias=new Set(dias);
+  const visiveis=dados.filter(x=>setDias.has(String(x.data||'').slice(0,10)));
+  const grupos=montarGruposEscala(visiveis);
+  if(status)status.textContent=visiveis.length+' registro(s) neste bloco · '+dados.length+' no período selecionado';
+  const weekday=d=>new Intl.DateTimeFormat('pt-BR',{weekday:'short',timeZone:'UTC'}).format(new Date(d+'T12:00:00Z')).replace('.','');
+  const cab='<th class="col-posto">POSTO / HORÁRIO</th>'+dias.map(d=>'<th class="'+([0,6].includes(new Date(d+'T12:00:00Z').getUTCDay())?'gc-rel-weekend':'')+'">'+esc(fmt(d))+'<small>'+esc(weekday(d))+'</small></th>').join('');
+  const linhas=grupos.map(g=>'<tr><th class="posto-linha"><b>'+esc(g.posto)+'</b><span>'+esc(g.horario)+'</span></th>'+dias.map(d=>{
     const itens=g.itens.get(d)||[];
-    return itens.length
-      ?`<td>${itens.map(x=>`<div class="gcm-linha"><b>${esc(x.nome)}</b>${x.motorista?`<span class="tag-driver">MOTORISTA${x.veiculo?' - '+esc(x.veiculo):''}</span>`:x.veiculo?`<span>Viatura: ${esc(x.veiculo)}</span>`:''}${x.extra?'<span class="tag-extra">Extra</span>':''}</div>`).join('')}</td>`
-      :'<td class="vazio">—</td>';
-  }).join('')}</tr>`).join('');
-  host.innerHTML=grupos.length&&datas.length
-    ?`<div class="matrix-wrap"><table class="report-matrix" data-gc129-desktop="1"><thead><tr>${cab}</tr></thead><tbody>${linhas}</tbody></table></div>`
-    :'<div class="empty">Nenhum registro encontrado para os filtros informados.</div>';
+    return itens.length?'<td>'+itens.map(x=>'<div class="gcm-linha"><b>'+esc(x.nome)+'</b>'+(x.motorista?'<span class="tag-driver">MOTORISTA'+(x.veiculo?' - '+esc(x.veiculo):'')+'</span>':x.veiculo?'<span>Viatura: '+esc(x.veiculo)+'</span>':'')+(x.extra?'<span class="tag-extra">Extra</span>':'')+'</div>').join('')+'</td>':'<td class="vazio">—</td>';
+  }).join('')+'</tr>').join('');
+  const pager='<div class="gc-rel-pager"><button type="button" data-rel-prev '+(relatorioPagina===0?'disabled':'')+'>‹ Anterior</button><div><strong>'+esc(fmt(dias[0]))+' a '+esc(fmt(dias.at(-1)))+'</strong><small>Bloco '+(relatorioPagina+1)+' de '+blocos.length+' · até 7 dias</small></div><button type="button" data-rel-next '+(relatorioPagina>=blocos.length-1?'disabled':'')+'>Próximo ›</button></div>';
+  host.innerHTML=pager+(grupos.length&&dias.length?'<div class="matrix-wrap"><table class="report-matrix" data-gc129-desktop="1"><thead><tr>'+cab+'</tr></thead><tbody>'+linhas+'</tbody></table></div>':'<div class="empty">Nenhum registro encontrado neste bloco. Altere o período ou os filtros.</div>');
+  host.querySelector('[data-rel-prev]').onclick=()=>{if(relatorioPagina>0){relatorioPagina--;renderRelatoriosInstitucionais()}};
+  host.querySelector('[data-rel-next]').onclick=()=>{if(relatorioPagina<blocos.length-1){relatorioPagina++;renderRelatoriosInstitucionais()}};
 }
 async function carregarRelatoriosInstitucionais(force=false){
   if(force||!escalasInstitucionais.length)escalasInstitucionais=await provider.relatorioEscalas();
-  const ds=(escalasInstitucionais||[]).map(x=>String(x.data||'').slice(0,10)).filter(Boolean).sort();if(ds.length){if($('relatoriosIni')&&!$('relatoriosIni').value)$('relatoriosIni').value=ds[0];if($('relatoriosFim')&&!$('relatoriosFim').value)$('relatoriosFim').value=ds[ds.length-1];}
+  const [ini,fim]=semanaRelatorio(hoje());
+  if($('relatoriosIni')&&!$('relatoriosIni').value&&ini)$('relatoriosIni').value=ini;
+  if($('relatoriosFim')&&!$('relatoriosFim').value&&fim)$('relatoriosFim').value=fim;
   renderRelatoriosInstitucionais();
 }
 function imprimirRelatoriosInstitucionais(){
