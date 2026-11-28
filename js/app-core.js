@@ -148,7 +148,7 @@ function orderedColumns(){const write=new Set((onlineCurrent?.write_fields||[]).
 
 const NAV_GROUP_TITLES={operacional:'Operacional',escalas:'Escalas',frota:'Frota',gestao:'Gestão Institucional',institucional:'Institucional'};
 const NAV_GROUP_ORDER=['operacional','escalas','frota','gestao','institucional'];
-const NAV_GROUPS=NAV_GROUP_ORDER.map(id=>({id,titulo:NAV_GROUP_TITLES[id]||id,mods:MODULOS_GCMBS.filter(m=>m.group===id).map(m=>m.id)}));
+const NAV_GROUPS=NAV_GROUP_ORDER.map(id=>{const mods=MODULOS_GCMBS.filter(m=>m.group===id).map(m=>m.id);if(id==='frota'&&mods.includes('checklist_viaturas')){mods.splice(mods.indexOf('checklist_viaturas'),1);mods.unshift('checklist_viaturas');}return {id,titulo:NAV_GROUP_TITLES[id]||id,mods};});
 const NAV_ICONS=Object.fromEntries(MODULOS_GCMBS.map(m=>[m.id,m.icon||'•']));
 
 
