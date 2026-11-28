@@ -46,8 +46,8 @@
   loadScript('js/gcmbs-v146-final-pending-fixes.js?v=100271-cloud-stability','gc146-final-pending');
   loadScript('js/gcmbs-v147-final-reconciliation.js?v=100159','gc147-final-reconciliation');
   loadScript('js/gcmbs-permuta-flow-v148.js?v=100161','gc148-permuta-flow');
-  loadScript('js/gcmbs-permuta-cancel-v150.js?v=100161','gc150-permuta-cancel');
-  loadScript('js/gcmbs-quadro-tipo-servico-v151.js?v=100161','gc151-quadro-tipo');
+  // R21: script já carregado diretamente pelo HTML com a versão vigente.
+  // R21: script já carregado diretamente pelo HTML com a versão vigente.
   loadScript('js/gcmbs-online-authoritative-v160.js?v=100161','gc160-online-authoritative');
   loadScript('js/gcmbs-bank-audit-v162.js?v=100162','gc162-bank-audit');
   loadScript('js/gcmbs-bank-controls-v165.js?v=100165','gc165-bank-controls');

@@ -1,7 +1,7 @@
 
 
-import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin';
-import {MODULOS_GCMBS,onlineModuleBlocked,onlineEntityBlocked,onlineCatalogAllowed} from './access-catalog.js?v=100420-r2';
+import {AuthenticatedProvider} from './data-provider.js?v=20261127-clean-r21';
+import {MODULOS_GCMBS,onlineModuleBlocked,onlineEntityBlocked,onlineCatalogAllowed} from './access-catalog.js?v=20261127-clean-r21';
 import {PRIMARY_ENTITY,DEDICATED_VIEW,canonicalModule,ENTITY_BY_ID} from './communication-contract.js?v=100250-accessscope';
 import {configurarPushNativo} from './native-push.js';
 import {renderBankModern,clearBankModern} from './gcmbs-bank-modern-r2-release.js';
@@ -275,7 +275,7 @@ function renderPerfil(){
   $('perfilCargo').textContent=s.cargo||s.role||'';
   $('perfilUsuario').textContent=s.usuario||s.username||'';
   $('perfilRole').textContent=s.role||'gcm';
-  const ps=provider.permissoesEfetivas().filter(p=>!onlineModuleBlocked(p.modulo));
+  const visiveis=new Set(MODULOS_GCMBS.map(m=>m.id));const ps=provider.permissoesEfetivas().filter(p=>visiveis.has(canonicalModule(p.modulo)));
   $('listaPermissoes').innerHTML=provider.controleTotal()
     ? `<span class="badge">CONTROLE TOTAL · ${ps.length} módulos</span>`
     : ps.length

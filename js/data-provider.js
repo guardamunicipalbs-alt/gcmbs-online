@@ -1,7 +1,7 @@
 import './login-security.js?v=100282-active-session';
 import './v62-sync-ui.js?v=100156';
 import './v58-ui.js?v=100110';
-import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=100076';
+import {MODULOS_GCMBS, normalizarPerfil, controleTotal} from './access-catalog.js?v=20261127-clean-r21';
 
 const API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-communication-gateway-v74';
 const CORE_API='https://cxtayxzvilqrfczjlufk.supabase.co/functions/v1/gcmbs-mobile-api-v6';

@@ -26,8 +26,10 @@ export function onlineEntityBlocked(id){
 export function onlineCatalogAllowed(row){
   return !!row && !onlineModuleBlocked(row.modulo) && !onlineEntityBlocked(row.entity);
 }
+// R21: lista explícita de menus publicados; o contrato de transporte permanece integral.
+export const ONLINE_VISIBLE_MODULES = new Set(["dashboard","justificativas_faltas","permutas","banco_horas","relatorios","checklist_viaturas","manutencao_viaturas","abastecimento_viaturas","ocorrencias","operacoes_especiais"]);
 export const MODULOS_GCMBS = MODULES
-  .filter(m=>!onlineModuleBlocked(m.id))
+  .filter(m=>ONLINE_VISIBLE_MODULES.has(m.id)&&!onlineModuleBlocked(m.id))
   .map(m=>({...m,nome:m.name,descricao:m.description}));
 
 export function normalizarPerfil(session={}){
