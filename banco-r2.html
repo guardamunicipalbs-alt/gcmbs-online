@@ -89,7 +89,12 @@
 </section>
 
 <section data-view="ocorrencias" class="hidden">
-  <div class="desktop-page-head"><div><h1>Ocorrências e Produção Operacional</h1><p>Formulário institucional equivalente ao Desktop, otimizado para uso em campo.</p></div><button id="occNovo" class="primary" type="button">Nova ocorrência</button></div>
+  <div class="desktop-page-head"><div><h1>Ocorrências e Produção Operacional</h1><p>Formulário institucional equivalente ao Desktop, otimizado para uso em campo.</p></div><div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap"><button id="occStatsBtnR17" class="secondary" type="button" aria-controls="occStatsR17" aria-expanded="false">Estatísticas</button><button id="occNovo" class="primary" type="button">Nova ocorrência</button></div></div>
+  <div id="occStatsR17" class="card" hidden>
+    <div class="os-head"><div><h2>Estatísticas de Ocorrências e Produção Operacional</h2><small class="muted">Indicadores institucionais · R17 · somente consulta</small></div><button id="occStatsCloseR17" class="secondary" type="button">Fechar</button></div>
+    <div class="os-filters"><label>Data inicial<input id="occStatsStartR17" type="date"></label><label>Data final<input id="occStatsEndR17" type="date"></label><label>Natureza<select id="occStatsNatureR17"><option value="">Todas</option></select></label><div class="os-actions"><button id="occStatsYearR17" class="secondary" type="button">Ano atual</button><button id="occStatsAllR17" class="secondary" type="button">Todo histórico</button><button id="occStatsRefreshR17" class="primary" type="button">Atualizar</button></div></div>
+    <div id="occStatsResultsR17" aria-live="polite"></div>
+  </div>
   <div id="occFormCard" class="card hidden"><form id="occForm" class="desktop-form">
     <div class="form-section"><h2>Dados da ocorrência</h2><div class="form-grid">
       <label>Data da ocorrência<input id="occData" type="date" required></label><label>Hora da ocorrência<input id="occHora" type="time" required></label>
@@ -238,4 +243,5 @@
 <script type="module" src="js/gcmbs-permuta-agendada-v259.js?v=100328-model-b-30m"></script><script defer src="js/gcmbs-permuta-agendada-comando-v275.js?v=100328-model-b-30m"></script>
 <link rel="stylesheet" href="css/gcmbs-permuta-ux-v302.css?v=100302-ux6"><script defer src="js/gcmbs-permuta-ux-v302.js?v=100302-ux6"></script>
 <script defer src="js/gcmbs-permuta-cancel-v150.js?v=100296-r2-nomes-guerra"></script><script defer src="js/gcmbs-permutas-consulta-r9r3.js?v=100329-r9r3"></script><script defer src="js/gcmbs-forms-inline-r10.js?v=20261127-escopo-r12"></script><script defer src="js/gcmbs-permutas-layout-r11.js?v=100331-layout"></script><script type="module" src="js/gcmbs-checklists-history-r16.js"></script>
+<script defer src="js/gcmbs-occ-statistics-r17.js"></script>
 </body></html>
