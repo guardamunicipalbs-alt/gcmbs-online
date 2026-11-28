@@ -5,13 +5,18 @@
   'use strict';
   const viewSelector='section[data-view="permutas"]';
   const frameId='gcmbs-forms-inline-frame';
-  let carregado=false;
+  let carregado=false, tokenCarregado='';
+  function limpar(){const frame=document.getElementById(frameId);if(!frame)return;carregado=false;tokenCarregado='';frame.style.display='none';frame.removeAttribute('src');const status=document.getElementById('gcmbs-forms-inline-status');if(status){status.style.display='';status.textContent='Abra Permutas para consultar seu histórico.';}}
   function ativar(){
     const sec=document.querySelector(viewSelector);
     const frame=document.getElementById(frameId);
     const status=document.getElementById('gcmbs-forms-inline-status');
-    if(!sec||!frame||sec.classList.contains('hidden'))return;
-    if(carregado)return;
+    if(!sec||!frame)return;
+    const token=localStorage.getItem('gcmbs.mobile.token')||'';
+    if(carregado&&token!==tokenCarregado)limpar();
+    if(!token||document.getElementById('appTela')?.classList.contains('hidden')){if(carregado)limpar();return;}
+    if(sec.classList.contains('hidden')||carregado)return;
+    tokenCarregado=token;
     carregado=true;
     frame.style.display='block';
     const src=frame.getAttribute('data-src');
@@ -29,10 +34,13 @@
     const frame=document.getElementById(frameId);
     if(frame)frame.addEventListener('load',()=>{
       const status=document.getElementById('gcmbs-forms-inline-status');
-      if(status)status.style.display='none';
+      if(status&&carregado&&tokenCarregado===localStorage.getItem('gcmbs.mobile.token'))status.style.display='none';
     });
     const view=document.querySelector(viewSelector);
     if(view)new MutationObserver(ativar).observe(view,{attributes:true,attributeFilter:['class','style']});
+    const app=document.getElementById('appTela');if(app)new MutationObserver(ativar).observe(app,{attributes:true,attributeFilter:['class','style']});
+    window.addEventListener('storage',e=>{if(e.key==='gcmbs.mobile.token'||e.key===null){limpar();ativar();}});
+    window.addEventListener('pageshow',ativar);
     ativar();
     document.addEventListener('click',()=>queueMicrotask(ativar),true);
   }
