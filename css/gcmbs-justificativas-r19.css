@@ -1,0 +1,41 @@
+/* R19 — exclusivamente Justificativa de Faltas, sem alterar campos ou envio. */
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19{padding:0!important;gap:12px!important;background:transparent!important;box-shadow:none!important;border:0!important;min-width:0}
+html body #onlineRegistrosCard.gc-just-r19 #gc170Panel{order:0!important;margin:0!important;padding:12px 15px!important;background:linear-gradient(180deg,#f8fbff,#f2f7fc)!important;border:1px solid #c5d8ec!important;border-radius:13px!important}
+#onlineRegistrosCard.gc-just-r19 #gc170Panel h3{font-size:17px!important;line-height:1.3;margin:0 0 3px!important;color:#14375c}
+#onlineRegistrosCard.gc-just-r19 .gc170Grid{grid-template-columns:1.35fr repeat(4,minmax(0,1fr))!important;gap:8px 10px!important;margin:9px 0!important}
+#onlineRegistrosCard.gc-just-r19 .gc170Grid label{font-size:12px!important;gap:4px!important}
+#onlineRegistrosCard.gc-just-r19 .gc170Grid :is(input,select){min-height:34px!important;padding:5px 8px!important}
+#onlineRegistrosCard.gc-just-r19 .gc170Actions{gap:7px!important}
+#onlineRegistrosCard.gc-just-r19 .gc170Actions button{min-height:34px!important;padding:6px 12px!important}
+#onlineRegistrosCard.gc-just-r19 .gc170Note{font-size:11px!important;margin:4px 0!important;line-height:1.35!important}
+#onlineRegistrosCard.gc-just-r19 .gc170Status{margin:8px 0 3px!important;font-size:12px!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-editor-card{padding:12px 14px!important;border-radius:13px!important;box-shadow:0 2px 8px rgba(18,53,92,.07)!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-editor-head{align-items:center!important;margin-bottom:9px!important;padding-bottom:6px!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-editor-head>div{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:center;flex-direction:row-reverse;justify-content:space-between;width:100%}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-kicker{background:#e2eefb!important;color:#204b76!important;padding:4px 8px;border-radius:12px}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor #onlineCampos{display:grid!important;grid-template-columns:minmax(0,1.05fr) minmax(0,1.15fr) minmax(0,0.9fr)!important;gap:10px!important;align-items:stretch}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-editor-section{margin:0!important;padding:10px!important;background:#f8fbff!important;border:1px solid #cbddef!important;border-radius:11px!important;min-width:0}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-editor-section h3{font-size:14px!important;text-transform:none!important;letter-spacing:0!important;color:#12385e!important;margin-bottom:9px!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .form-grid label:has([data-online-field="guarda_id"]){grid-column:1/-1!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor label{font-size:11px!important;line-height:1.35!important;min-width:0}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor :is(input:not([type=checkbox]):not([type=radio]),select,textarea){box-sizing:border-box!important;min-width:0!important;min-height:35px!important;padding:6px 8px!important;font-size:12px!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor textarea{height:52px!important;min-height:52px!important;resize:vertical!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor #onlineCampos>label:has(#onlineArquivoJustificativa){grid-column:auto!important;align-content:start;align-self:stretch;padding:10px!important;border:1px solid #cbddef!important;border-radius:11px!important;background:#f8fbff!important;overflow-wrap:anywhere;gap:8px!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor #onlineCampos>label:has(#onlineArquivoJustificativa)::before{content:"Anexo";display:block;font-size:14px;font-weight:850;color:#12385e;margin-bottom:2px}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor #onlineArquivoJustificativa{height:auto!important;min-height:78px!important;padding:12px 7px!important;border:1px dashed #8daed2!important;border-radius:9px!important;background:#f1f6fc!important;cursor:pointer;white-space:normal!important}
+#onlineRegistrosCard.gc-just-r19 #onlineArquivoJustificativa::file-selector-button{display:block;width:100%;margin:0 0 8px;padding:8px;border:1px solid #b3cce8;border-radius:7px;background:white;color:#1353a4;font-weight:700;cursor:pointer}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-editor-actions{padding-top:7px!important;margin-top:8px!important;gap:8px!important}
+html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor .module-editor-actions button{min-height:34px!important;padding:0 14px!important;border-radius:8px!important}
+#onlineRegistrosCard.gc-just-r19 #gc107ListHead{margin:0!important;padding:9px 12px 0!important;border:1px solid #cbddef;border-bottom:0;border-radius:12px 12px 0 0;background:#fff}
+#onlineRegistrosCard.gc-just-r19 #gc107TableHost{margin-top:-12px!important;padding:10px 12px!important;border:1px solid #cbddef;border-top:0;border-radius:0 0 12px 12px;background:#fff;box-sizing:border-box}
+#onlineRegistrosCard.gc-just-r19 .gc107-table-wrap{max-height:45vh;overflow:auto!important;border-radius:8px!important;box-shadow:none!important}
+#onlineRegistrosCard.gc-just-r19 .gc107-table{min-width:680px!important;width:100%!important;table-layout:auto!important;height:auto!important}
+#onlineRegistrosCard.gc-just-r19 .gc107-table :is(th,td){padding:7px 8px!important;font-size:11px!important;line-height:1.4!important;height:auto!important;min-height:0!important;white-space:normal!important;overflow-wrap:anywhere!important}
+#onlineRegistrosCard.gc-just-r19 .gc107-table :is(th,td):first-child{display:none!important}
+#onlineRegistrosCard.gc-just-r19 .gc107-table thead th{background:#dce9f6!important;color:#173b61!important}
+#onlineRegistrosCard.gc-just-r19 .gc107-inline-actions{flex-wrap:wrap!important;gap:4px!important}
+#onlineRegistrosCard.gc-just-r19 .gc107-inline-actions button{min-height:28px!important;padding:3px 7px!important}
+#onlineRegistrosCard.gc-just-r19 .gc107-empty{padding:16px!important;min-height:50px!important;text-align:center}
+@media(max-width:1150px){html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor #onlineCampos{grid-template-columns:repeat(2,minmax(0,1fr))!important}html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor #onlineCampos>label:has(#onlineArquivoJustificativa){grid-column:1/-1!important}#onlineRegistrosCard.gc-just-r19 .gc170Grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:700px){html.gc107-clean body.gc107-cadastro #onlineRegistrosCard.gc-just-r19 #onlineEditor #onlineCampos,#onlineRegistrosCard.gc-just-r19 .gc170Grid{grid-template-columns:1fr!important}#onlineRegistrosCard.gc-just-r19 .gc107-table-wrap{max-height:none}}
