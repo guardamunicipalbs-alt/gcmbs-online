@@ -126,7 +126,7 @@
     <div class="form-section"><h2>Troca de óleo</h2><div id="chkOleoResumo" class="notice">Selecione uma viatura.</div><label class="inline-check"><input id="chkTrocaOleo" type="checkbox"> Óleo trocado neste check-list</label><label id="chkKmTrocaBox" class="hidden">KM da nova troca<input id="chkKmTroca" type="number" min="0"></label></div>
     <label>Observações<textarea id="chkObs"></textarea></label><div class="form-actions"><button class="primary" type="submit">Salvar check-list</button><button id="chkCancelar" class="secondary" type="button">Cancelar</button><span id="chkMsg" class="muted"></span></div>
   </form></div>
-  <div class="card"><h2>Histórico</h2><div id="chkLista" class="record-grid"></div></div>
+  <div class="card" id="gcChecklistCardR16"><h2>Histórico institucional de check-lists <small style="font-size:11px;color:#56728f">R16</small></h2><div id="gcChecklistInstitutionalR16" class="gc-chk-r15" role="region" aria-label="Histórico institucional">Aguardando consulta autenticada…</div><div id="chkLista" hidden aria-hidden="true" style="display:none!important"></div></div>
 </section>
 <section data-view="viaturas" class="hidden">
   <div class="desktop-page-head"><div><h1>Viaturas</h1><p>Acesso rápido aos módulos autorizados da frota.</p></div></div>
@@ -222,7 +222,7 @@
 </div>
 <script defer src="js/gcmbs-design-system-v76.js?v=100386-pendencias-only"></script>
 <script type="module" src="js/hf10-r15-online-stability.js?v=100110"></script>
-<script type="module" src="js/app-bank-r2-release.js?v=20261127-checklist-r15"></script>
+<script type="module" src="js/app-bank-r2-release.js?v=20261127-checklist-r16"></script>
 <script defer src="js/gcmbs-quadro-tipo-servico-v151.js?v=100177-extra-classify2"></script>
 <script defer src="js/gcmbs-status-desktop-v365.js?v=100365-sync-evidence"></script>
 
@@ -237,4 +237,5 @@
 <script defer src="js/gcmbs-v137-checklist-detalhado.js?v=100137"></script><script type="module" src="js/gcmbs-bank-competencia-v233.js?v=100328-model-b-30m"></script>
 <script type="module" src="js/gcmbs-permuta-agendada-v259.js?v=100328-model-b-30m"></script><script defer src="js/gcmbs-permuta-agendada-comando-v275.js?v=100328-model-b-30m"></script>
 <link rel="stylesheet" href="css/gcmbs-permuta-ux-v302.css?v=100302-ux6"><script defer src="js/gcmbs-permuta-ux-v302.js?v=100302-ux6"></script>
-<script defer src="js/gcmbs-permuta-cancel-v150.js?v=100296-r2-nomes-guerra"></script><script defer src="js/gcmbs-permutas-consulta-r9r3.js?v=100329-r9r3"></script><script defer src="js/gcmbs-forms-inline-r10.js?v=20261127-escopo-r12"></script><script defer src="js/gcmbs-permutas-layout-r11.js?v=100331-layout"></script></body></html>
+<script defer src="js/gcmbs-permuta-cancel-v150.js?v=100296-r2-nomes-guerra"></script><script defer src="js/gcmbs-permutas-consulta-r9r3.js?v=100329-r9r3"></script><script defer src="js/gcmbs-forms-inline-r10.js?v=20261127-escopo-r12"></script><script defer src="js/gcmbs-permutas-layout-r11.js?v=100331-layout"></script><script type="module" src="js/gcmbs-checklists-history-r16.js"></script>
+</body></html>
