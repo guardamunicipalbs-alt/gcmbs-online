@@ -1,3 +1,4 @@
+import {renderChecklistHistory,clearChecklistHistory} from './gcmbs-checklists-history-r15.js';
 
 import {AuthenticatedProvider} from './data-provider.js?v=100299-permutas-admin';
 import {MODULOS_GCMBS,onlineModuleBlocked,onlineEntityBlocked,onlineCatalogAllowed} from './access-catalog.js?v=100420-r2';
@@ -53,6 +54,7 @@ let permutaExtrasCache={mine:[],others:[]};
 let onlineCatalog=[],onlineCurrent=null,onlineRecords=[],onlineEditing=null,quadroAtual=null,permutaEditingId=null,escalasInstitucionais=[];
 
 function limparEscopoUsuarioRuntime(){
+  clearChecklistHistory();
   clearBankModern();
   if(window.gcmbsAgendadaEstadoV298)window.gcmbsAgendadaEstadoV298.requests=[];
   permutasEspelho=[];
@@ -561,7 +563,7 @@ async function carregarChecklist(){
   $('chkItens').innerHTML=CHECK_ITEMS.map(i=>`<label><span>${checklistItemLabel(i)}</span><select id="chk_${i}"><option selected>OK</option><option>ATENÇÃO</option><option>NÃO CONFORME</option></select></label>`).join('');
   const refs=provider.references();$('chkViatura').innerHTML='<option value="">Selecione...</option>'+(refs.viaturas||[]).map(v=>`<option value="${v.id}">${esc([v.prefixo,v.placa,v.modelo].filter(Boolean).join(' · '))}</option>`).join('');
   const gid=Number(provider.session?.guarda_id);$('chkGuarda').innerHTML=(refs.guardas||[]).filter(g=>Number(g.id)===gid).map(g=>`<option value="${g.id}" selected>${esc(g.nome_guerra||g.nome_completo)}</option>`).join('')||`<option value="${gid}">${esc(provider.session?.nome||'GCM')}</option>`;
-  const b=await provider.entityList('checklist_viaturas',500,0);chkRecords=b.records||[];renderChecklistHistorico();
+  await renderChecklistHistory(provider);
 }
 function renderChecklistHistorico(){const el=$('chkLista');if(!el)return;el.innerHTML=chkRecords.slice(0,40).map(r=>{const d=r.data||{},probs=CHECK_ITEMS.filter(i=>['ATENÇÃO','NÃO CONFORME'].includes(String(d[i]||'').toUpperCase()));return `<article class="record-card"><div class="record-card-head"><strong>${esc(viaturaPorId(d.viatura_id)||'Viatura')}</strong><span class="status-pill ${probs.length?'warn':'ok'}">${esc(d.situacao||'APTA')}</span></div><div class="record-meta">${fmt(d.data)} ${esc(d.hora||'')} · KM ${esc(d.km??'—')}</div>${probs.length?`<div class="record-warning">${probs.map(i=>checklistItemLabel(i)+': '+d[i]).join(' · ')}</div>`:'<div class="record-ok">Sem problemas apontados.</div>'}</article>`}).join('')||'<div class="empty">Nenhum check-list registrado.</div>'}
 async function atualizarChecklistContexto(){const vid=Number($('chkViatura').value)||0;chkPending=[];$('chkPendencia').classList.add('hidden');if(!vid)return;try{const c=await provider.checklistContext(vid);chkPending=c.pending||[];if(chkPending.length){$('chkPendencia').classList.remove('hidden');$('chkPendenciaTexto').textContent=(c.previous?.data?`Check-list de ${fmt(c.previous.data)}: `:'')+chkPending.map(x=>`${checklistItemLabel(x.item)} — ${x.status}`).join('; ')+(c.previous?.observacao?` · ${c.previous.observacao}`:'');$('chkResolvidos').innerHTML=chkPending.map(x=>`<label><input type="checkbox" class="chk-resolved" value="${esc(x.item)}"> ${checklistItemLabel(x.item)} já foi resolvido</label>`).join('')}else $('chkResolvidos').innerHTML='';if(c.vehicle){const v=c.vehicle,km=Number($('chkKm').value)||0,intv=Number(v.intervalo_troca_oleo_km)||0,ult=v.km_ultima_troca_oleo==null?null:Number(v.km_ultima_troca_oleo);let txt=intv?`Intervalo: ${intv.toLocaleString('pt-BR')} km.`:'Intervalo de troca de óleo não cadastrado.';if(ult!=null){const prox=ult+intv;txt+=` Última troca: ${ult.toLocaleString('pt-BR')} km. Próxima: ${prox.toLocaleString('pt-BR')} km.`;if(km)txt+=km>=prox?' TROCA NECESSÁRIA.':` Faltam ${(prox-km).toLocaleString('pt-BR')} km.`}$('chkOleoResumo').textContent=txt}}catch(e){$('chkOleoResumo').textContent=e.message}}
